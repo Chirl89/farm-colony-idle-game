@@ -1801,9 +1801,9 @@ ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;1;5;stone;
 Crop;wheat;Trigo;5;0;0;3;30;food;
 Crop;potato;Patata;10;0;0;5;100;food;
 Crop;carrot;Zanahoria;20;0;0;10;300;food;
-Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;3;gold;Consumes:1:food
-Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;1;gold;Consumes:1:wood
-Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;0;1;gold;Consumes:1:stone
+Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;15;gold;Consumes:10:food
+Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;8;gold;Consumes:10:wood
+Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;0;12;gold;Consumes:10:stone
 Sales;market_food;Venta Automática Comida;0;0;0;0.1;3;gold;Consumes:1:food
 Sales;market_wood;Venta Automática Madera;0;0;0;0.1;1;gold;Consumes:1:wood
 Sales;market_stone;Venta Automática Piedra;0;0;0;0.1;1;gold;Consumes:1:stone
@@ -1818,7 +1818,7 @@ Processing;pot_auto;Cocinar Automático Caldero;0;0;0;0.1;1;cookedFood;Consumes:
 Processing;pot_manual;Cocinar Manual Caldero;0;0;0;0.1;1;cookedFood;Consumes:1:food
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
-Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;4;gold;Consumes:1:cookedFood
+Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;40;gold;Consumes:10:cookedFood
 Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cookedFood
 Building;townhall;Ayuntamiento T1;0;30;20;0;0;;
 Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;0;;
@@ -3981,20 +3981,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     // AYUNTAMIENTO LÓGICA Y RENDER
-    let lastRenderedTownHallBuilt = null;
-    let lastRenderedTownHallTier = null;
-
     function renderTownHallUI() {
       const container = document.getElementById('townhall-ui-container');
       if (!container) return;
-      
-      const built = state.townHall.built;
-      const tier = state.townHall.tier;
-      if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier) {
-        return;
-      }
-      lastRenderedTownHallBuilt = built;
-      lastRenderedTownHallTier = tier;
       
       const cfg = CONFIG.Building.townhall;
       const cfg_t2 = CONFIG.Building.townhall_t2;
@@ -4196,15 +4185,10 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
 
       // Marketplace - Ventas manuales habilitadas según stock, SIEMPRE disponibles
-      const sellWoodConsume = CONFIG.Sales.sell_wood_manual.consume_amount;
-      const sellStoneConsume = CONFIG.Sales.sell_stone_manual.consume_amount;
-      const sellFoodConsume = CONFIG.Sales.sell_food_manual.consume_amount;
-      const sellCookedConsume = CONFIG.Sales.sell_cooked_manual.consume_amount;
-
-      DOM.btnSellWood.disabled = state.wood < sellWoodConsume;
-      DOM.btnSellStone.disabled = state.stone < sellStoneConsume;
-      DOM.btnSellFood.disabled = state.food < sellFoodConsume;
-      if (DOM.btnSellCooked) DOM.btnSellCooked.disabled = (state.cookedFood || 0) < sellCookedConsume;
+      DOM.btnSellWood.disabled = state.wood < 10;
+      DOM.btnSellStone.disabled = state.stone < 10;
+      DOM.btnSellFood.disabled = state.food < 10;
+      if (DOM.btnSellCooked) DOM.btnSellCooked.disabled = (state.cookedFood || 0) < 10;
 
       // Ocultar mercado si ya se ha construido uno
       const marketCard = document.getElementById('build-market-card');
@@ -4389,8 +4373,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     function loadGame() {
-      lastRenderedTownHallBuilt = null;
-      lastRenderedTownHallTier = null;
       try {
         const saved = localStorage.getItem(SAVE_KEY);
         if (saved) {
@@ -4602,8 +4584,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     function resetGame(isTestMode = false) {
-      lastRenderedTownHallBuilt = null;
-      lastRenderedTownHallTier = null;
       localStorage.removeItem(SAVE_KEY);
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
       

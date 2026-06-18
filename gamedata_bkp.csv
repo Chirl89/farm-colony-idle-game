@@ -1,0 +1,32 @@
+Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Duration;Yield_Amount;Yield_Type;Extra_Info
+BasicGathering;wood_manual;Recolección de Madera;0;0;0;0;1;wood;
+BasicGathering;stone_manual;Recolección de Piedra;0;0;0;0;1;stone;
+BasicGathering;berries_manual;Recolección de Frutos;0;0;0;0;1;food;
+BasicGathering;wood_auto;Leñador Básico;0;0;0;1;5;wood;
+BasicGathering;stone_auto;Minero Básico;0;0;0;1;5;stone;
+BasicGathering;berries_auto;Recolector de Frutos Básico;0;0;0;1;5;food;
+Building;basic_house;Casa Básica;0;20;15;0;1;maxPopulation;
+Building;upgraded_house;Mejorar Casa;0;40;30;0;1;maxPopulationUpgrade;
+Building;lumbermill;Aserradero;80;0;40;0;0;;
+Building;quarry;Cantera;100;40;0;0;0;;
+Building;farm;Granja;0;30;20;0;0;;
+Building;packager;Envasadora Industrial;0;50;40;0;0;;
+Building;market;Mercado;0;60;50;0;0;;
+Building;hire_colonist;Contratar Colono;50;0;0;0;1;colonist;
+ProductionRate;lumbermill_prod;Producción Aserradero;0;0;0;1;5;wood;
+ProductionRate;quarry_prod;Producción Cantera;0;0;0;1;5;stone;
+Crop;wheat;Trigo;5;0;0;3;30;food;
+Crop;potato;Patata;10;0;0;5;100;food;
+Crop;carrot;Zanahoria;20;0;0;10;300;food;
+Processing;packager_auto;Envasado Automático;0;0;0;5;10;packagedFood;Consumes:10:food
+Processing;packager_manual;Envasado Manual;0;0;0;5;10;packagedFood;Consumes:10:food
+Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;3;gold;Consumes:1:food
+Sales;sell_packaged_manual;Venta Manual Envasada;0;0;0;0;10;gold;Consumes:1:packagedFood
+Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;1;gold;Consumes:1:wood
+Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;0;1;gold;Consumes:1:stone
+Sales;market_packaged;Venta Automática Envasada;0;0;0;0.1;10;gold;Consumes:1:packagedFood
+Sales;market_food;Venta Automática Comida;0;0;0;0.1;3;gold;Consumes:1:food
+Sales;market_wood;Venta Automática Madera;0;0;0;0.1;1;gold;Consumes:1:wood
+Sales;market_stone;Venta Automática Piedra;0;0;0;0.1;1;gold;Consumes:1:stone
+System;day_duration;Duración del Día;0;0;0;30;0;;
+System;night_duration;Duración de la Noche;0;0;0;5;0;;

@@ -1,0 +1,3413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aetheria: Granja & Colonia - MVP</title>
+  <!-- Fuente moderna Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* VARIABLES DE DISEÑO (TEMA OSCURO PREMIUM) */
+    :root {
+      --font-primary: 'Outfit', sans-serif;
+      
+      /* Colores base */
+      --bg-dark: #0a0d14;
+      --bg-card: rgba(18, 24, 38, 0.6);
+      --bg-card-hover: rgba(26, 34, 54, 0.8);
+      --border-color: rgba(255, 255, 255, 0.07);
+      --border-glow: rgba(99, 102, 241, 0.15);
+      
+      /* Colores de recursos HSL */
+      --color-gold: 45, 100%, 55%;        /* Amarillo Dorado */
+      --color-wood: 25, 60%, 50%;         /* Marrón Madera */
+      --color-stone: 210, 15%, 60%;       /* Gris Piedra */
+      --color-food: 145, 65%, 50%;        /* Verde Comida */
+      --color-packaged: 275, 80%, 65%;    /* Morado Envasado */
+      --color-colonist: 195, 85%, 55%;    /* Azul Colonos */
+      --color-berries: 340, 75%, 55%;     /* Rosa Berries */
+      
+      /* Estados de UI */
+      --color-text: #e2e8f0;
+      --color-text-muted: #94a3b8;
+      --color-success: #10b981;
+      --color-danger: #ef4444;
+      --color-primary: #6366f1; /* Indigo */
+    }
+
+    /* ESTILOS GLOBALES */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--bg-dark);
+      color: var(--color-text);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* SCROLLBAR PERSONALIZADO */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* CONTENEDOR PRINCIPAL */
+    .app-container {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand h1 span {
+      background: linear-gradient(135deg, hsl(var(--color-primary)) 0%, hsl(var(--color-packaged)) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand p {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .system-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* PANEL DE RECURSOS */
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .resource-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--res-color-alpha);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 10px var(--res-color-glow);
+    }
+
+    .resource-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--res-color);
+    }
+
+    .resource-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .resource-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .resource-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 0.25rem;
+    }
+
+    .resource-rate {
+      font-size: 0.7rem;
+      font-weight: 500;
+      margin-top: 0.1rem;
+    }
+
+    .rate-positive { color: var(--color-success); }
+    .rate-neutral { color: var(--color-text-muted); }
+
+    .resource-icon {
+      font-size: 1.8rem;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* DASHBOARD PRINCIPAL */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* TARJETAS DE MÓDULOS */
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .module-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    .module-title span.badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.15rem 0.5rem;
+      border-radius: 99px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+    }
+
+    /* BOTONES DE ACCIÓN */
+    .btn {
+      font-family: var(--font-primary);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, hsl(var(--color-primary)) 0%, #4f46e5 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-color);
+      color: var(--color-text);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-accent-gold {
+      background: rgba(255, 193, 7, 0.1);
+      border-color: rgba(255, 193, 7, 0.2);
+      color: #ffe082;
+    }
+    .btn-accent-gold:hover:not(:disabled) {
+      background: rgba(255, 193, 7, 0.2);
+      border-color: rgba(255, 193, 7, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(80%);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    /* CONTROL DE TRABAJADORES (COLONOS) */
+    .colonist-allocator {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+
+    .allocator-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .allocator-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+      color: hsl(var(--color-colonist));
+    }
+
+    .allocator-btn:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+    }
+
+    .allocator-val {
+      font-weight: 700;
+      font-size: 0.9rem;
+      min-width: 24px;
+      text-align: center;
+      color: hsl(var(--color-colonist));
+    }
+
+    /* PANEL DE RECOLECCIÓN MANUAL */
+    .gather-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .gather-card {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .gather-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gather-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .gather-auto-info {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    /* AGRICULTURA - PARCELAS */
+    .plots-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .plot-card {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+    }
+
+    @media (max-width: 580px) {
+      .plot-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .plot-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .plot-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .plot-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--color-text-muted);
+    }
+    .plot-status-dot.active {
+      background-color: var(--color-success);
+      box-shadow: 0 0 8px var(--color-success);
+      animation: pulse 1.5s infinite;
+    }
+
+    .crop-selector {
+      font-family: var(--font-primary);
+      font-size: 0.85rem;
+      background: rgba(10, 13, 20, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--color-text);
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .crop-selector:focus {
+      border-color: hsl(var(--color-food));
+    }
+
+    .plot-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 580px) {
+      .plot-right {
+        align-items: flex-start;
+      }
+    }
+
+    /* BARRAS DE PROGRESO */
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, hsl(var(--color-food)) 0%, #10b981 100%);
+      border-radius: 99px;
+      transition: width 0.1s linear;
+    }
+
+    .timer-text {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+    }
+
+    /* PANEL DE COLONIA (EDIFICIOS) */
+    .colony-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .building-item {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .building-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .building-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .building-desc {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .costs-list {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .cost-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .cost-badge.affordable {
+      color: var(--color-success);
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .cost-badge.expensive {
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    /* PANEL DE ENVASE Y COMERCIO */
+    .processing-section {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .packager-unbuilt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .packager-unbuilt p {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+    }
+
+    .packager-active {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .packager-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .packager-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .packager-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: hsl(var(--color-packaged));
+      box-shadow: 0 0 8px hsl(var(--color-packaged));
+    }
+    .packager-pulse.active {
+      animation: pulse 1s infinite;
+    }
+
+    .packager-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .commerce-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .market-card {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .market-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* TOAST NOTIFICATIONS */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: toastIn 0.3s forwards, toastOut 0.3s forwards 2.7s;
+      pointer-events: auto;
+    }
+
+    .toast-success {
+      border-left: 4px solid var(--color-success);
+    }
+    .toast-info {
+      border-left: 4px solid var(--color-primary);
+    }
+    .toast-warning {
+      border-left: 4px solid var(--color-gold);
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+      border-top: 1px solid var(--border-color);
+      margin-top: auto;
+    }
+
+    /* ANIMACIONES */
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.6; }
+    }
+
+    @keyframes toastIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes toastOut {
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+
+    /* TABS SYSTEM STYLING */
+    .tab-container {
+      display: flex;
+      flex-wrap: wrap;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.35rem;
+      gap: 0.35rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      margin-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 140px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--color-text-muted);
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active-content {
+      display: block;
+      animation: tabFadeIn 0.3s ease-out forwards;
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* TAB GRIDS & STRUCTURES */
+    .tab-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .tab-grid-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tab-grid-buildings {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .column-gap {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* BUILDING BOXES INDIVIDUAL STYLING */
+    .building-boxes-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .building-box {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+    }
+
+    .building-box:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    .building-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .building-box-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #fff;
+    }
+
+    .building-box-prod {
+      font-size: 0.85rem;
+      color: #a5b4fc;
+      font-weight: 500;
+    }
+
+    /* COLONISTS DASHBOARD STYLING */
+    .colonist-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .colonist-stat-box {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .colonist-stat-label {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .colonist-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: hsl(var(--color-colonist));
+      margin-top: 0.25rem;
+    }
+
+    .job-allocation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .job-allocation-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+    }
+
+    .job-allocation-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .job-allocation-count {
+      font-weight: 700;
+      color: hsl(var(--color-colonist));
+    }
+
+    /* Sub-allocator styling inside active cards */
+    .sub-allocator-container {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .sub-allocator-label {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      text-align: left;
+    }
+
+    .sub-allocator-title {
+      font-weight: 600;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- CABECERA -->
+    <header>
+      <div class="brand">
+        <h1>AETHERIA: <span>Granja & Colonia</span></h1>
+        <p>Prototipo de Economía Idle & Automatización</p>
+      </div>
+      <div class="system-controls">
+        <button id="btn-change-path" class="btn btn-secondary" onclick="changeGamedataPath()" title="Configura la ruta de tu archivo de balance Excel/CSV">
+          ⚙️ Cambiar Ruta
+        </button>
+        <button id="btn-reload-csv" class="btn btn-secondary" onclick="loadConfigFromPath(null, true)" title="Recargar el archivo de balance desde la ruta configurada">
+          🔄 Recargar Datos
+        </button>
+        <button id="btn-save" class="btn btn-secondary" onclick="saveGame()">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11 2H9v3h2z"/><path d="M1.5 0A1.5 1.5 0 0 0 0 1.5v13A1.5 1.5 0 0 0 1.5 16h13a1.5 1.5 0 0 0 1.5-1.5V2.914a1.5 1.5 0 0 0-.44-1.06L14.14.44A1.5 1.5 0 0 0 13.086 0zM10 6a2 2 0 0 1-2 2 2 2 0 0 1-2-2zM2 9h12v5H2z"/></svg>
+          Guardar
+        </button>
+        <button id="btn-reset" class="btn btn-danger" onclick="confirmReset()">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+          Reiniciar
+        </button>
+      </div>
+    </header>
+
+    <!-- PANEL DE RECURSOS GLOBALES -->
+    <section class="resources-grid" id="resources-panel">
+      <!-- Oro -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-gold)); --res-color-alpha: rgba(255, 193, 7, 0.3); --res-color-glow: rgba(255, 193, 7, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🪙 Oro</span>
+          </div>
+          <div class="resource-value" id="res-gold">100</div>
+          <div class="resource-rate rate-neutral" id="rate-gold">+0/s</div>
+        </div>
+        <div class="resource-icon">🪙</div>
+      </div>
+
+      <!-- Madera -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-wood)); --res-color-alpha: rgba(245, 158, 11, 0.3); --res-color-glow: rgba(245, 158, 11, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🪵 Madera</span>
+          </div>
+          <div class="resource-value" id="res-wood">10</div>
+          <div class="resource-rate rate-neutral" id="rate-wood">+0/s</div>
+        </div>
+        <div class="resource-icon">🪵</div>
+      </div>
+
+      <!-- Piedra -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-stone)); --res-color-alpha: rgba(148, 163, 184, 0.3); --res-color-glow: rgba(148, 163, 184, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🪨 Piedra</span>
+          </div>
+          <div class="resource-value" id="res-stone">10</div>
+          <div class="resource-rate rate-neutral" id="rate-stone">+0/s</div>
+        </div>
+        <div class="resource-icon">🪨</div>
+      </div>
+
+      <!-- Comida -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-food)); --res-color-alpha: rgba(16, 185, 129, 0.3); --res-color-glow: rgba(16, 185, 129, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🌾 Comida</span>
+          </div>
+          <div class="resource-value" id="res-food">20</div>
+          <div class="resource-rate rate-neutral" id="rate-food">+0/s</div>
+        </div>
+        <div class="resource-icon">🌾</div>
+      </div>
+
+      <!-- Comida Envasada -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-packaged)); --res-color-alpha: rgba(168, 85, 247, 0.3); --res-color-glow: rgba(168, 85, 247, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🥫 Envasada</span>
+          </div>
+          <div class="resource-value" id="res-packaged">0</div>
+          <div class="resource-rate rate-neutral" id="rate-packaged">+0/s</div>
+        </div>
+        <div class="resource-icon">🥫</div>
+      </div>
+
+
+
+      <!-- Vivienda / Población -->
+      <div class="resource-card" style="--res-color: hsl(var(--color-colonist)); --res-color-alpha: rgba(14, 165, 233, 0.3); --res-color-glow: rgba(14, 165, 233, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>👥 Colonos</span>
+          </div>
+          <div class="resource-value" id="res-colonists">0 / 0</div>
+          <div class="resource-rate rate-neutral" id="res-free-colonists">Libres: 0</div>
+        </div>
+        <div class="resource-icon">👥</div>
+      </div>
+    </section>
+
+    <!-- NAVEGACIÓN POR PESTAÑAS -->
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="switchTab('basic')">
+        🛠️ Recolección
+      </button>
+      <button class="tab-btn" onclick="switchTab('production')">
+        🏭 Edificios de Prod.
+      </button>
+      <button class="tab-btn" onclick="switchTab('construction')">
+        🏗️ Construcción
+      </button>
+      <button class="tab-btn" onclick="switchTab('sales')">
+        📈 Comercio
+      </button>
+      <button class="tab-btn" onclick="switchTab('colonists')">
+        👥 Colonos
+      </button>
+    </div>
+
+    <!-- DASHBOARD PRINCIPAL (CONTENEDORES DE CONTENIDO DE PESTAÑAS) -->
+    <main id="main-content">
+      
+      <!-- PESTAÑA: RECOLECCIÓN BÁSICA -->
+      <div id="tab-basic" class="tab-content active-content">
+        <section class="module-card">
+          <div class="module-title">
+            <span>🛠️ Recolección Manual & Asignación</span>
+          </div>
+          
+          <div class="gather-grid">
+            <!-- Madera -->
+            <div class="gather-card">
+              <div class="gather-header">
+                <span class="gather-title">Woodcutting</span>
+                <span class="gather-auto-info" id="wood-auto-info">0.0/s</span>
+              </div>
+              <button class="btn btn-secondary" onclick="gatherWood()">
+                🪵 Recolectar Madera (+1)
+              </button>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar leñadores:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignJob('wood', -1)">-</button>
+                  <span class="allocator-val" id="alloc-wood">0</span>
+                  <button class="allocator-btn" onclick="assignJob('wood', 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Piedra -->
+            <div class="gather-card">
+              <div class="gather-header">
+                <span class="gather-title">Mining</span>
+                <span class="gather-auto-info" id="stone-auto-info">0.0/s</span>
+              </div>
+              <button class="btn btn-secondary" onclick="gatherStone()">
+                🪨 Recolectar Piedra (+1)
+              </button>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar mineros:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignJob('stone', -1)">-</button>
+                  <span class="allocator-val" id="alloc-stone">0</span>
+                  <button class="allocator-btn" onclick="assignJob('stone', 1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Frutos Silvestres -->
+            <div class="gather-card">
+              <div class="gather-header">
+                <span class="gather-title">Foraging</span>
+                <span class="gather-auto-info" id="berries-auto-info">0.0/s</span>
+              </div>
+              <button class="btn btn-secondary" onclick="gatherBerries()">
+                🍓 Recolectar Frutos (+1)
+              </button>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar colonos:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignJob('berries', -1)">-</button>
+                  <span class="allocator-val" id="alloc-berries">0</span>
+                  <button class="allocator-btn" onclick="assignJob('berries', 1)">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- PESTAÑA: EDIFICIOS DE PRODUCCIÓN -->
+      <div id="tab-production" class="tab-content">
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          
+          <!-- Aserraderos -->
+          <section class="module-card">
+            <div class="module-title">
+              <span>🪵 Aserraderos Activos</span>
+            </div>
+            <div id="active-lumbermills-list" class="building-boxes-container">
+              <!-- Cajas dinámicas -->
+            </div>
+          </section>
+
+          <!-- Canteras -->
+          <section class="module-card">
+            <div class="module-title">
+              <span>🪨 Canteras Activas</span>
+            </div>
+            <div id="active-quarries-list" class="building-boxes-container">
+              <!-- Cajas dinámicas -->
+            </div>
+          </section>
+
+          <!-- Granjas -->
+          <section class="module-card">
+            <div class="module-title">
+              <span>🌾 Granjas Activas</span>
+            </div>
+            <div id="active-farms-list" class="building-boxes-container">
+              <!-- Cajas dinámicas -->
+            </div>
+          </section>
+
+          <!-- Envasadoras -->
+          <section class="module-card">
+            <div class="module-title">
+              <span>🏭 Envasadoras Activas</span>
+            </div>
+            <div id="active-packagers-list" class="building-boxes-container">
+              <!-- Cajas dinámicas -->
+            </div>
+          </section>
+
+          <!-- Mercados -->
+          <section class="module-card">
+            <div class="module-title">
+              <span>📈 Mercados Activos</span>
+            </div>
+            <div id="active-markets-list" class="building-boxes-container">
+              <!-- Cajas dinámicas -->
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- PESTAÑA: CONSTRUCCIÓN -->
+      <div id="tab-construction" class="tab-content">
+        <section class="module-card">
+          <div class="module-title">
+            <span>🏗️ Astillero de Construcción & Viviendas</span>
+          </div>
+          
+          <div class="tab-grid-buildings">
+            <!-- Casa Básica -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Casa Básica</span>
+                <span class="building-desc">Aumenta capacidad máxima de colonos en +1.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-basic-wood">🪵 20 Madera</span>
+                  <span class="cost-badge" id="cost-basic-stone">🪨 15 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-basic-houses">Construidas: 0</span>
+                <button class="btn btn-secondary" id="btn-build-basic" onclick="buildBasicHouse()">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Mejorar Casa -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Mejorar Casa</span>
+                <span class="building-desc">Requiere casa básica. Convierte en Mejorada (+1 Capacidad adicional).</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-upgrade-wood">🪵 40 Madera</span>
+                  <span class="cost-badge" id="cost-upgrade-stone">🪨 30 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-upgraded-houses">Mejoradas: 0</span>
+                <button class="btn btn-secondary" id="btn-upgrade-house" onclick="upgradeHouse()">
+                  Mejorar
+                </button>
+              </div>
+            </div>
+
+            <!-- Aserradero -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Aserradero (Lumber Mill)</span>
+                <span class="building-desc">Habilita leñadores industriales (+5.0 Madera/s por trabajador).</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-lumbermill-gold">🪙 80 Oro</span>
+                  <span class="cost-badge" id="cost-lumbermill-stone">🪨 40 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-lumbermills">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-lumbermill" onclick="buildLumberMill()">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Cantera -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Cantera (Quarry)</span>
+                <span class="building-desc">Habilita mineros industriales (+5.0 Piedra/s por trabajador).</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-quarry-gold">🪙 100 Oro</span>
+                  <span class="cost-badge" id="cost-quarry-wood">🪵 40 Madera</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-quarries">Construidas: 0</span>
+                <button class="btn btn-secondary" id="btn-build-quarry" onclick="buildQuarry()">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Granja -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Granja (Farm)</span>
+                <span class="building-desc">Habilita parcelas agrícolas individuales para cultivar alimentos.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-farm-wood">🪵 30 Madera</span>
+                  <span class="cost-badge" id="cost-farm-stone">🪨 20 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-farms">Construidas: 0</span>
+                <button class="btn btn-secondary" id="btn-build-farm" onclick="buildFarm()">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Envasadora -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Envasadora Industrial</span>
+                <span class="building-desc">Habilita procesamiento automático y manual de comida.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-packager-wood">🪵 50 Madera</span>
+                  <span class="cost-badge" id="cost-packager-stone">🪨 40 Piedra</span>
+                  <span class="cost-badge" id="req-packager-colonist" style="color: var(--color-text-muted);">👥 Requiere 1 Colono</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-packagers">Construidas: 0</span>
+                <button class="btn btn-secondary" id="btn-build-packager" onclick="buildPackager()">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Mercado -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Mercado</span>
+                <span class="building-desc">Habilita ventas manuales e inteligentes con mercaderes.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-market-wood">🪵 60 Madera</span>
+                  <span class="cost-badge" id="cost-market-stone">🪨 50 Piedra</span>
+                  <span class="cost-badge" id="req-market-colonist" style="color: var(--color-text-muted);">👥 Requiere 1 Colono</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <button class="btn btn-secondary" id="btn-build-market" onclick="buildMarket()">
+                  Construir
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- PESTAÑA: COMERCIO Y VENTAS -->
+      <div id="tab-sales" class="tab-content">
+        <div class="tab-grid-2col">
+          
+          <!-- Columna izquierda: Ventas Manuales -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>🪙 Marketplace (Ventas Manuales)</span>
+              </div>
+              
+              <div class="market-card" style="background: none; border: none; padding: 0;">
+                <div class="commerce-grid">
+                  <!-- Comida -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-food)); font-weight: 600;">Comida</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+15 🪙</span>
+                    </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-food" onclick="sellFood()">
+                      Vender x10 Comida
+                    </button>
+                  </div>
+
+                  <!-- Comida Envasada -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-packaged)); font-weight: 600;">Comida Premium</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+100 🪙</span>
+                    </div>
+                    <button class="btn btn-accent-gold" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-packaged" onclick="sellPackagedFood()">
+                      Vender x10 Envasada
+                    </button>
+                  </div>
+
+                  <!-- Madera -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-wood)); font-weight: 600;">Madera</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+8 🪙</span>
+                    </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-wood" onclick="sellWood()">
+                      Vender x10 Madera
+                    </button>
+                  </div>
+
+                  <!-- Piedra -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-stone)); font-weight: 600;">Piedra</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+12 🪙</span>
+                    </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-stone" onclick="sellStone()">
+                      Vender x10 Piedra
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Columna derecha: Ventas Automáticas -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>📈 Ventas Automáticas</span>
+              </div>
+
+              <!-- Mercado Automático -->
+              <div class="processing-section" id="market-card-container" style="background: none; border: none; padding: 0;">
+                <div class="packager-header">
+                  <span class="packager-title">
+                    <div class="packager-pulse" id="market-indicator" style="background-color: hsl(var(--color-gold)); box-shadow: 0 0 8px hsl(var(--color-gold));"></div>
+                    Ventas Automáticas (<span id="count-markets">Construidos: 0</span>)
+                  </span>
+                  <span class="timer-text" id="market-status-text">Inactivo</span>
+                </div>
+
+                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+                  <div class="progress-bar-fill" id="market-progress" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
+                </div>
+
+                <!-- Controles activos (Configuración de auto-venta y asignación) -->
+                <div id="market-active-controls" style="display: none; flex-direction: column; gap: 0.75rem;">
+                  <!-- Configuración de Venta Automática -->
+                  <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.1rem;">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Ajustes de Comercio:</span>
+                    
+                    <!-- Ajuste Comida -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-food-chk" onchange="toggleAutoSell('food', this.checked)" checked>
+                        <span>Auto-vender Comida</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-food-min" value="50" min="0" step="10" onchange="changeAutoSellMin('food', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+                    <!-- Ajuste Envasada -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-packaged-chk" onchange="toggleAutoSell('packaged', this.checked)" checked>
+                        <span>Auto-vender Envasada</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-packaged-min" value="0" min="0" step="10" onchange="changeAutoSellMin('packaged', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+                    <!-- Ajuste Madera -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-wood-chk" onchange="toggleAutoSell('wood', this.checked)">
+                        <span>Auto-vender Madera</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-wood-min" value="100" min="0" step="10" onchange="changeAutoSellMin('wood', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+                    <!-- Ajuste Piedra -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-stone-chk" onchange="toggleAutoSell('stone', this.checked)">
+                        <span>Auto-vender Piedra</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-stone-min" value="100" min="0" step="10" onchange="changeAutoSellMin('stone', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Asignar mercaderes:</span>
+                    <div class="colonist-allocator">
+                      <button class="allocator-btn" onclick="assignBuildingJob('market', -1)">-</button>
+                      <span class="allocator-val" id="alloc-market">0</span>
+                      <button class="allocator-btn" onclick="assignBuildingJob('market', 1)">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- PESTAÑA: COLONOS -->
+      <div id="tab-colonists" class="tab-content">
+        <div class="tab-grid-2col">
+          <!-- Columna izquierda: Contratación -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>🤝 Contratación de Personal</span>
+              </div>
+              
+              <div class="building-item" style="border: none; background: none; padding: 0;">
+                <div class="building-info">
+                  <span class="building-name">Contratar Colono</span>
+                  <span class="building-desc">Trae mano de obra para automatizar y operar la colonia.</span>
+                  <div class="costs-list" style="margin-top: 0.5rem;">
+                    <span class="cost-badge" id="cost-hire-gold">🪙 50 Oro</span>
+                  </div>
+                </div>
+                <button class="btn btn-accent-gold" style="width: 100%; margin-top: 1rem;" id="btn-hire-colonist" onclick="hireColonist()">
+                  🧑‍🌾 Contratar Colono
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <!-- Columna derecha: Gestión de Trabajo QoL -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>📊 Resumen de Tareas y Gestión</span>
+              </div>
+              
+              <div class="colonist-stats-grid">
+                <div class="colonist-stat-box">
+                  <div class="colonist-stat-label">Libres</div>
+                  <div class="colonist-stat-value" id="stats-free-colonists">0</div>
+                </div>
+                <div class="colonist-stat-box">
+                  <div class="colonist-stat-label">Capacidad</div>
+                  <div class="colonist-stat-value" id="stats-total-colonists">0 / 0</div>
+                </div>
+              </div>
+              
+              <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <span style="font-size: 0.85rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Desglose de Trabajos:</span>
+                <div class="job-allocation-list">
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🪵 Leñadores</span>
+                    <span class="job-allocation-count" id="job-stat-wood">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🪨 Mineros</span>
+                    <span class="job-allocation-count" id="job-stat-stone">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🍓 Recolectores (Foraging)</span>
+                    <span class="job-allocation-count" id="job-stat-berries">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🌾 Agricultores</span>
+                    <span class="job-allocation-count" id="job-stat-plots">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🪵 Aserraderos</span>
+                    <span class="job-allocation-count" id="job-stat-lumbermill">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🪨 Canteras</span>
+                    <span class="job-allocation-count" id="job-stat-quarry">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">🏭 Envasadores</span>
+                    <span class="job-allocation-count" id="job-stat-packager">0</span>
+                  </div>
+                  <div class="job-allocation-row">
+                    <span class="job-allocation-name">📈 Mercaderes</span>
+                    <span class="job-allocation-count" id="job-stat-market">0</span>
+                  </div>
+                </div>
+                
+                <button class="btn btn-danger" style="margin-top: 0.5rem; width: 100%;" onclick="resetAllAssignments()">
+                  🚫 Liberar a todos los Colonos
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      Aetheria Farm & Colony Management System • Antigravity MVP Prototype v1.0.0
+    </footer>
+
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- LÓGICA DE JUEGO (JAVASCRIPT) -->
+  <script>
+    const DEFAULT_CSV_DATA = `Category,Type,Name,Cost_Gold,Cost_Wood,Cost_Stone,Duration,Yield_Amount,Yield_Type,Extra_Info
+BasicGathering,wood_manual,Recolección de Madera,0,0,0,0,1,wood,
+BasicGathering,stone_manual,Recolección de Piedra,0,0,0,0,1,stone,
+BasicGathering,berries_manual,Recolección de Frutos,0,0,0,0,1,food,
+BasicGathering,wood_auto,Leñador Básico,0,0,0,3.0,1,wood,
+BasicGathering,stone_auto,Minero Básico,0,0,0,3.0,1,stone,
+BasicGathering,berries_auto,Recolector de Frutos Básico,0,0,0,3.0,1,food,
+Building,basic_house,Casa Básica,0,20,15,0,1,maxPopulation,
+Building,upgraded_house,Mejorar Casa,0,40,30,0,1,maxPopulationUpgrade,
+Building,lumbermill,Aserradero,80,0,40,0,0,,
+Building,quarry,Cantera,100,40,0,0,0,,
+Building,farm,Granja,0,30,20,0,0,,
+Building,packager,Envasadora Industrial,0,50,40,0,0,,
+Building,market,Mercado,0,60,50,0,0,,
+Building,hire_colonist,Contratar Colono,50,0,0,0,1,colonist,
+ProductionRate,lumbermill_prod,Producción Aserradero,0,0,0,1.0,5.0,wood,
+ProductionRate,quarry_prod,Producción Cantera,0,0,0,1.0,5.0,stone,
+Crop,wheat,Trigo,5,0,0,5.0,3,food,
+Crop,potato,Patata,10,0,0,10.0,7,food,
+Crop,carrot,Zanahoria,20,0,0,18.0,16,food,
+Processing,packager_auto,Envasado Automático,0,0,0,5.0,10,packagedFood,Consumes:20:food
+Processing,packager_manual,Envasado Manual,0,0,0,1.0,10,packagedFood,Consumes:20:food
+Sales,sell_food_manual,Venta Manual Comida,0,0,0,0,15,gold,Consumes:10:food
+Sales,sell_packaged_manual,Venta Manual Envasada,0,0,0,0,100,gold,Consumes:10:packagedFood
+Sales,sell_wood_manual,Venta Manual Madera,0,0,0,0,8,gold,Consumes:10:wood
+Sales,sell_stone_manual,Venta Manual Piedra,0,0,0,0,12,gold,Consumes:10:stone
+Sales,market_packaged,Venta Automática Envasada,0,0,0,0.1,10.0,gold,Consumes:1:packagedFood
+Sales,market_food,Venta Automática Comida,0,0,0,0.1,1.5,gold,Consumes:1:food
+Sales,market_wood,Venta Automática Madera,0,0,0,0.1,0.8,gold,Consumes:1:wood
+Sales,market_stone,Venta Automática Piedra,0,0,0,0.1,1.2,gold,Consumes:1:stone`;
+
+    let CROPS = {
+      wheat: { name: 'Trigo', cost: 5, duration: 5.0, yield: 3 },
+      potato: { name: 'Patata', cost: 10, duration: 10.0, yield: 7 },
+      carrot: { name: 'Zanahoria', cost: 20, duration: 18.0, yield: 16 }
+    };
+
+    function parseCSV(csvText) {
+      const lines = csvText.split('\n');
+      const parsedConfig = {};
+      
+      // Auto-detectar delimitador en base a la primera línea no vacía
+      let delimiter = ',';
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line) {
+          if (line.includes(';')) {
+            delimiter = ';';
+          }
+          break;
+        }
+      }
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const columns = line.split(delimiter);
+        if (columns.length < 9) continue;
+        
+        const category = columns[0];
+        if (category === 'Category') continue;
+        const type = columns[1];
+        const name = columns[2];
+        const cost_gold = parseFloat(columns[3]) || 0;
+        const cost_wood = parseFloat(columns[4]) || 0;
+        const cost_stone = parseFloat(columns[5]) || 0;
+        const duration = parseFloat(columns[6]) || 0;
+        const yield_amount = parseFloat(columns[7]) || 0;
+        const yield_type = columns[8];
+        const extra_info = columns[9] || '';
+        
+        let consume_amount = 0;
+        let consume_type = '';
+        if (extra_info.startsWith('Consumes:')) {
+          const parts = extra_info.split(':');
+          if (parts.length >= 3) {
+            consume_amount = parseFloat(parts[1]) || 0;
+            consume_type = parts[2];
+          }
+        }
+        
+        if (!parsedConfig[category]) parsedConfig[category] = {};
+        
+        if (category === 'Crop') {
+          parsedConfig[category][type] = {
+            name: name,
+            cost: cost_gold,
+            duration: duration,
+            yield: yield_amount
+          };
+        } else if (category === 'Building') {
+          parsedConfig[category][type] = {
+            name: name,
+            cost_gold: cost_gold,
+            cost_wood: cost_wood,
+            cost_stone: cost_stone,
+            yield_type: yield_type,
+            yield_amount: yield_amount
+          };
+        } else {
+          parsedConfig[category][type] = {
+            name: name,
+            duration: duration,
+            yield: yield_amount,
+            yield_type: yield_type,
+            consume_amount: consume_amount,
+            consume_type: consume_type
+          };
+        }
+      }
+      return parsedConfig;
+    }
+
+    let CONFIG = parseCSV(DEFAULT_CSV_DATA);
+
+    function changeGamedataPath() {
+      const currentPath = localStorage.getItem('aetheria_gamedata_path') || 'gamedata.csv';
+      const newPath = prompt("Introduce la ruta relativa, URL o path a tu archivo Excel/CSV (ej. 'gamedata.csv' o 'C:/datos/gamedata.csv'):", currentPath);
+      
+      if (newPath === null) return; // Cancelar
+      
+      const cleanPath = newPath.trim().replace(/\\/g, '/');
+      if (cleanPath === '') {
+        localStorage.setItem('aetheria_gamedata_path', 'gamedata.csv');
+        showToast("Ruta restablecida a 'gamedata.csv'", "info");
+        loadConfigFromPath('gamedata.csv', true);
+      } else {
+        localStorage.setItem('aetheria_gamedata_path', cleanPath);
+        loadConfigFromPath(cleanPath, true);
+      }
+    }
+
+    function loadConfigFromPath(path, isManual = false) {
+      if (!path) {
+        path = localStorage.getItem('aetheria_gamedata_path') || 'gamedata.csv';
+      }
+      
+      // Limpiar el localStorage del comportamiento CSV antiguo si existe
+      localStorage.removeItem('aetheria_custom_csv');
+      
+      // Construir una URL con timestamp anti-caché si es relativa o HTTP
+      let fetchUrl = path;
+      if (!path.startsWith('file://') && !path.match(/^[a-zA-Z]:/)) {
+        const separator = path.includes('?') ? '&' : '?';
+        fetchUrl = `${path}${separator}t=${Date.now()}`;
+      }
+
+      fetch(fetchUrl)
+        .then(response => {
+          if (!response.ok) throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+          return response.text();
+        })
+        .then(text => {
+          const testConfig = parseCSV(text);
+          if (!testConfig.Building || !testConfig.Crop || !testConfig.Sales) {
+            throw new Error("Formato inválido. Faltan categorías críticas (Building, Crop, Sales).");
+          }
+          CONFIG = testConfig;
+          Object.assign(CROPS, CONFIG.Crop);
+          console.log(`Configuración cargada correctamente desde: ${path}`);
+          if (isManual) {
+            showToast("¡Configuración recargada con éxito!", "success");
+          }
+          
+          updateStaticTextsFromConfig();
+          if (isManual) {
+            document.getElementById('active-lumbermills-list').innerHTML = '';
+            document.getElementById('active-quarries-list').innerHTML = '';
+            document.getElementById('active-farms-list').innerHTML = '';
+            document.getElementById('active-packagers-list').innerHTML = '';
+            document.getElementById('active-markets-list').innerHTML = '';
+          }
+          updateUI();
+        })
+        .catch(err => {
+          console.warn(`No se pudo cargar la ruta '${path}':`, err);
+          
+          let msg = `No se pudo cargar el archivo desde la ruta: "${path}".\n\nDetalles del error: ${err.message}`;
+          if (path.startsWith('file://') || path.match(/^[a-zA-Z]:/)) {
+            msg += "\n\nNota: Los navegadores bloquean el acceso a rutas absolutas del disco local por seguridad (CORS). Coloca tu archivo en la carpeta del juego y usa la ruta relativa 'gamedata.csv' con un servidor local HTTP (como http-server).";
+          } else {
+            msg += "\n\nVerifica que la ruta sea correcta, que el archivo exista y que estés usando un servidor HTTP si juegas localmente o que el formato del archivo sea un CSV/Excel válido.";
+          }
+          
+          if (isManual) {
+            alert(msg);
+          } else {
+            showToast("Usando datos de balance predeterminados", "warning");
+          }
+          
+          CONFIG = parseCSV(DEFAULT_CSV_DATA);
+          Object.assign(CROPS, CONFIG.Crop);
+          updateStaticTextsFromConfig();
+          updateUI();
+        });
+    }
+
+    // ESTADO POR DEFECTO
+    const DEFAULT_STATE = {
+      gold: 0,
+      wood: 0,
+      stone: 0,
+      food: 0,
+      packagedFood: 0,
+      maxPopulation: 0,
+      currentColonists: 0,
+      freeColonists: 0,
+      basicHouses: 0,
+      upgradedHouses: 0,
+      lumberMills: [],
+      quarries: [],
+      farms: [],
+      packagers: [],
+      markets: [],
+      autoSellFood: true,
+      autoSellFoodMin: 50,
+      autoSellPackaged: true,
+      autoSellPackagedMin: 0,
+      autoSellWood: false,
+      autoSellWoodMin: 100,
+      autoSellStone: false,
+      autoSellStoneMin: 100,
+      jobs: {
+        wood: 0,
+        stone: 0,
+        berries: 0
+      },
+      jobsProgress: {
+        wood: 0,
+        stone: 0,
+        berries: 0
+      },
+      currentTab: 'basic'
+    };
+
+    // ESTADO ACTIVO
+    let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+    // RECOPILACIÓN DE ESTADÍSTICAS DEL ÚLTIMO SEGUNDO
+    let rates = {
+      gold: 0,
+      wood: 0,
+      stone: 0,
+      food: 0,
+      packaged: 0
+    };
+    
+    // Contadores para calcular tasas de recursos
+    let resourcesGeneratedThisSecond = { gold: 0, wood: 0, stone: 0, food: 0, packaged: 0 };
+    let lastRateResetTime = Date.now();
+
+    // REFERENCIAS A ELEMENTOS DEL DOM
+    const DOM = {
+      resGold: document.getElementById('res-gold'),
+      resWood: document.getElementById('res-wood'),
+      resStone: document.getElementById('res-stone'),
+      resFood: document.getElementById('res-food'),
+      resPackaged: document.getElementById('res-packaged'),
+      resColonists: document.getElementById('res-colonists'),
+      resFreeColonists: document.getElementById('res-free-colonists'),
+
+      rateGold: document.getElementById('rate-gold'),
+      rateWood: document.getElementById('rate-wood'),
+      rateStone: document.getElementById('rate-stone'),
+      rateFood: document.getElementById('rate-food'),
+      ratePackaged: document.getElementById('rate-packaged'),
+
+      allocWood: document.getElementById('alloc-wood'),
+      allocStone: document.getElementById('alloc-stone'),
+      allocBerries: document.getElementById('alloc-berries'),
+      woodAutoInfo: document.getElementById('wood-auto-info'),
+      stoneAutoInfo: document.getElementById('stone-auto-info'),
+      berriesAutoInfo: document.getElementById('berries-auto-info'),
+
+      countBasicHouses: document.getElementById('count-basic-houses'),
+      countUpgradedHouses: document.getElementById('count-upgraded-houses'),
+      btnBuildBasic: document.getElementById('btn-build-basic'),
+      btnUpgradeHouse: document.getElementById('btn-upgrade-house'),
+      btnHireColonist: document.getElementById('btn-hire-colonist'),
+
+      costBasicWood: document.getElementById('cost-basic-wood'),
+      costBasicStone: document.getElementById('cost-basic-stone'),
+      costUpgradeWood: document.getElementById('cost-upgrade-wood'),
+      costUpgradeStone: document.getElementById('cost-upgrade-stone'),
+      costHireGold: document.getElementById('cost-hire-gold'),
+
+      btnBuildLumberMill: document.getElementById('btn-build-lumbermill'),
+      btnBuildQuarry: document.getElementById('btn-build-quarry'),
+      btnBuildPackager: document.getElementById('btn-build-packager'),
+      btnBuildMarket: document.getElementById('btn-build-market'),
+
+      autoSellFoodChk: document.getElementById('auto-sell-food-chk'),
+      autoSellFoodMin: document.getElementById('auto-sell-food-min'),
+      autoSellPackagedChk: document.getElementById('auto-sell-packaged-chk'),
+      autoSellPackagedMin: document.getElementById('auto-sell-packaged-min'),
+      autoSellWoodChk: document.getElementById('auto-sell-wood-chk'),
+      autoSellWoodMin: document.getElementById('auto-sell-wood-min'),
+      autoSellStoneChk: document.getElementById('auto-sell-stone-chk'),
+      autoSellStoneMin: document.getElementById('auto-sell-stone-min'),
+
+      btnSellFood: document.getElementById('btn-sell-food'),
+      btnSellPackaged: document.getElementById('btn-sell-packaged'),
+      btnSellWood: document.getElementById('btn-sell-wood'),
+      btnSellStone: document.getElementById('btn-sell-stone'),
+
+      statsFreeColonists: document.getElementById('stats-free-colonists'),
+      statsTotalColonists: document.getElementById('stats-total-colonists'),
+      jobStatWood: document.getElementById('job-stat-wood'),
+      jobStatStone: document.getElementById('job-stat-stone'),
+      jobStatBerries: document.getElementById('job-stat-berries'),
+      jobStatPlots: document.getElementById('job-stat-plots'),
+      jobStatLumberMill: document.getElementById('job-stat-lumbermill'),
+      jobStatQuarry: document.getElementById('job-stat-quarry'),
+      jobStatPackager: document.getElementById('job-stat-packager'),
+      jobStatMarket: document.getElementById('job-stat-market')
+    };
+
+    // INICIALIZACIÓN
+    window.onload = function() {
+      // 1. Cargar el progreso guardado de la partida
+      loadGame();
+      
+      // 2. Cargar el balance desde la ruta persistente
+      const savedPath = localStorage.getItem('aetheria_gamedata_path') || 'gamedata.csv';
+      loadConfigFromPath(savedPath, false);
+
+      // Ciclo principal cada 100ms (10 ticks = 1 segundo)
+      setInterval(gameTick, 100);
+      
+      // Auto-guardado cada 10 segundos
+      setInterval(saveGame, 10000);
+
+      // Limpieza de colonos fantasmas por corrupción de datos
+      fixColonistAllocation();
+      
+      // Activar la pestaña guardada o por defecto
+      switchTab(state.currentTab || 'basic');
+    };
+
+    // FUNCIÓN DE TOASTS
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'warning') icon = '⚠️';
+      
+      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+      container.appendChild(toast);
+      
+      // Eliminar del DOM después de que termine la animación
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // ARREGLO DE ASIGNACIÓN (POR SEGURIDAD)
+    function fixColonistAllocation() {
+      state.jobs.wood = Math.max(0, parseInt(state.jobs.wood) || 0);
+      state.jobs.stone = Math.max(0, parseInt(state.jobs.stone) || 0);
+      state.jobs.berries = Math.max(0, parseInt(state.jobs.berries) || 0);
+
+      let allocated = state.jobs.wood + state.jobs.stone + state.jobs.berries;
+      
+      if (Array.isArray(state.lumberMills)) {
+        state.lumberMills.forEach(b => allocated += (b.workerAssigned || 0));
+      } else {
+        state.lumberMills = [];
+      }
+      
+      if (Array.isArray(state.quarries)) {
+        state.quarries.forEach(b => allocated += (b.workerAssigned || 0));
+      } else {
+        state.quarries = [];
+      }
+      
+      if (Array.isArray(state.farms)) {
+        state.farms.forEach(b => allocated += (b.workerAssigned || 0));
+      } else {
+        state.farms = [];
+      }
+      
+      if (Array.isArray(state.packagers)) {
+        state.packagers.forEach(b => allocated += (b.workerAssigned || 0));
+      } else {
+        state.packagers = [];
+      }
+      
+      if (Array.isArray(state.markets)) {
+        state.markets.forEach(b => allocated += (b.workerAssigned || 0));
+      } else {
+        state.markets = [];
+      }
+
+      state.freeColonists = state.currentColonists - allocated;
+      
+      if (state.freeColonists < 0 || isNaN(state.freeColonists)) {
+        state.jobs.wood = 0;
+        state.jobs.stone = 0;
+        state.jobs.berries = 0;
+        state.lumberMills.forEach(b => b.workerAssigned = 0);
+        state.quarries.forEach(b => b.workerAssigned = 0);
+        state.farms.forEach(b => b.workerAssigned = 0);
+        state.packagers.forEach(b => b.workerAssigned = 0);
+        state.markets.forEach(b => b.workerAssigned = 0);
+        state.freeColonists = state.currentColonists;
+      }
+    }
+
+    // ACCIONES DE RECOLECCIÓN MANUAL
+    function gatherWood() {
+      const yieldVal = CONFIG.BasicGathering.wood_manual.yield;
+      state.wood += yieldVal;
+      resourcesGeneratedThisSecond.wood += yieldVal;
+      updateUI();
+    }
+
+    function gatherStone() {
+      const yieldVal = CONFIG.BasicGathering.stone_manual.yield;
+      state.stone += yieldVal;
+      resourcesGeneratedThisSecond.stone += yieldVal;
+      updateUI();
+    }
+
+    function gatherBerries() {
+      const yieldVal = CONFIG.BasicGathering.berries_manual.yield;
+      state.food += yieldVal;
+      resourcesGeneratedThisSecond.food += yieldVal;
+      updateUI();
+    }
+
+    // ASIGNACIÓN DE TRABAJOS BÁSICOS
+    function assignJob(job, val) {
+      if (val > 0) {
+        if (state.freeColonists > 0) {
+          state.jobs[job] += 1;
+          state.freeColonists -= 1;
+          const jobName = job === 'wood' ? 'Leñador' : job === 'stone' ? 'Minero' : 'Recolector de Frutos';
+          showToast(`Colono asignado a ${jobName}`);
+        } else {
+          showToast("No tienes colonos libres disponibles", "warning");
+        }
+      } else {
+        if (state.jobs[job] > 0) {
+          state.jobs[job] -= 1;
+          state.freeColonists += 1;
+          const jobName = job === 'wood' ? 'Leñador' : job === 'stone' ? 'Minero' : 'Recolector de Frutos';
+          showToast(`Colono retirado de ${jobName}`);
+        }
+      }
+      updateUI();
+    }
+
+    // ASIGNACIÓN A EDIFICIO INDIVIDUAL
+    function assignBuildingWorker(type, index, val) {
+      const list = state[type];
+      if (!list || !list[index]) return;
+      const building = list[index];
+      
+      if (val > 0) {
+        if (state.freeColonists > 0) {
+          if (building.workerAssigned >= 1) {
+            showToast("Este edificio ya tiene un colono asignado", "warning");
+            return;
+          }
+          building.workerAssigned = 1;
+          state.freeColonists -= 1;
+          showToast("Colono asignado al edificio");
+        } else {
+          showToast("No tienes colonos libres disponibles", "warning");
+        }
+      } else {
+        if (building.workerAssigned > 0) {
+          building.workerAssigned = 0;
+          state.freeColonists += 1;
+          showToast("Colono retirado del edificio");
+        }
+      }
+      updateUI();
+    }
+
+    // AGRICULTURA DE GRANJA INDIVIDUAL
+    function changeFarmCrop(idx, cropKey) {
+      if (state.farms && state.farms[idx]) {
+        state.farms[idx].crop = cropKey;
+      }
+    }
+
+    function startFarmCycle(idx) {
+      if (!state.farms || !state.farms[idx]) return;
+      const farm = state.farms[idx];
+      if (farm.isRunning) return;
+
+      const crop = CROPS[farm.crop];
+      if (state.gold >= crop.cost) {
+        state.gold -= crop.cost;
+        farm.elapsed = 0;
+        farm.isRunning = true;
+        farm.activeCrop = farm.crop;
+        updateUI();
+      } else {
+        showToast("Oro insuficiente para iniciar el ciclo", "warning");
+      }
+    }
+
+    // CONTRATACIÓN Y CONSTRUCCIÓN (COLONIA)
+    function buildBasicHouse() {
+      const cfg = CONFIG.Building.basic_house;
+      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+        state.wood -= cfg.cost_wood;
+        state.stone -= cfg.cost_stone;
+        state.basicHouses += 1;
+        
+        const basicCapacity = CONFIG.Building.basic_house.yield_amount;
+        const upgradeCapacity = CONFIG.Building.upgraded_house.yield_amount;
+        state.maxPopulation = state.basicHouses * basicCapacity + state.upgradedHouses * (basicCapacity + upgradeCapacity);
+        
+        showToast(`¡Casa Básica construida! (+${cfg.yield_amount} Capacidad de población)`, "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir la Casa Básica", "warning");
+      }
+    }
+
+    function upgradeHouse() {
+      if (state.basicHouses < 1) {
+        showToast("No tienes casas básicas disponibles para mejorar", "warning");
+        return;
+      }
+      const cfg = CONFIG.Building.upgraded_house;
+      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+        state.wood -= cfg.cost_wood;
+        state.stone -= cfg.cost_stone;
+        state.basicHouses -= 1;
+        state.upgradedHouses += 1;
+        
+        const basicCapacity = CONFIG.Building.basic_house.yield_amount;
+        const upgradeCapacity = CONFIG.Building.upgraded_house.yield_amount;
+        state.maxPopulation = state.basicHouses * basicCapacity + state.upgradedHouses * (basicCapacity + upgradeCapacity);
+        
+        showToast(`¡Vivienda mejorada! (+${cfg.yield_amount} Capacidad de población)`, "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para mejorar la vivienda", "warning");
+      }
+    }
+
+    function buildLumberMill() {
+      const cfg = CONFIG.Building.lumbermill;
+      if (state.gold >= cfg.cost_gold && state.stone >= cfg.cost_stone) {
+        state.gold -= cfg.cost_gold;
+        state.stone -= cfg.cost_stone;
+        state.lumberMills.push({
+          id: state.lumberMills.length,
+          workerAssigned: 0
+        });
+        showToast(`¡Aserradero construido! (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(1)} Madera/s por trabajador asignado)`, "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir el Aserradero", "warning");
+      }
+    }
+
+    function buildQuarry() {
+      const cfg = CONFIG.Building.quarry;
+      if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood) {
+        state.gold -= cfg.cost_gold;
+        state.wood -= cfg.cost_wood;
+        state.quarries.push({
+          id: state.quarries.length,
+          workerAssigned: 0
+        });
+        showToast(`¡Cantera construida! (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(1)} Piedra/s por trabajador asignado)`, "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir la Cantera", "warning");
+      }
+    }
+
+    function buildFarm() {
+      const cfg = CONFIG.Building.farm;
+      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+        state.wood -= cfg.cost_wood;
+        state.stone -= cfg.cost_stone;
+        state.farms.push({
+          id: state.farms.length,
+          workerAssigned: 0,
+          crop: 'wheat',
+          elapsed: 0,
+          isRunning: false,
+          activeCrop: 'wheat'
+        });
+        showToast("¡Granja construida! Habilitadas las parcelas agrícolas.", "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir la Granja", "warning");
+      }
+    }
+
+    function hireColonist() {
+      const cfg = CONFIG.Building.hire_colonist;
+      if (state.currentColonists >= state.maxPopulation) {
+        showToast("No hay suficiente espacio de vivienda. Construye o mejora casas.", "warning");
+        return;
+      }
+      if (state.gold >= cfg.cost_gold) {
+        state.gold -= cfg.cost_gold;
+        state.currentColonists += 1;
+        state.freeColonists += 1;
+        showToast("¡Colono contratado! Ya disponible para tareas.", "success");
+        updateUI();
+      } else {
+        showToast("Oro insuficiente para contratar un colono", "warning");
+      }
+    }
+
+    // ENVASADORA
+    function buildPackager() {
+      const cfg = CONFIG.Building.packager;
+      if (state.currentColonists < 1) {
+        showToast("Requiere al menos 1 Colono contratado en la colonia para construir u operar.", "warning");
+        return;
+      }
+      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+        state.wood -= cfg.cost_wood;
+        state.stone -= cfg.cost_stone;
+        state.packagers.push({
+          id: state.packagers.length,
+          workerAssigned: 0,
+          elapsed: 0,
+          isRunning: false,
+          mode: 'none'
+        });
+        showToast("¡Envasadora construida con éxito! Habilitados los modos manual y automático.", "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir la Envasadora", "warning");
+      }
+    }
+
+    // MERCADO
+    function buildMarket() {
+      const cfg = CONFIG.Building.market;
+      if (state.currentColonists < 1) {
+        showToast("Requiere al menos 1 Colono contratado en la colonia para construir u operar.", "warning");
+        return;
+      }
+      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+        state.wood -= cfg.cost_wood;
+        state.stone -= cfg.cost_stone;
+        state.markets.push({
+          id: state.markets.length,
+          workerAssigned: 0,
+          elapsed: 0,
+          isRunning: false,
+          sales: { packaged: 0, food: 0, stone: 0, wood: 0 }
+        });
+        showToast("¡Mercado construido con éxito! Habilitadas las ventas automáticas con mercaderes.", "success");
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para construir el Mercado", "warning");
+      }
+    }
+
+    function packageManually(idx) {
+      if (!state.packagers || !state.packagers[idx]) return;
+      const packager = state.packagers[idx];
+      if (packager.isRunning) {
+        showToast("Esta envasadora ya está procesando un lote", "warning");
+        return;
+      }
+      
+      const minFood = CONFIG.Processing.packager_manual.consume_amount;
+      if (state.food >= minFood) {
+        state.food -= minFood;
+        packager.elapsed = 0;
+        packager.isRunning = true;
+        packager.mode = 'manual';
+        updateUI();
+      } else {
+        showToast(`Comida insuficiente para envasar manualmente (Mín. ${minFood})`, "warning");
+      }
+    }
+
+    // CONFIGURACIÓN DE AUTO-VENTAS
+    function toggleAutoSell(type, checked) {
+      if (type === 'food') state.autoSellFood = checked;
+      if (type === 'packaged') state.autoSellPackaged = checked;
+      if (type === 'wood') state.autoSellWood = checked;
+      if (type === 'stone') state.autoSellStone = checked;
+    }
+
+    // COMERCIO (VENTAS MANUALES)
+    function sellFood() {
+      const sale = CONFIG.Sales.sell_food_manual;
+      if (state.food >= sale.consume_amount) {
+        state.food -= sale.consume_amount;
+        state.gold += sale.yield;
+        resourcesGeneratedThisSecond.gold += sale.yield;
+        showToast(`¡Vendidas ${sale.consume_amount} unidades de Comida por ${sale.yield}🪙!`, "success");
+        updateUI();
+      } else {
+        showToast(`No tienes suficiente Comida (Mín. ${sale.consume_amount})`, "warning");
+      }
+    }
+
+    function sellPackagedFood() {
+      const sale = CONFIG.Sales.sell_packaged_manual;
+      if (state.packagedFood >= sale.consume_amount) {
+        state.packagedFood -= sale.consume_amount;
+        state.gold += sale.yield;
+        resourcesGeneratedThisSecond.gold += sale.yield;
+        showToast(`¡Vendidas ${sale.consume_amount} unidades de Envasada por ${sale.yield}🪙!`, "success");
+        updateUI();
+      } else {
+        showToast(`No tienes suficiente Envasada (Mín. ${sale.consume_amount})`, "warning");
+      }
+    }
+
+    function sellWood() {
+      const sale = CONFIG.Sales.sell_wood_manual;
+      if (state.wood >= sale.consume_amount) {
+        state.wood -= sale.consume_amount;
+        state.gold += sale.yield;
+        resourcesGeneratedThisSecond.gold += sale.yield;
+        showToast(`¡Vendidas ${sale.consume_amount} unidades de Madera por ${sale.yield}🪙!`, "success");
+        updateUI();
+      } else {
+        showToast(`No tienes suficiente Madera (Mín. ${sale.consume_amount})`, "warning");
+      }
+    }
+
+    function sellStone() {
+      const sale = CONFIG.Sales.sell_stone_manual;
+      if (state.stone >= sale.consume_amount) {
+        state.stone -= sale.consume_amount;
+        state.gold += sale.yield;
+        resourcesGeneratedThisSecond.gold += sale.yield;
+        showToast(`¡Vendidas ${sale.consume_amount} unidades de Piedra por ${sale.yield}🪙!`, "success");
+        updateUI();
+      } else {
+        showToast(`No tienes suficiente Piedra (Mín. ${sale.consume_amount})`, "warning");
+      }
+    }
+
+    function changeAutoSellMin(type, val) {
+      const value = Math.max(0, parseInt(val) || 0);
+      if (type === 'food') state.autoSellFoodMin = value;
+      if (type === 'packaged') state.autoSellPackagedMin = value;
+      if (type === 'wood') state.autoSellWoodMin = value;
+      if (type === 'stone') state.autoSellStoneMin = value;
+    }
+
+    // CICLO INTERNO DEL JUEGO (CADA 100ms)
+    function gameTick() {
+      const now = Date.now();
+      const delta = 0.1; // 100ms
+      
+      // 1. Recolección Automática básica
+      if (!state.jobsProgress) {
+        state.jobsProgress = { wood: 0, stone: 0, berries: 0 };
+      }
+      
+      // Madera auto
+      if (state.jobs.wood > 0) {
+        const cfg = CONFIG.BasicGathering.wood_auto;
+        state.jobsProgress.wood += delta;
+        if (state.jobsProgress.wood >= cfg.duration) {
+          state.jobsProgress.wood = 0;
+          const woodAdded = state.jobs.wood * cfg.yield;
+          state.wood += woodAdded;
+          resourcesGeneratedThisSecond.wood += woodAdded;
+        }
+      }
+      
+      // Piedra auto
+      if (state.jobs.stone > 0) {
+        const cfg = CONFIG.BasicGathering.stone_auto;
+        state.jobsProgress.stone += delta;
+        if (state.jobsProgress.stone >= cfg.duration) {
+          state.jobsProgress.stone = 0;
+          const stoneAdded = state.jobs.stone * cfg.yield;
+          state.stone += stoneAdded;
+          resourcesGeneratedThisSecond.stone += stoneAdded;
+        }
+      }
+
+      // Frutos auto (Comida)
+      if (state.jobs.berries > 0) {
+        const cfg = CONFIG.BasicGathering.berries_auto;
+        state.jobsProgress.berries += delta;
+        if (state.jobsProgress.berries >= cfg.duration) {
+          state.jobsProgress.berries = 0;
+          const foodAdded = state.jobs.berries * cfg.yield;
+          state.food += foodAdded;
+          resourcesGeneratedThisSecond.food += foodAdded;
+        }
+      }
+
+      // 1b. Producción Pasiva de Aserraderos y Canteras (cada tick de 100ms)
+      if (Array.isArray(state.lumberMills)) {
+        state.lumberMills.forEach(b => {
+          if (b.workerAssigned > 0) {
+            const millCfg = CONFIG.ProductionRate.lumbermill_prod;
+            const woodPassive = (millCfg.yield / millCfg.duration) * delta;
+            state.wood += woodPassive;
+            resourcesGeneratedThisSecond.wood += woodPassive;
+          }
+        });
+      }
+      
+      if (Array.isArray(state.quarries)) {
+        state.quarries.forEach(b => {
+          if (b.workerAssigned > 0) {
+            const quarryCfg = CONFIG.ProductionRate.quarry_prod;
+            const stonePassive = (quarryCfg.yield / quarryCfg.duration) * delta;
+            state.stone += stonePassive;
+            resourcesGeneratedThisSecond.stone += stonePassive;
+          }
+        });
+      }
+
+      // 2. Progreso de agricultura en Granjas individuales
+      if (Array.isArray(state.farms)) {
+        state.farms.forEach((farm, idx) => {
+          const hasWorker = farm.workerAssigned > 0;
+          
+          // Auto-sembrar
+          if (!farm.isRunning && hasWorker) {
+            const crop = CROPS[farm.crop];
+            if (state.gold >= crop.cost) {
+              state.gold -= crop.cost;
+              farm.elapsed = 0;
+              farm.isRunning = true;
+              farm.activeCrop = farm.crop;
+            }
+          }
+          
+          // Progreso
+          if (farm.isRunning) {
+            const crop = CROPS[farm.activeCrop || farm.crop];
+            farm.elapsed += delta;
+            
+            if (farm.elapsed >= crop.duration) {
+              farm.isRunning = false;
+              farm.elapsed = 0;
+              state.food += crop.yield;
+              resourcesGeneratedThisSecond.food += crop.yield;
+              showToast(`¡Cosecha de ${crop.name} lista en Granja #${idx + 1}! +${crop.yield} Comida`, "success");
+            }
+          }
+        });
+      }
+
+      // 3. Procesamiento en Envasadoras individuales
+      if (Array.isArray(state.packagers)) {
+        state.packagers.forEach((packager, idx) => {
+          const hasWorker = packager.workerAssigned > 0;
+          const autoPkg = CONFIG.Processing.packager_auto;
+          const manualPkg = CONFIG.Processing.packager_manual;
+          
+          if (!packager.isRunning && hasWorker) {
+            if (state.food >= autoPkg.consume_amount) {
+              state.food -= autoPkg.consume_amount;
+              packager.elapsed = 0;
+              packager.isRunning = true;
+              packager.mode = 'auto';
+            }
+          }
+          
+          if (packager.isRunning) {
+            packager.elapsed += delta;
+            const targetDuration = packager.mode === 'manual' ? manualPkg.duration : autoPkg.duration;
+            
+            if (packager.elapsed >= targetDuration) {
+              packager.isRunning = false;
+              packager.elapsed = 0;
+              const produced = packager.mode === 'manual' ? manualPkg.yield : autoPkg.yield;
+              state.packagedFood += produced;
+              resourcesGeneratedThisSecond.packaged += produced;
+              showToast(`🥫 Envasadora #${idx + 1} completó un lote de ${produced} Comida Envasada`, "success");
+              packager.mode = 'none';
+            }
+          }
+        });
+      }
+
+      // 4. Automatización de Ventas en Mercados individuales (Ventas rápidas 1 a 1)
+      if (Array.isArray(state.markets)) {
+        state.markets.forEach((market, idx) => {
+          const hasWorker = market.workerAssigned > 0;
+          
+          if (!market.isRunning && hasWorker) {
+            const minPackaged = parseInt(state.autoSellPackagedMin) || 0;
+            const minFood = parseInt(state.autoSellFoodMin) || 0;
+            const minStone = parseInt(state.autoSellStoneMin) || 0;
+            const minWood = parseInt(state.autoSellWoodMin) || 0;
+
+            const mPackaged = CONFIG.Sales.market_packaged;
+            const mFood = CONFIG.Sales.market_food;
+            const mStone = CONFIG.Sales.market_stone;
+            const mWood = CONFIG.Sales.market_wood;
+
+            let soldResource = null;
+            let revenue = 0;
+            let targetDuration = 0.1;
+
+            if (state.autoSellPackaged && state.packagedFood >= minPackaged + mPackaged.consume_amount) {
+              state.packagedFood -= mPackaged.consume_amount;
+              soldResource = 'Comida Envasada';
+              revenue = mPackaged.yield;
+              targetDuration = mPackaged.duration;
+            } else if (state.autoSellFood && state.food >= minFood + mFood.consume_amount) {
+              state.food -= mFood.consume_amount;
+              soldResource = 'Comida';
+              revenue = mFood.yield;
+              targetDuration = mFood.duration;
+            } else if (state.autoSellStone && state.stone >= minStone + mStone.consume_amount) {
+              state.stone -= mStone.consume_amount;
+              soldResource = 'Piedra';
+              revenue = mStone.yield;
+              targetDuration = mStone.duration;
+            } else if (state.autoSellWood && state.wood >= minWood + mWood.consume_amount) {
+              state.wood -= mWood.consume_amount;
+              soldResource = 'Madera';
+              revenue = mWood.yield;
+              targetDuration = mWood.duration;
+            }
+
+            if (soldResource !== null) {
+              market.soldResource = soldResource;
+              market.revenue = revenue;
+              market.targetDuration = targetDuration;
+              market.elapsed = 0;
+              market.isRunning = true;
+            }
+          }
+          
+          if (market.isRunning) {
+            market.elapsed += delta;
+            const duration = market.targetDuration || 0.1;
+            if (market.elapsed >= duration) {
+              market.isRunning = false;
+              market.elapsed = 0;
+              state.gold += market.revenue;
+              resourcesGeneratedThisSecond.gold += market.revenue;
+            }
+          }
+        });
+      }
+
+      // 4. Calcular y reiniciar tasas de recursos cada segundo (Filtro EMA)
+      if (now - lastRateResetTime >= 1000) {
+        rates.gold = (rates.gold * 0.8) + (resourcesGeneratedThisSecond.gold * 0.2);
+        rates.wood = (rates.wood * 0.8) + (resourcesGeneratedThisSecond.wood * 0.2);
+        rates.stone = (rates.stone * 0.8) + (resourcesGeneratedThisSecond.stone * 0.2);
+        rates.food = (rates.food * 0.8) + (resourcesGeneratedThisSecond.food * 0.2);
+        rates.packaged = (rates.packaged * 0.8) + (resourcesGeneratedThisSecond.packaged * 0.2);
+        
+        // Reset
+        resourcesGeneratedThisSecond = { gold: 0, wood: 0, stone: 0, food: 0, packaged: 0 };
+        lastRateResetTime = now;
+        
+        updateRatesUI();
+      }
+
+      // Actualizar la interfaz de recursos y botones en tiempo real
+      updateUI();
+    }
+
+    // ACTUALIZACIONES DE UI DE PROGRESO Y BOTONES
+    // RENDERIZAR CAJITAS DE EDIFICIOS INDIVIDUALES
+    function renderLumberMills() {
+      const container = document.getElementById('active-lumbermills-list');
+      if (!container) return;
+      const count = state.lumberMills ? state.lumberMills.length : 0;
+      const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
+        if (count === 0) {
+          if (!container.querySelector('.placeholder-text')) {
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Aserradero construido</div>`;
+          }
+          return;
+        }
+        let html = '';
+        state.lumberMills.forEach((mill, idx) => {
+          html += `
+            <div class="building-box" id="mill-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">🪵 Aserradero #${idx + 1}</span>
+                <span class="building-box-prod" id="mill-prod-${idx}">0.0 Madera/s</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar colono:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="mill-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      if (count > 0) {
+        state.lumberMills.forEach((mill, idx) => {
+          const isWorking = mill.workerAssigned > 0;
+          const yieldVal = CONFIG.ProductionRate.lumbermill_prod.yield;
+          document.getElementById(`mill-prod-${idx}`).innerText = isWorking ? `+${yieldVal.toFixed(1)} Madera/s` : '0.0 Madera/s';
+          document.getElementById(`mill-alloc-${idx}`).innerText = mill.workerAssigned;
+        });
+      }
+    }
+
+    function renderQuarries() {
+      const container = document.getElementById('active-quarries-list');
+      if (!container) return;
+      const count = state.quarries ? state.quarries.length : 0;
+      const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
+        if (count === 0) {
+          if (!container.querySelector('.placeholder-text')) {
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Cantera construida</div>`;
+          }
+          return;
+        }
+        let html = '';
+        state.quarries.forEach((quarry, idx) => {
+          html += `
+            <div class="building-box" id="quarry-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">🪨 Cantera #${idx + 1}</span>
+                <span class="building-box-prod" id="quarry-prod-${idx}">0.0 Piedra/s</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar colono:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      if (count > 0) {
+        state.quarries.forEach((quarry, idx) => {
+          const isWorking = quarry.workerAssigned > 0;
+          const yieldVal = CONFIG.ProductionRate.quarry_prod.yield;
+          document.getElementById(`quarry-prod-${idx}`).innerText = isWorking ? `+${yieldVal.toFixed(1)} Piedra/s` : '0.0 Piedra/s';
+          document.getElementById(`quarry-alloc-${idx}`).innerText = quarry.workerAssigned;
+        });
+      }
+    }
+
+    function renderFarms() {
+      const container = document.getElementById('active-farms-list');
+      if (!container) return;
+      const count = state.farms ? state.farms.length : 0;
+      const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
+        if (count === 0) {
+          if (!container.querySelector('.placeholder-text')) {
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Granja construida</div>`;
+          }
+          return;
+        }
+        let html = '';
+        state.farms.forEach((farm, idx) => {
+          let cropsOptionsHtml = '';
+          Object.keys(CROPS).forEach(key => {
+            const crop = CROPS[key];
+            const emoji = key === 'wheat' ? '🌾' : (key === 'potato' ? '🥔' : '🥕');
+            cropsOptionsHtml += `<option value="${key}">${emoji} ${crop.name} (Costo: ${crop.cost}🪙, Duración: ${crop.duration}s, Rend: ${crop.yield} Comida)</option>`;
+          });
+          html += `
+            <div class="building-box" id="farm-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">🌾 Granja #${idx + 1}</span>
+                <span class="building-box-prod" id="farm-status-${idx}">Inactiva</span>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
+                  ${cropsOptionsHtml}
+                </select>
+                
+                <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                  <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
+                  Sembrar
+                </button>
+                
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
+                  <div class="colonist-allocator">
+                    <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
+                    <span class="allocator-val" id="farm-alloc-${idx}">0</span>
+                    <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      if (count > 0) {
+        state.farms.forEach((farm, idx) => {
+          const select = document.getElementById(`farm-select-${idx}`);
+          if (select && select.value !== farm.crop) {
+            select.value = farm.crop;
+          }
+          
+          const pBar = document.getElementById(`farm-progress-${idx}`);
+          const btn = document.getElementById(`farm-btn-${idx}`);
+          const statusText = document.getElementById(`farm-status-${idx}`);
+          const allocText = document.getElementById(`farm-alloc-${idx}`);
+          
+          if (allocText) allocText.innerText = farm.workerAssigned;
+          
+          const crop = CROPS[farm.crop];
+          if (btn) btn.disabled = farm.isRunning || state.gold < crop.cost;
+
+          if (farm.isRunning) {
+            const activeCropObj = CROPS[farm.activeCrop || farm.crop];
+            const pct = Math.min(100, (farm.elapsed / activeCropObj.duration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            const rem = Math.max(activeCropObj.duration - farm.elapsed, 0).toFixed(1);
+            if (statusText) statusText.innerText = `Cultivando (${rem}s)`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = farm.workerAssigned > 0 ? 'Esperando Oro...' : 'Inactiva';
+          }
+        });
+      }
+    }
+
+    function renderPackagers() {
+      const container = document.getElementById('active-packagers-list');
+      if (!container) return;
+      const count = state.packagers ? state.packagers.length : 0;
+      const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
+        if (count === 0) {
+          if (!container.querySelector('.placeholder-text')) {
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Envasadora construida</div>`;
+          }
+          return;
+        }
+        let html = '';
+        state.packagers.forEach((packager, idx) => {
+          html += `
+            <div class="building-box" id="packager-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">🏭 Envasadora #${idx + 1}</span>
+                <span class="building-box-prod" id="packager-status-${idx}">Inactiva</span>
+              </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="packager-progress-${idx}" style="background: linear-gradient(90deg, hsl(var(--color-packaged)) 0%, #c084fc 100%);"></div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="packager-btn-${idx}" onclick="packageManually(${idx})">
+                  Envasar Manual
+                </button>
+                
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
+                  <div class="colonist-allocator">
+                    <button class="allocator-btn" onclick="assignBuildingWorker('packagers', ${idx}, -1)">-</button>
+                    <span class="allocator-val" id="packager-alloc-${idx}">0</span>
+                    <button class="allocator-btn" onclick="assignBuildingWorker('packagers', ${idx}, 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      if (count > 0) {
+        state.packagers.forEach((packager, idx) => {
+          const pBar = document.getElementById(`packager-progress-${idx}`);
+          const btn = document.getElementById(`packager-btn-${idx}`);
+          const statusText = document.getElementById(`packager-status-${idx}`);
+          const allocText = document.getElementById(`packager-alloc-${idx}`);
+          
+          const minFood = CONFIG.Processing.packager_auto.consume_amount;
+          if (allocText) allocText.innerText = packager.workerAssigned;
+          if (btn) btn.disabled = packager.isRunning || state.food < minFood;
+
+          if (packager.isRunning) {
+            const targetDuration = packager.mode === 'manual' ? CONFIG.Processing.packager_manual.duration : CONFIG.Processing.packager_auto.duration;
+            const pct = Math.min(100, (packager.elapsed / targetDuration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            const rem = Math.max(targetDuration - packager.elapsed, 0).toFixed(1);
+            if (statusText) statusText.innerText = `Envasando (${rem}s)`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = packager.workerAssigned > 0 ? `Esperando comida (Mín. ${minFood})...` : 'Inactiva';
+          }
+        });
+      }
+    }
+
+    function renderMarkets() {
+      const container = document.getElementById('active-markets-list');
+      if (!container) return;
+      const count = state.markets ? state.markets.length : 0;
+      const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
+        if (count === 0) {
+          if (!container.querySelector('.placeholder-text')) {
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Mercado construido</div>`;
+          }
+          return;
+        }
+        let html = '';
+        state.markets.forEach((market, idx) => {
+          html += `
+            <div class="building-box" id="market-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">📈 Mercado #${idx + 1}</span>
+                <span class="building-box-prod" id="market-status-${idx}">Inactivo</span>
+              </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Asignar mercader:</span>
+                
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="market-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      if (count > 0) {
+        state.markets.forEach((market, idx) => {
+          const pBar = document.getElementById(`market-progress-${idx}`);
+          const statusText = document.getElementById(`market-status-${idx}`);
+          const allocText = document.getElementById(`market-alloc-${idx}`);
+          
+          if (allocText) allocText.innerText = market.workerAssigned;
+
+          if (market.isRunning) {
+            const duration = market.targetDuration || 0.1;
+            const pct = Math.min(100, (market.elapsed / duration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            if (statusText) statusText.innerText = `Vendiendo...`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = market.workerAssigned > 0 ? 'Comerciando' : 'Inactivo';
+          }
+        });
+      }
+    }
+
+    // Tasas dinámicas
+    function updateRatesUI() {
+      function formatRate(value) {
+        return value > 0.05 ? `+${value.toFixed(1)}/s` : `+0/s`;
+      }
+
+      DOM.rateGold.textContent = formatRate(rates.gold);
+      DOM.rateGold.className = rates.gold > 0.05 ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+
+      DOM.rateWood.textContent = formatRate(rates.wood);
+      DOM.rateWood.className = rates.wood > 0.05 ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+
+      DOM.rateStone.textContent = formatRate(rates.stone);
+      DOM.rateStone.className = rates.stone > 0.05 ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+
+      DOM.rateFood.textContent = formatRate(rates.food);
+      DOM.rateFood.className = rates.food > 0.05 ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+
+      DOM.ratePackaged.textContent = formatRate(rates.packaged);
+      DOM.ratePackaged.className = rates.packaged > 0.05 ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+    }
+
+    // Actualiza variables numéricas de recursos
+    function updateUI() {
+      DOM.resGold.textContent = Math.floor(state.gold);
+      DOM.resWood.textContent = Math.floor(state.wood);
+      DOM.resStone.textContent = Math.floor(state.stone);
+      DOM.resFood.textContent = Math.floor(state.food);
+      DOM.resPackaged.textContent = Math.floor(state.packagedFood);
+      DOM.resColonists.textContent = `${state.currentColonists} / ${state.maxPopulation}`;
+      DOM.resFreeColonists.textContent = `Libres: ${state.freeColonists}`;
+
+      // Asignación de leñadores/mineros/foragers
+      DOM.allocWood.textContent = state.jobs.wood;
+      DOM.allocStone.textContent = state.jobs.stone;
+      DOM.allocBerries.textContent = state.jobs.berries;
+      
+      const woodDuration = CONFIG.BasicGathering.wood_auto.duration;
+      const woodYield = CONFIG.BasicGathering.wood_auto.yield;
+      DOM.woodAutoInfo.textContent = `+${((state.jobs.wood * woodYield) / woodDuration).toFixed(1)}/s`;
+      
+      const stoneDuration = CONFIG.BasicGathering.stone_auto.duration;
+      const stoneYield = CONFIG.BasicGathering.stone_auto.yield;
+      DOM.stoneAutoInfo.textContent = `+${((state.jobs.stone * stoneYield) / stoneDuration).toFixed(1)}/s`;
+
+      const berriesDuration = CONFIG.BasicGathering.berries_auto.duration;
+      const berriesYield = CONFIG.BasicGathering.berries_auto.yield;
+      DOM.berriesAutoInfo.textContent = `+${((state.jobs.berries * berriesYield) / berriesDuration).toFixed(1)}/s`;
+
+      // Renderizar y actualizar los edificios individuales en tab-production
+      renderLumberMills();
+      renderQuarries();
+      renderFarms();
+      renderPackagers();
+      renderMarkets();
+
+      // Viviendas construidas
+      DOM.countBasicHouses.textContent = `Construidas: ${state.basicHouses}`;
+      DOM.countUpgradedHouses.textContent = `Mejoradas: ${state.upgradedHouses}`;
+
+      // Contadores en Construcción
+      document.getElementById('count-lumbermills').innerText = `Construidos: ${state.lumberMills.length}`;
+      document.getElementById('count-quarries').innerText = `Construidas: ${state.quarries.length}`;
+      document.getElementById('count-farms').innerText = `Construidas: ${state.farms ? state.farms.length : 0}`;
+      document.getElementById('count-packagers').innerText = `Construidas: ${state.packagers ? state.packagers.length : 0}`;
+      document.getElementById('count-markets').innerText = `Construidos: ${state.markets ? state.markets.length : 0}`;
+
+      // Sincronizar inputs de auto-venta en Comercio y controlar visibilidad
+      const marketControls = document.getElementById('market-active-controls');
+      const countMarkets = state.markets ? state.markets.length : 0;
+      
+      if (countMarkets > 0) {
+        if (marketControls) marketControls.style.display = 'flex';
+        if (document.activeElement !== DOM.autoSellFoodMin) DOM.autoSellFoodMin.value = state.autoSellFoodMin;
+        if (document.activeElement !== DOM.autoSellPackagedMin) DOM.autoSellPackagedMin.value = state.autoSellPackagedMin;
+        if (document.activeElement !== DOM.autoSellWoodMin) DOM.autoSellWoodMin.value = state.autoSellWoodMin;
+        if (document.activeElement !== DOM.autoSellStoneMin) DOM.autoSellStoneMin.value = state.autoSellStoneMin;
+        
+        DOM.autoSellFoodChk.checked = state.autoSellFood;
+        DOM.autoSellPackagedChk.checked = state.autoSellPackaged;
+        DOM.autoSellWoodChk.checked = state.autoSellWood;
+        DOM.autoSellStoneChk.checked = state.autoSellStone;
+        
+        // Sincronizar indicadores globales del Mercado en Comercio
+        const anyActive = state.markets.some(m => m.workerAssigned > 0);
+        const indicator = document.getElementById('market-indicator');
+        const statusText = document.getElementById('market-status-text');
+        const globalProgressBar = document.getElementById('market-progress');
+        
+        if (indicator) {
+          if (anyActive) indicator.classList.add('active');
+          else indicator.classList.remove('active');
+        }
+        if (statusText) {
+          statusText.innerText = anyActive ? 'Operando' : 'Sin Mercader';
+        }
+        if (globalProgressBar) {
+          const runningMarket = state.markets.find(m => m.isRunning);
+          if (runningMarket) {
+            const pct = Math.min(100, (runningMarket.elapsed / runningMarket.targetDuration) * 100);
+            globalProgressBar.style.width = `${pct}%`;
+          } else {
+            globalProgressBar.style.width = anyActive ? '100%' : '0%';
+          }
+        }
+      } else {
+        if (marketControls) marketControls.style.display = 'none';
+        const indicator = document.getElementById('market-indicator');
+        const statusText = document.getElementById('market-status-text');
+        const globalProgressBar = document.getElementById('market-progress');
+        if (indicator) indicator.classList.remove('active');
+        if (statusText) statusText.innerText = 'Inactivo';
+        if (globalProgressBar) globalProgressBar.style.width = '0%';
+      }
+
+      // Sincronizar el asignador de mercaderes del Commerce tab
+      const allocMarket = document.getElementById('alloc-market');
+      if (allocMarket) {
+        allocMarket.textContent = state.markets ? state.markets.filter(m => m.workerAssigned > 0).length : 0;
+      }
+
+      // Actualizar estadísticas de colonos y desglose de trabajos
+      if (DOM.statsFreeColonists) DOM.statsFreeColonists.textContent = state.freeColonists;
+      if (DOM.statsTotalColonists) DOM.statsTotalColonists.textContent = `${state.currentColonists} / ${state.maxPopulation}`;
+      if (DOM.jobStatWood) DOM.jobStatWood.textContent = state.jobs.wood;
+      if (DOM.jobStatStone) DOM.jobStatStone.textContent = state.jobs.stone;
+      if (DOM.jobStatBerries) DOM.jobStatBerries.textContent = state.jobs.berries;
+      
+      if (DOM.jobStatPlots) DOM.jobStatPlots.textContent = state.farms ? state.farms.filter(f => f.workerAssigned > 0).length : 0;
+      if (DOM.jobStatLumberMill) DOM.jobStatLumberMill.textContent = state.lumberMills.filter(l => l.workerAssigned > 0).length;
+      if (DOM.jobStatQuarry) DOM.jobStatQuarry.textContent = state.quarries.filter(q => q.workerAssigned > 0).length;
+      if (DOM.jobStatPackager) DOM.jobStatPackager.textContent = state.packagers ? state.packagers.filter(p => p.workerAssigned > 0).length : 0;
+      if (DOM.jobStatMarket) DOM.jobStatMarket.textContent = state.markets ? state.markets.filter(m => m.workerAssigned > 0).length : 0;
+
+      updateButtonStates();
+    }
+
+    // Controla habilitado/deshabilitado de botones
+    function updateButtonStates() {
+      const hBasic = CONFIG.Building.basic_house;
+      const hUpgraded = CONFIG.Building.upgraded_house;
+      const bLumber = CONFIG.Building.lumbermill;
+      const bQuarry = CONFIG.Building.quarry;
+      const bFarm = CONFIG.Building.farm;
+      const bPackager = CONFIG.Building.packager;
+      const bMarket = CONFIG.Building.market;
+      const bHire = CONFIG.Building.hire_colonist;
+
+      // Costos básicos colores visuales
+      toggleCostAffordability(DOM.costBasicWood, state.wood, hBasic.cost_wood);
+      toggleCostAffordability(DOM.costBasicStone, state.stone, hBasic.cost_stone);
+      toggleCostAffordability(DOM.costUpgradeWood, state.wood, hUpgraded.cost_wood);
+      toggleCostAffordability(DOM.costUpgradeStone, state.stone, hUpgraded.cost_stone);
+      toggleCostAffordability(DOM.costHireGold, state.gold, bHire.cost_gold);
+
+      // Costos edificios de producción
+      toggleCostAffordability(document.getElementById('cost-lumbermill-gold'), state.gold, bLumber.cost_gold);
+      toggleCostAffordability(document.getElementById('cost-lumbermill-stone'), state.stone, bLumber.cost_stone);
+      toggleCostAffordability(document.getElementById('cost-quarry-gold'), state.gold, bQuarry.cost_gold);
+      toggleCostAffordability(document.getElementById('cost-quarry-wood'), state.wood, bQuarry.cost_wood);
+      toggleCostAffordability(document.getElementById('cost-farm-wood'), state.wood, bFarm.cost_wood);
+      toggleCostAffordability(document.getElementById('cost-farm-stone'), state.stone, bFarm.cost_stone);
+      toggleCostAffordability(document.getElementById('cost-packager-wood'), state.wood, bPackager.cost_wood);
+      toggleCostAffordability(document.getElementById('cost-packager-stone'), state.stone, bPackager.cost_stone);
+      toggleCostAffordability(document.getElementById('cost-market-wood'), state.wood, bMarket.cost_wood);
+      toggleCostAffordability(document.getElementById('cost-market-stone'), state.stone, bMarket.cost_stone);
+
+      // Botones comprar construcciones
+      DOM.btnBuildBasic.disabled = !(state.wood >= hBasic.cost_wood && state.stone >= hBasic.cost_stone);
+      DOM.btnUpgradeHouse.disabled = !(state.basicHouses >= 1 && state.wood >= hUpgraded.cost_wood && state.stone >= hUpgraded.cost_stone);
+      DOM.btnBuildLumberMill.disabled = !(state.gold >= bLumber.cost_gold && state.stone >= bLumber.cost_stone);
+      DOM.btnBuildQuarry.disabled = !(state.gold >= bQuarry.cost_gold && state.wood >= bQuarry.cost_wood);
+      
+      const btnBuildFarm = document.getElementById('btn-build-farm');
+      if (btnBuildFarm) btnBuildFarm.disabled = !(state.wood >= bFarm.cost_wood && state.stone >= bFarm.cost_stone);
+
+      const hasHired = state.currentColonists >= 1;
+      
+      const reqPackager = document.getElementById('req-packager-colonist');
+      if (reqPackager) {
+        reqPackager.style.color = hasHired ? 'var(--color-success)' : '#f87171';
+        reqPackager.className = `cost-badge ${hasHired ? 'affordable' : 'expensive'}`;
+      }
+      DOM.btnBuildPackager.disabled = !(state.wood >= bPackager.cost_wood && state.stone >= bPackager.cost_stone && hasHired);
+
+      const reqMarket = document.getElementById('req-market-colonist');
+      if (reqMarket) {
+        reqMarket.style.color = hasHired ? 'var(--color-success)' : '#f87171';
+        reqMarket.className = `cost-badge ${hasHired ? 'affordable' : 'expensive'}`;
+      }
+      DOM.btnBuildMarket.disabled = !(state.wood >= bMarket.cost_wood && state.stone >= bMarket.cost_stone && hasHired);
+
+      // Botón contratar colono (Condición: colonos actuales < maxPopulation)
+      const spaceAvailable = state.currentColonists < state.maxPopulation;
+      DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
+
+      // Marketplace - Ventas manuales habilitadas según stock, SIEMPRE disponibles
+      DOM.btnSellWood.disabled = state.wood < 10;
+      DOM.btnSellStone.disabled = state.stone < 10;
+    }
+
+    function toggleCostAffordability(element, currentAmount, costAmount) {
+      if (!element) return;
+      if (currentAmount >= costAmount) {
+        element.classList.add('affordable');
+        element.classList.remove('expensive');
+      } else {
+        element.classList.add('expensive');
+        element.classList.remove('affordable');
+      }
+    }
+
+    function updateStaticTextsFromConfig() {
+      // Viviendas y Colonos
+      document.getElementById('cost-basic-wood').innerHTML = `🪵 ${CONFIG.Building.basic_house.cost_wood} Madera`;
+      document.getElementById('cost-basic-stone').innerHTML = `🪨 ${CONFIG.Building.basic_house.cost_stone} Piedra`;
+      
+      document.getElementById('cost-upgrade-wood').innerHTML = `🪵 ${CONFIG.Building.upgraded_house.cost_wood} Madera`;
+      document.getElementById('cost-upgrade-stone').innerHTML = `🪨 ${CONFIG.Building.upgraded_house.cost_stone} Piedra`;
+      
+      document.getElementById('cost-hire-gold').innerHTML = `🪙 ${CONFIG.Building.hire_colonist.cost_gold} Oro`;
+      document.getElementById('btn-hire-colonist').innerHTML = `🧑‍🌾 Contratar Colono (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
+
+      // Edificios
+      document.getElementById('cost-lumbermill-gold').innerHTML = `🪙 ${CONFIG.Building.lumbermill.cost_gold} Oro`;
+      document.getElementById('cost-lumbermill-stone').innerHTML = `🪨 ${CONFIG.Building.lumbermill.cost_stone} Piedra`;
+      
+      document.getElementById('cost-quarry-gold').innerHTML = `🪙 ${CONFIG.Building.quarry.cost_gold} Oro`;
+      document.getElementById('cost-quarry-wood').innerHTML = `🪵 ${CONFIG.Building.quarry.cost_wood} Madera`;
+      
+      document.getElementById('cost-farm-wood').innerHTML = `🪵 ${CONFIG.Building.farm.cost_wood} Madera`;
+      document.getElementById('cost-farm-stone').innerHTML = `🪨 ${CONFIG.Building.farm.cost_stone} Piedra`;
+      
+      document.getElementById('cost-packager-wood').innerHTML = `🪵 ${CONFIG.Building.packager.cost_wood} Madera`;
+      document.getElementById('cost-packager-stone').innerHTML = `🪨 ${CONFIG.Building.packager.cost_stone} Piedra`;
+      
+      document.getElementById('cost-market-wood').innerHTML = `🪵 ${CONFIG.Building.market.cost_wood} Madera`;
+      document.getElementById('cost-market-stone').innerHTML = `🪨 ${CONFIG.Building.market.cost_stone} Piedra`;
+
+      // Recolección Manual
+      const gatherWoodBtn = document.querySelector('button[onclick="gatherWood()"]');
+      if (gatherWoodBtn) gatherWoodBtn.innerHTML = `🪵 Recolectar Madera (+${CONFIG.BasicGathering.wood_manual.yield})`;
+      const gatherStoneBtn = document.querySelector('button[onclick="gatherStone()"]');
+      if (gatherStoneBtn) gatherStoneBtn.innerHTML = `🪨 Recolectar Piedra (+${CONFIG.BasicGathering.stone_manual.yield})`;
+      const gatherBerriesBtn = document.querySelector('button[onclick="gatherBerries()"]');
+      if (gatherBerriesBtn) gatherBerriesBtn.innerHTML = `🍓 Recolectar Frutos (+${CONFIG.BasicGathering.berries_manual.yield})`;
+
+      // Descripciones de Edificios
+      const lumberDesc = document.querySelector('#cost-lumbermill-gold').parentElement.parentElement.querySelector('.building-desc');
+      if (lumberDesc) lumberDesc.innerHTML = `Habilita leñadores industriales (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(1)} Madera/s por trabajador).`;
+      const quarryDesc = document.querySelector('#cost-quarry-gold').parentElement.parentElement.querySelector('.building-desc');
+      if (quarryDesc) quarryDesc.innerHTML = `Habilita mineros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(1)} Piedra/s por trabajador).`;
+
+      // Comercio - Ventas manuales
+      const foodSaleVal = document.getElementById('btn-sell-food').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
+      if (foodSaleVal) foodSaleVal.innerHTML = `+${CONFIG.Sales.sell_food_manual.yield} 🪙`;
+      document.getElementById('btn-sell-food').innerHTML = `Vender x${CONFIG.Sales.sell_food_manual.consume_amount} Comida`;
+      
+      const pkgSaleVal = document.getElementById('btn-sell-packaged').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
+      if (pkgSaleVal) pkgSaleVal.innerHTML = `+${CONFIG.Sales.sell_packaged_manual.yield} 🪙`;
+      document.getElementById('btn-sell-packaged').innerHTML = `Vender x${CONFIG.Sales.sell_packaged_manual.consume_amount} Envasada`;
+      
+      const woodSaleVal = document.getElementById('btn-sell-wood').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
+      if (woodSaleVal) woodSaleVal.innerHTML = `+${CONFIG.Sales.sell_wood_manual.yield} 🪙`;
+      document.getElementById('btn-sell-wood').innerHTML = `Vender x${CONFIG.Sales.sell_wood_manual.consume_amount} Madera`;
+      
+      const stoneSaleVal = document.getElementById('btn-sell-stone').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
+      if (stoneSaleVal) stoneSaleVal.innerHTML = `+${CONFIG.Sales.sell_stone_manual.yield} 🪙`;
+      document.getElementById('btn-sell-stone').innerHTML = `Vender x${CONFIG.Sales.sell_stone_manual.consume_amount} Piedra`;
+    }
+
+    // ASIGNAR COLONOS A TRABAJOS DE EDIFICIOS INDUSTRIALES DESDE COMERCIO/OTROS PANELES DE FORMA GLOBAL
+    function assignBuildingJob(type, val) {
+      const arrayKey = type === 'market' ? 'markets' : (type === 'packager' ? 'packagers' : null);
+      if (!arrayKey || !state[arrayKey]) return;
+      const list = state[arrayKey];
+      
+      if (val > 0) {
+        if (state.freeColonists > 0) {
+          const building = list.find(b => b.workerAssigned === 0);
+          if (building) {
+            building.workerAssigned = 1;
+            state.freeColonists -= 1;
+            showToast(`Colono asignado al ${type === 'market' ? 'Mercado' : 'Envasadora'}`);
+          } else {
+            showToast(`Todos los ${type === 'market' ? 'Mercados' : 'Envasadoras'} ya tienen trabajador`, "warning");
+          }
+        } else {
+          showToast("No tienes colonos libres disponibles", "warning");
+        }
+      } else {
+        const building = [...list].reverse().find(b => b.workerAssigned > 0);
+        if (building) {
+          building.workerAssigned = 0;
+          state.freeColonists += 1;
+          showToast(`Colono retirado del ${type === 'market' ? 'Mercado' : 'Envasadora'}`);
+        }
+      }
+      updateUI();
+    }
+
+    // PERSISTENCIA (GUARDADO Y CARGA)
+    const SAVE_KEY = 'aetheria_farm_colony_save';
+
+    function saveGame() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+        showToast("Progreso auto-guardado en la nube local", "info");
+      } catch (err) {
+        console.error("Error al guardar la partida:", err);
+      }
+    }
+
+    function loadGame() {
+      try {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          
+          // Deep merge seguro para evitar problemas con estructuras anidadas como state.jobs
+          state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+          for (let key in parsed) {
+            if (typeof parsed[key] === 'object' && parsed[key] !== null) {
+              if (Array.isArray(parsed[key])) {
+                state[key] = [...parsed[key]];
+              } else {
+                state[key] = Object.assign(state[key] || {}, parsed[key]);
+              }
+            } else {
+              state[key] = parsed[key];
+            }
+          }
+          
+          // Migración para unificar frutos (berries) en comida (food)
+          if (parsed.hasOwnProperty('berries') && parsed.berries > 0) {
+            state.food = (state.food || 0) + parsed.berries;
+          }
+          if (state.hasOwnProperty('berries')) {
+            delete state.berries;
+          }
+
+          // --- MIGRACIONES PARA ARREGLOS DE EDIFICIOS INDUSTRIALES ---
+          
+          // Aserraderos
+          let oldLumberMillWorkers = (parsed.jobs && parsed.jobs.lumberMill) || 0;
+          if (!Array.isArray(state.lumberMills)) {
+            const count = parseInt(state.lumberMills) || 0;
+            state.lumberMills = [];
+            for (let i = 0; i < count; i++) {
+              const assigned = oldLumberMillWorkers > 0 ? 1 : 0;
+              state.lumberMills.push({ id: i, workerAssigned: assigned });
+              if (assigned) oldLumberMillWorkers--;
+            }
+          }
+
+          // Canteras
+          let oldQuarryWorkers = (parsed.jobs && parsed.jobs.quarry) || 0;
+          if (!Array.isArray(state.quarries)) {
+            const count = parseInt(state.quarries) || 0;
+            state.quarries = [];
+            for (let i = 0; i < count; i++) {
+              const assigned = oldQuarryWorkers > 0 ? 1 : 0;
+              state.quarries.push({ id: i, workerAssigned: assigned });
+              if (assigned) oldQuarryWorkers--;
+            }
+          }
+
+          // Envasadoras (puede venir de hasPackager o packagers count)
+          if (!Array.isArray(state.packagers)) {
+            let count = 0;
+            if (parsed.hasOwnProperty('hasPackager') && parsed.hasPackager) count = 1;
+            else count = parseInt(state.packagers) || 0;
+            
+            let oldPackagerWorkers = (parsed.jobs && parsed.jobs.packager) || 0;
+            state.packagers = [];
+            for (let i = 0; i < count; i++) {
+              const assigned = oldPackagerWorkers > 0 ? 1 : 0;
+              state.packagers.push({
+                id: i,
+                workerAssigned: assigned,
+                elapsed: 0,
+                isRunning: false,
+                mode: 'none'
+              });
+              if (assigned) oldPackagerWorkers--;
+            }
+          }
+
+          // Mercados (puede venir de hasMarket o markets count)
+          if (!Array.isArray(state.markets)) {
+            let count = 0;
+            if (parsed.hasOwnProperty('hasMarket') && parsed.hasMarket) count = 1;
+            else count = parseInt(state.markets) || 0;
+            
+            let oldMarketWorkers = (parsed.jobs && parsed.jobs.market) || 0;
+            state.markets = [];
+            for (let i = 0; i < count; i++) {
+              const assigned = oldMarketWorkers > 0 ? 1 : 0;
+              state.markets.push({
+                id: i,
+                workerAssigned: assigned,
+                elapsed: 0,
+                isRunning: false,
+                sales: { packaged: 0, food: 0, stone: 0, wood: 0 }
+              });
+              if (assigned) oldMarketWorkers--;
+            }
+          }
+
+          // Granjas (puede venir de parcelas antiguas plots)
+          if (parsed.plots && Array.isArray(parsed.plots)) {
+            state.farms = [];
+            parsed.plots.forEach((plot, idx) => {
+              let assigned = 0;
+              if (parsed.jobs && parsed.jobs.plots && parsed.jobs.plots[idx]) {
+                assigned = parsed.jobs.plots[idx];
+              }
+              state.farms.push({
+                id: idx,
+                workerAssigned: assigned,
+                crop: plot.crop || 'wheat',
+                elapsed: 0,
+                isRunning: false,
+                activeCrop: plot.crop || 'wheat'
+              });
+            });
+          } else if (!Array.isArray(state.farms)) {
+            const count = parseInt(state.farms) || 0;
+            state.farms = [];
+            for (let i = 0; i < count; i++) {
+              state.farms.push({
+                id: i,
+                workerAssigned: 0,
+                crop: 'wheat',
+                elapsed: 0,
+                isRunning: false,
+                activeCrop: 'wheat'
+              });
+            }
+          }
+
+          // Migración para viviendas de partidas antiguas
+          if (parsed.hasOwnProperty('upgradedHouses') && parsed.hasOwnProperty('basicHouses') && parsed.hasOwnProperty('maxPopulation')) {
+            if (parsed.upgradedHouses > 0 && parsed.maxPopulation === parsed.basicHouses + parsed.upgradedHouses) {
+              state.basicHouses = Math.max(0, parsed.basicHouses - parsed.upgradedHouses);
+            }
+          }
+
+          // Asegurar población máxima correcta
+          const basicCapacity = CONFIG.Building.basic_house ? CONFIG.Building.basic_house.yield_amount : 1;
+          const upgradeCapacity = CONFIG.Building.upgraded_house ? CONFIG.Building.upgraded_house.yield_amount : 1;
+          state.maxPopulation = state.basicHouses * basicCapacity + state.upgradedHouses * (basicCapacity + upgradeCapacity);
+          
+          // Resetear estados de ejecución para evitar bloqueos
+          if (Array.isArray(state.packagers)) {
+            state.packagers.forEach(p => {
+              p.isRunning = false;
+              p.elapsed = 0;
+              p.mode = 'none';
+            });
+          }
+          if (Array.isArray(state.markets)) {
+            state.markets.forEach(m => {
+              m.isRunning = false;
+              m.elapsed = 0;
+            });
+          }
+          if (Array.isArray(state.farms)) {
+            state.farms.forEach(f => {
+              f.isRunning = false;
+              f.elapsed = 0;
+            });
+          }
+          
+          showToast("Partida cargada con éxito", "success");
+        }
+      } catch (err) {
+        console.error("Error al cargar la partida:", err);
+        showToast("Error al cargar la partida anterior", "warning");
+      }
+    }
+
+    function confirmReset() {
+      if (confirm("¿Estás seguro de que quieres restablecer tu colonia? Perderás todo tu progreso actual.")) {
+        resetGame();
+      }
+    }
+
+    function resetGame() {
+      localStorage.removeItem(SAVE_KEY);
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      
+      // Limpiar el contenido renderizado para forzar placeholders
+      document.getElementById('active-lumbermills-list').innerHTML = '';
+      document.getElementById('active-quarries-list').innerHTML = '';
+      document.getElementById('active-farms-list').innerHTML = '';
+      document.getElementById('active-packagers-list').innerHTML = '';
+      document.getElementById('active-markets-list').innerHTML = '';
+      
+      showToast("Juego reiniciado por completo", "warning");
+      updateUI();
+    }
+
+    // GESTIÓN DE PESTAÑAS (TABS)
+    function switchTab(tabId) {
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(c => c.classList.remove('active-content'));
+      
+      const buttons = document.querySelectorAll('.tab-btn');
+      buttons.forEach(b => b.classList.remove('active'));
+      
+      const targetContent = document.getElementById(`tab-${tabId}`);
+      if (targetContent) targetContent.classList.add('active-content');
+      
+      const targetBtn = Array.from(buttons).find(b => b.getAttribute('onclick').includes(`'${tabId}'`));
+      if (targetBtn) targetBtn.classList.add('active');
+      
+      state.currentTab = tabId;
+    }
+
+    // LIBERAR TODOS LOS TRABAJADORES (QoL)
+    function resetAllAssignments() {
+      if (confirm("¿Estás seguro de que quieres liberar a todos tus colonos asignados?")) {
+        state.jobs.wood = 0;
+        state.jobs.stone = 0;
+        state.jobs.berries = 0;
+        
+        if (Array.isArray(state.lumberMills)) state.lumberMills.forEach(b => b.workerAssigned = 0);
+        if (Array.isArray(state.quarries)) state.quarries.forEach(b => b.workerAssigned = 0);
+        if (Array.isArray(state.farms)) state.farms.forEach(b => b.workerAssigned = 0);
+        if (Array.isArray(state.packagers)) state.packagers.forEach(b => b.workerAssigned = 0);
+        if (Array.isArray(state.markets)) state.markets.forEach(b => b.workerAssigned = 0);
+        
+        fixColonistAllocation();
+        showToast("Todos los colonos han sido liberados de sus tareas", "info");
+        updateUI();
+      }
+    }
+  </script>
+</body>
+</html>

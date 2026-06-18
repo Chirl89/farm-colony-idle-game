@@ -1233,12 +1233,9 @@
                 <span class="gather-title">Woodcutting</span>
                 <span class="gather-auto-info" id="wood-auto-info">0.0/s</span>
               </div>
-              <button id="btn-gather-wood" class="btn btn-secondary" onclick="gatherWood()">
+              <button class="btn btn-secondary" onclick="gatherWood()">
                 🪵 Recolectar Madera (+1)
               </button>
-              <div id="gather-cooldown-container-wood" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
-                <div id="gather-cooldown-bar-wood" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
-              </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar leñadores:</span>
                 <div class="colonist-allocator">
@@ -1255,12 +1252,9 @@
                 <span class="gather-title">Mining</span>
                 <span class="gather-auto-info" id="stone-auto-info">0.0/s</span>
               </div>
-              <button id="btn-gather-stone" class="btn btn-secondary" onclick="gatherStone()">
+              <button class="btn btn-secondary" onclick="gatherStone()">
                 🪨 Recolectar Piedra (+1)
               </button>
-              <div id="gather-cooldown-container-stone" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
-                <div id="gather-cooldown-bar-stone" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
-              </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar canteros:</span>
                 <div class="colonist-allocator">
@@ -1277,12 +1271,9 @@
                 <span class="gather-title">Foraging</span>
                 <span class="gather-auto-info" id="berries-auto-info">0.0/s</span>
               </div>
-              <button id="btn-gather-berries" class="btn btn-secondary" onclick="gatherBerries()">
+              <button class="btn btn-secondary" onclick="gatherBerries()">
                 🍓 Recolectar Frutos (+1)
               </button>
-              <div id="gather-cooldown-container-berries" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
-                <div id="gather-cooldown-bar-berries" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
-              </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar recolectores:</span>
                 <div class="colonist-allocator">
@@ -1290,60 +1281,6 @@
                   <span class="allocator-val" id="alloc-berries">0</span>
                   <button class="allocator-btn" onclick="assignJob('berries', 1)">+</button>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        <!-- Ventas Básicas -->
-        <section class="module-card" style="margin-top: 1.5rem;">
-          <div class="module-title">
-            <span>🪙 Ventas Básicas</span>
-          </div>
-          <div class="market-card" style="background: none; border: none; padding: 0;">
-            <div class="commerce-grid">
-              <!-- Comida -->
-              <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                  <span style="color: hsl(var(--color-food)); font-weight: 600;">Comida</span>
-                  <span style="color: hsl(var(--color-gold)); font-weight: 700;">+15 🪙</span>
-                </div>
-                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-food" onclick="sellFood()">
-                  Vender x10 Comida
-                </button>
-              </div>
-
-              <!-- Comida Cocinada -->
-              <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                  <span style="color: hsl(20, 90%, 60%); font-weight: 600;">Comida Cocinada</span>
-                  <span style="color: hsl(var(--color-gold)); font-weight: 700;">+40 🪙</span>
-                </div>
-                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-cooked" onclick="sellCookedFood()">
-                  Vender x10 Cocinada
-                </button>
-              </div>
-
-              <!-- Madera -->
-              <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                  <span style="color: hsl(var(--color-wood)); font-weight: 600;">Madera</span>
-                  <span style="color: hsl(var(--color-gold)); font-weight: 700;">+8 🪙</span>
-                </div>
-                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-wood" onclick="sellWood()">
-                  Vender x10 Madera
-                </button>
-              </div>
-
-              <!-- Piedra -->
-              <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
-                  <span style="color: hsl(var(--color-stone)); font-weight: 600;">Piedra</span>
-                  <span style="color: hsl(var(--color-gold)); font-weight: 700;">+12 🪙</span>
-                </div>
-                <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-stone" onclick="sellStone()">
-                  Vender x10 Piedra
-                </button>
               </div>
             </div>
           </div>
@@ -1436,17 +1373,6 @@
 
       <!-- PESTAÑA: CONSTRUCCIÓN -->
       <div id="tab-construction" class="tab-content">
-        
-        <!-- Ayuntamiento UI Module Card -->
-        <section class="module-card" id="townhall-module-card" style="margin-bottom: 1.5rem;">
-          <div class="module-title">
-            <span>🏛️ Ayuntamiento</span>
-          </div>
-          <div id="townhall-ui-container">
-            <!-- Dynamically populated via updateUI() -->
-          </div>
-        </section>
-
         <section class="module-card">
           <div class="module-title">
             <span>🏗️ Astillero de Construcción & Viviendas</span>
@@ -1534,6 +1460,7 @@
                 <div class="costs-list">
                   <span class="cost-badge" id="cost-bonfire-wood">🪵 40 Madera</span>
                   <span class="cost-badge" id="cost-bonfire-stone">🪨 20 Piedra</span>
+                  <span class="cost-badge" id="req-bonfire-colonist" style="color: var(--color-text-muted);">👥 Requiere 1 Aldeano</span>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
@@ -1553,6 +1480,7 @@
                 <div class="costs-list">
                   <span class="cost-badge" id="cost-market-wood">🪵 60 Madera</span>
                   <span class="cost-badge" id="cost-market-stone">🪨 50 Piedra</span>
+                  <span class="cost-badge" id="req-market-colonist" style="color: var(--color-text-muted);">👥 Requiere 1 Aldeano</span>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
@@ -1567,88 +1495,151 @@
 
       <!-- PESTAÑA: COMERCIO Y VENTAS -->
       <div id="tab-sales" class="tab-content">
-        <div style="max-width: 600px; margin: 0 auto;">
-          <section class="module-card">
-            <div class="module-title">
-              <span>📈 Ventas Automáticas</span>
-            </div>
-
-            <!-- Mercado Automático -->
-            <div class="processing-section" id="market-card-container" style="background: none; border: none; padding: 0;">
-              <div class="packager-header">
-                <span class="packager-title">
-                  <div class="packager-pulse" id="market-indicator" style="background-color: hsl(var(--color-gold)); box-shadow: 0 0 8px hsl(var(--color-gold));"></div>
-                  Ventas Automáticas (<span id="count-markets">Construidos: 0</span>)
-                </span>
-                <span class="timer-text" id="market-status-text">Inactivo</span>
+        <div class="tab-grid-2col">
+          
+          <!-- Columna izquierda: Ventas Manuales -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>🪙 Marketplace (Ventas Manuales)</span>
               </div>
-
-              <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                <div class="progress-bar-fill" id="market-progress" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
-              </div>
-
-              <!-- Controles activos (Configuración de auto-venta y asignación) -->
-              <div id="market-active-controls" style="display: none; flex-direction: column; gap: 0.75rem;">
-                <!-- Configuración de Venta Automática -->
-                <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.1rem;">
-                  <span style="font-size: 0.75rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Ajustes de Comercio:</span>
-                  
-                  <!-- Ajuste Comida -->
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                      <input type="checkbox" id="auto-sell-food-chk" onchange="toggleAutoSell('food', this.checked)" checked>
-                      <span>Auto-vender Comida</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
-                      <input type="number" id="auto-sell-food-min" value="50" min="0" step="10" onchange="changeAutoSellMin('food', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+              
+              <div class="market-card" style="background: none; border: none; padding: 0;">
+                <div class="commerce-grid">
+                  <!-- Comida -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-food)); font-weight: 600;">Comida</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+15 🪙</span>
                     </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-food" onclick="sellFood()">
+                      Vender x10 Comida
+                    </button>
                   </div>
 
-                  <!-- Ajuste Cocinada -->
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                      <input type="checkbox" id="auto-sell-cooked-chk" onchange="toggleAutoSell('cooked', this.checked)" checked>
-                      <span>Auto-vender Cocinada</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
-                      <input type="number" id="auto-sell-cooked-min" value="0" min="0" step="10" onchange="changeAutoSellMin('cooked', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                  <!-- Comida Cocinada -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(20, 90%, 60%); font-weight: 600;">Comida Cocinada</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+40 🪙</span>
                     </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-cooked" onclick="sellCookedFood()">
+                      Vender x10 Cocinada
+                    </button>
                   </div>
 
 
-                  <!-- Ajuste Madera -->
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                      <input type="checkbox" id="auto-sell-wood-chk" onchange="toggleAutoSell('wood', this.checked)">
-                      <span>Auto-vender Madera</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
-                      <input type="number" id="auto-sell-wood-min" value="100" min="0" step="10" onchange="changeAutoSellMin('wood', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                  <!-- Madera -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-wood)); font-weight: 600;">Madera</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+8 🪙</span>
                     </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-wood" onclick="sellWood()">
+                      Vender x10 Madera
+                    </button>
                   </div>
 
-                  <!-- Ajuste Piedra -->
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
-                    <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                      <input type="checkbox" id="auto-sell-stone-chk" onchange="toggleAutoSell('stone', this.checked)">
-                      <span>Auto-vender Piedra</span>
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                      <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
-                      <input type="number" id="auto-sell-stone-min" value="100" min="0" step="10" onchange="changeAutoSellMin('stone', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                  <!-- Piedra -->
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                      <span style="color: hsl(var(--color-stone)); font-weight: 600;">Piedra</span>
+                      <span style="color: hsl(var(--color-gold)); font-weight: 700;">+12 🪙</span>
                     </div>
+                    <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem;" id="btn-sell-stone" onclick="sellStone()">
+                      Vender x10 Piedra
+                    </button>
                   </div>
                 </div>
+              </div>
+            </section>
+          </div>
 
-                <div id="active-markets-list" class="building-boxes-container" style="margin-top: 0.5rem;">
-                  <!-- Cajas dinámicas -->
+          <!-- Columna derecha: Ventas Automáticas -->
+          <div class="column-gap">
+            <section class="module-card">
+              <div class="module-title">
+                <span>📈 Ventas Automáticas</span>
+              </div>
+
+              <!-- Mercado Automático -->
+              <div class="processing-section" id="market-card-container" style="background: none; border: none; padding: 0;">
+                <div class="packager-header">
+                  <span class="packager-title">
+                    <div class="packager-pulse" id="market-indicator" style="background-color: hsl(var(--color-gold)); box-shadow: 0 0 8px hsl(var(--color-gold));"></div>
+                    Ventas Automáticas (<span id="count-markets">Construidos: 0</span>)
+                  </span>
+                  <span class="timer-text" id="market-status-text">Inactivo</span>
+                </div>
+
+                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+                  <div class="progress-bar-fill" id="market-progress" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
+                </div>
+
+                <!-- Controles activos (Configuración de auto-venta y asignación) -->
+                <div id="market-active-controls" style="display: none; flex-direction: column; gap: 0.75rem;">
+                  <!-- Configuración de Venta Automática -->
+                  <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.1rem;">
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Ajustes de Comercio:</span>
+                    
+                    <!-- Ajuste Comida -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-food-chk" onchange="toggleAutoSell('food', this.checked)" checked>
+                        <span>Auto-vender Comida</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-food-min" value="50" min="0" step="10" onchange="changeAutoSellMin('food', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+                    <!-- Ajuste Cocinada -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-cooked-chk" onchange="toggleAutoSell('cooked', this.checked)" checked>
+                        <span>Auto-vender Cocinada</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-cooked-min" value="0" min="0" step="10" onchange="changeAutoSellMin('cooked', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+
+                    <!-- Ajuste Madera -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-wood-chk" onchange="toggleAutoSell('wood', this.checked)">
+                        <span>Auto-vender Madera</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-wood-min" value="100" min="0" step="10" onchange="changeAutoSellMin('wood', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+
+                    <!-- Ajuste Piedra -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                      <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                        <input type="checkbox" id="auto-sell-stone-chk" onchange="toggleAutoSell('stone', this.checked)">
+                        <span>Auto-vender Piedra</span>
+                      </label>
+                      <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+                        <input type="number" id="auto-sell-stone-min" value="100" min="0" step="10" onchange="changeAutoSellMin('stone', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="active-markets-list" class="building-boxes-container" style="margin-top: 0.5rem;">
+                    <!-- Cajas dinámicas -->
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
+          
         </div>
       </div>
 
@@ -1801,9 +1792,9 @@ ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;1;5;stone;
 Crop;wheat;Trigo;5;0;0;3;30;food;
 Crop;potato;Patata;10;0;0;5;100;food;
 Crop;carrot;Zanahoria;20;0;0;10;300;food;
-Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;15;gold;Consumes:10:food
-Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;8;gold;Consumes:10:wood
-Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;0;12;gold;Consumes:10:stone
+Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;3;gold;Consumes:1:food
+Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;1;gold;Consumes:1:wood
+Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;0;1;gold;Consumes:1:stone
 Sales;market_food;Venta Automática Comida;0;0;0;0.1;3;gold;Consumes:1:food
 Sales;market_wood;Venta Automática Madera;0;0;0;0.1;1;gold;Consumes:1:wood
 Sales;market_stone;Venta Automática Piedra;0;0;0;0.1;1;gold;Consumes:1:stone
@@ -1819,10 +1810,7 @@ Processing;pot_manual;Cocinar Manual Caldero;0;0;0;0.1;1;cookedFood;Consumes:1:f
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
 Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;40;gold;Consumes:10:cookedFood
-Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cookedFood
-Building;townhall;Ayuntamiento T1;0;30;20;0;0;;
-Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;0;;
-Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
+Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cookedFood`;;
 
     let CROPS = {
       wheat: { name: 'Trigo', cost: 5, duration: 3.0, yield: 30 },
@@ -2029,8 +2017,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       autoSellWoodMin: 100,
       autoSellStone: false,
       autoSellStoneMin: 100,
-      gatherCooldown: 0,
-      gatherType: null,
       jobs: {
         wood: 0,
         stone: 0,
@@ -2044,9 +2030,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       currentTab: 'basic',
       currentDay: 1,
       timePhase: 'day',
-      phaseElapsed: 0,
-      townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0 },
-      maxBuildingTier: 0
+      phaseElapsed: 0
     };
 
     // ESTADO ACTIVO
@@ -2094,6 +2078,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       btnBuildBonfire: document.getElementById('btn-build-bonfire'),
       costBonfireWood: document.getElementById('cost-bonfire-wood'),
       costBonfireStone: document.getElementById('cost-bonfire-stone'),
+      reqBonfireColonist: document.getElementById('req-bonfire-colonist'),
       countBonfires: document.getElementById('count-bonfires'),
 
       autoSellFoodChk: document.getElementById('auto-sell-food-chk'),
@@ -2214,52 +2199,23 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
     // ACCIONES DE RECOLECCIÓN MANUAL
     function gatherWood() {
-      if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-      state.gatherCooldown = 1.0;
-      state.gatherType = 'wood';
-      showToast("Comenzando a recolectar madera...", "info");
+      const yieldVal = CONFIG.BasicGathering.wood_manual.yield;
+      state.wood += yieldVal;
+      resourcesGeneratedThisSecond.wood += yieldVal;
       updateUI();
     }
 
     function gatherStone() {
-      if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-      state.gatherCooldown = 1.0;
-      state.gatherType = 'stone';
-      showToast("Comenzando a recolectar piedra...", "info");
+      const yieldVal = CONFIG.BasicGathering.stone_manual.yield;
+      state.stone += yieldVal;
+      resourcesGeneratedThisSecond.stone += yieldVal;
       updateUI();
     }
 
     function gatherBerries() {
-      if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-      state.gatherCooldown = 1.0;
-      state.gatherType = 'berries';
-      showToast("Comenzando a recolectar frutos...", "info");
-      updateUI();
-    }
-
-    function deliverGatheredResources() {
-      const type = state.gatherType;
-      if (!type) return;
-      
-      if (type === 'wood') {
-        const yieldVal = CONFIG.BasicGathering.wood_manual.yield;
-        state.wood += yieldVal;
-        resourcesGeneratedThisSecond.wood += yieldVal;
-        showToast(`+${yieldVal} Madera recolectada`, "success");
-      } else if (type === 'stone') {
-        const yieldVal = CONFIG.BasicGathering.stone_manual.yield;
-        state.stone += yieldVal;
-        resourcesGeneratedThisSecond.stone += yieldVal;
-        showToast(`+${yieldVal} Piedra recolectada`, "success");
-      } else if (type === 'berries') {
-        const yieldVal = CONFIG.BasicGathering.berries_manual.yield;
-        state.food += yieldVal;
-        resourcesGeneratedThisSecond.food += yieldVal;
-        showToast(`+${yieldVal} Frutos recolectados`, "success");
-      }
-      
-      state.gatherType = null;
-      recalculateRates();
+      const yieldVal = CONFIG.BasicGathering.berries_manual.yield;
+      state.food += yieldVal;
+      resourcesGeneratedThisSecond.food += yieldVal;
       updateUI();
     }
 
@@ -2381,10 +2337,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const house = state.houses[idx];
       
       if (house.tier === 1) {
-        if (state.maxBuildingTier < 2) {
-          showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar viviendas a Tier 2.", "warning");
-          return;
-        }
         const cfg = CONFIG.Building.upgraded_house;
         if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
           state.wood -= cfg.cost_wood;
@@ -2399,10 +2351,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           showToast("Recursos insuficientes para mejorar a Cabaña (Requiere 40 Madera y 30 Piedra)", "warning");
         }
       } else if (house.tier === 2) {
-        if (state.maxBuildingTier < 3) {
-          showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar viviendas a Tier 3.", "warning");
-          return;
-        }
         // Upgrade to Tier 3 (Casa Grande): 50 Gold, 80 Wood, 60 Stone
         if (state.gold >= 50 && state.wood >= 80 && state.stone >= 60) {
           state.gold -= 50;
@@ -2444,10 +2392,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const tier = mill.tier || 1;
       
       if (tier === 1) {
-        if (state.maxBuildingTier < 2) {
-          showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Aserradero a Tier 2.", "warning");
-          return;
-        }
         // Upgrade to Tier 2: 100 Gold, 80 Wood, 50 Stone
         if (state.gold >= 100 && state.wood >= 80 && state.stone >= 50) {
           state.gold -= 100;
@@ -2461,10 +2405,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           showToast("Recursos insuficientes (Requiere 100 Oro, 80 Madera y 50 Piedra)", "warning");
         }
       } else if (tier === 2) {
-        if (state.maxBuildingTier < 3) {
-          showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Aserradero a Tier 3.", "warning");
-          return;
-        }
         // Upgrade to Tier 3: 200 Gold, 150 Wood, 100 Stone
         if (state.gold >= 200 && state.wood >= 150 && state.stone >= 100) {
           state.gold -= 200;
@@ -2504,10 +2444,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const tier = quarry.tier || 1;
       
       if (tier === 1) {
-        if (state.maxBuildingTier < 2) {
-          showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar la Cantera a Tier 2.", "warning");
-          return;
-        }
         // Upgrade to Tier 2: 120 Gold, 60 Wood, 80 Stone
         if (state.gold >= 120 && state.wood >= 60 && state.stone >= 80) {
           state.gold -= 120;
@@ -2521,17 +2457,13 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           showToast("Recursos insuficientes (Requiere 120 Oro, 60 Madera y 80 Piedra)", "warning");
         }
       } else if (tier === 2) {
-        if (state.maxBuildingTier < 3) {
-          showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cantera a Tier 3.", "warning");
-          return;
-        }
         // Upgrade to Tier 3: 240 Gold, 120 Wood, 150 Stone
         if (state.gold >= 240 && state.wood >= 120 && state.stone >= 150) {
           state.gold -= 240;
           state.wood -= 120;
           state.stone -= 150;
           quarry.tier = 3;
-          showToast(`¡Cantera #${idx + 1} mejorado a Gran Mina de Piedra! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
+          showToast(`¡Cantera #${idx + 1} mejorada a Gran Mina de Piedra! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
           recalculateRates();
           updateUI();
         } else {
@@ -2582,6 +2514,10 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     // MERCADO
     function buildMarket() {
       const cfg = CONFIG.Building.market;
+      if (state.currentColonists < 1) {
+        showToast("Requiere al menos 1 Aldeano en la aldea para construir u operar.", "warning");
+        return;
+      }
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
         state.stone -= cfg.cost_stone;
@@ -2604,6 +2540,10 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     // HOGUERA Y COCINADO
     function buildBonfire() {
       const cfg = CONFIG.Building.bonfire;
+      if (state.currentColonists < 1) {
+        showToast("Requiere al menos 1 Aldeano en la aldea para construir u operar.", "warning");
+        return;
+      }
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
         state.stone -= cfg.cost_stone;
@@ -2628,10 +2568,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const bonfire = state.bonfires[idx];
       
       if (bonfire.tier === 1) {
-        if (state.maxBuildingTier < 2) {
-          showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Caldero a Tier 2.", "warning");
-          return;
-        }
         // Mejorar a Caldero
         const cfg = CONFIG.Building.pot_upgrade;
         if (state.gold >= cfg.cost_gold && state.stone >= cfg.cost_stone) {
@@ -2645,10 +2581,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           showToast("Recursos insuficientes para mejorar a Caldero (Requiere 50 Oro y 30 Piedra)", "warning");
         }
       } else if (bonfire.tier === 2) {
-        if (state.maxBuildingTier < 3) {
-          showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cocina de Taberna a Tier 3.", "warning");
-          return;
-        }
         // Mejorar a Cocina de Taberna
         const cfg = CONFIG.Building.kitchen_upgrade;
         if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood) {
@@ -2842,16 +2774,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (typeof state.timePhase === 'undefined') state.timePhase = 'day';
       if (typeof state.phaseElapsed === 'undefined') state.phaseElapsed = 0;
       
-      // Reducir cooldown activo de recolección manual (1 hora de juego = delta / hourDuration)
-      if (state.gatherCooldown > 0) {
-        const hourDuration = state.timePhase === 'day' ? (dayDuration / 14) : (nightDuration / 10);
-        const prevCooldown = state.gatherCooldown;
-        state.gatherCooldown = Math.max(0, state.gatherCooldown - delta / hourDuration);
-        if (state.gatherCooldown === 0 && prevCooldown > 0) {
-          deliverGatheredResources();
-        }
-      }
-
       // Avanzar el ciclo de tiempo
       state.phaseElapsed += delta;
       if (state.timePhase === 'day') {
@@ -3976,137 +3898,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (DOM.jobStatBonfire) DOM.jobStatBonfire.textContent = state.bonfires ? state.bonfires.reduce((sum, b) => sum + (b.workerAssigned || 0), 0) : 0;
       if (DOM.jobStatMarket) DOM.jobStatMarket.textContent = state.markets ? state.markets.reduce((sum, m) => sum + (m.workerAssigned || 0), 0) : 0;
  
-      renderTownHallUI();
       updateButtonStates();
-    }
-
-    // AYUNTAMIENTO LÓGICA Y RENDER
-    function renderTownHallUI() {
-      const container = document.getElementById('townhall-ui-container');
-      if (!container) return;
-      
-      const cfg = CONFIG.Building.townhall;
-      const cfg_t2 = CONFIG.Building.townhall_t2;
-      const cfg_t3 = CONFIG.Building.townhall_t3;
-      
-      if (!state.townHall.built) {
-        container.innerHTML = `
-          <div class="building-item" style="border: 1px dashed #f87171; background: rgba(239, 68, 68, 0.05); padding: 1rem; border-radius: 8px;">
-            <div class="building-info">
-              <span class="building-name" style="font-size: 1.1rem; font-weight: 700; color: #f87171;">Ayuntamiento (No Construido)</span>
-              <span class="building-desc" style="margin-top: 0.25rem;">Establece el centro administrativo de tu asentamiento. Permite desbloquear y construir otros edificios.</span>
-              <div class="costs-list" style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
-                <span class="cost-badge" id="cost-townhall-wood">🪵 ${cfg.cost_wood} Madera</span>
-                <span class="cost-badge" id="cost-townhall-stone">🪨 ${cfg.cost_stone} Piedra</span>
-              </div>
-              <div style="margin-top: 0.75rem; color: #f87171; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem;">
-                <span>⚠️ Debes construir el Ayuntamiento antes de construir cualquier otra cosa.</span>
-              </div>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
-              <button class="btn btn-secondary" id="btn-build-townhall" onclick="buildTownHall()" style="background: hsl(var(--color-primary)); color: #fff; border-color: hsl(var(--color-primary));">
-                Construir Ayuntamiento
-              </button>
-            </div>
-          </div>
-        `;
-      } else {
-        const tier = state.townHall.tier;
-        let costsHtml = '';
-        let buttonHtml = '';
-        
-        if (tier === 1) {
-          costsHtml = `
-            <div class="costs-list" style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
-              <span class="cost-badge" id="cost-townhall-upgrade-wood">🪵 ${cfg_t2.cost_wood} Madera</span>
-              <span class="cost-badge" id="cost-townhall-upgrade-stone">🪨 ${cfg_t2.cost_stone} Piedra</span>
-            </div>
-          `;
-          buttonHtml = `
-            <button class="btn btn-secondary" id="btn-upgrade-townhall" onclick="upgradeTownHall()">
-              Mejorar a Nivel 2
-            </button>
-          `;
-        } else if (tier === 2) {
-          costsHtml = `
-            <div class="costs-list" style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
-              <span class="cost-badge" id="cost-townhall-upgrade-gold">🪙 ${cfg_t3.cost_gold} Oro</span>
-              <span class="cost-badge" id="cost-townhall-upgrade-wood">🪵 ${cfg_t3.cost_wood} Madera</span>
-              <span class="cost-badge" id="cost-townhall-upgrade-stone">🪨 ${cfg_t3.cost_stone} Piedra</span>
-            </div>
-          `;
-          buttonHtml = `
-            <button class="btn btn-secondary" id="btn-upgrade-townhall" onclick="upgradeTownHall()">
-              Mejorar a Nivel 3
-            </button>
-          `;
-        } else {
-          costsHtml = `
-            <span style="font-size: 0.8rem; color: var(--color-success); font-weight: 600; margin-top: 0.25rem;">¡Nivel Máximo alcanzado!</span>
-          `;
-        }
-        
-        container.innerHTML = `
-          <div class="building-item" style="border: 1px solid var(--border-color); background: rgba(165, 180, 252, 0.05); padding: 1rem; border-radius: 8px;">
-            <div class="building-info">
-              <span class="building-name" style="font-size: 1.1rem; font-weight: 700; color: #a5b4fc;">Ayuntamiento (Nivel ${tier})</span>
-              <span class="building-desc" style="margin-top: 0.25rem;">Desbloquea construcciones hasta Tier ${state.maxBuildingTier}.</span>
-              ${costsHtml}
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
-              ${buttonHtml}
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    function buildTownHall() {
-      const cfg = CONFIG.Building.townhall;
-      if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
-        state.wood -= cfg.cost_wood;
-        state.stone -= cfg.cost_stone;
-        state.townHall.built = true;
-        state.townHall.tier = 1;
-        state.maxBuildingTier = 1;
-        showToast("¡Ayuntamiento construido con éxito! Construcciones de Tier 1 desbloqueadas.", "success");
-        recalculateRates();
-        updateUI();
-      } else {
-        showToast("Recursos insuficientes para construir el Ayuntamiento", "warning");
-      }
-    }
-
-    function upgradeTownHall() {
-      if (!state.townHall.built) return;
-      const currentTier = state.townHall.tier;
-      if (currentTier >= 3) {
-        showToast("El Ayuntamiento ya está al nivel máximo.", "info");
-        return;
-      }
-      
-      let cfg;
-      if (currentTier === 1) {
-        cfg = CONFIG.Building.townhall_t2;
-      } else if (currentTier === 2) {
-        cfg = CONFIG.Building.townhall_t3;
-      }
-      
-      if (!cfg) return;
-      
-      if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
-        state.gold -= cfg.cost_gold;
-        state.wood -= cfg.cost_wood;
-        state.stone -= cfg.cost_stone;
-        
-        state.townHall.tier += 1;
-        state.maxBuildingTier = state.townHall.tier;
-        showToast(`¡Ayuntamiento mejorado al Nivel ${state.townHall.tier}! Construcciones de Tier ${state.maxBuildingTier} desbloqueadas.`, "success");
-        recalculateRates();
-        updateUI();
-      } else {
-        showToast("Recursos insuficientes para mejorar el Ayuntamiento", "warning");
-      }
     }
 
     // Controla habilitado/deshabilitado de botones
@@ -4138,47 +3930,28 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       toggleCostAffordability(document.getElementById('cost-market-stone'), state.stone, bMarket.cost_stone);
 
       // Botones comprar construcciones
-      // Costos de Ayuntamiento visuales
-      if (!state.townHall.built) {
-        const costTownHallWood = document.getElementById('cost-townhall-wood');
-        const costTownHallStone = document.getElementById('cost-townhall-stone');
-        const cfg = CONFIG.Building.townhall;
-        toggleCostAffordability(costTownHallWood, state.wood, cfg.cost_wood);
-        toggleCostAffordability(costTownHallStone, state.stone, cfg.cost_stone);
-        
-        const btnBuildTownhall = document.getElementById('btn-build-townhall');
-        if (btnBuildTownhall) btnBuildTownhall.disabled = !(state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone);
-      } else {
-        const tier = state.townHall.tier;
-        if (tier === 1) {
-          const cfg_t2 = CONFIG.Building.townhall_t2;
-          toggleCostAffordability(document.getElementById('cost-townhall-upgrade-wood'), state.wood, cfg_t2.cost_wood);
-          toggleCostAffordability(document.getElementById('cost-townhall-upgrade-stone'), state.stone, cfg_t2.cost_stone);
-          
-          const btnUpgradeTownhall = document.getElementById('btn-upgrade-townhall');
-          if (btnUpgradeTownhall) btnUpgradeTownhall.disabled = !(state.wood >= cfg_t2.cost_wood && state.stone >= cfg_t2.cost_stone);
-        } else if (tier === 2) {
-          const cfg_t3 = CONFIG.Building.townhall_t3;
-          toggleCostAffordability(document.getElementById('cost-townhall-upgrade-gold'), state.gold, cfg_t3.cost_gold);
-          toggleCostAffordability(document.getElementById('cost-townhall-upgrade-wood'), state.wood, cfg_t3.cost_wood);
-          toggleCostAffordability(document.getElementById('cost-townhall-upgrade-stone'), state.stone, cfg_t3.cost_stone);
-          
-          const btnUpgradeTownhall = document.getElementById('btn-upgrade-townhall');
-          if (btnUpgradeTownhall) btnUpgradeTownhall.disabled = !(state.gold >= cfg_t3.cost_gold && state.wood >= cfg_t3.cost_wood && state.stone >= cfg_t3.cost_stone);
-        }
-      }
-
-      // Botones comprar construcciones
-      const thBuilt = state.townHall.built;
-      DOM.btnBuildBasic.disabled = !thBuilt || !(state.wood >= hBasic.cost_wood && state.stone >= hBasic.cost_stone);
-      DOM.btnBuildLumberMill.disabled = !thBuilt || !(state.gold >= bLumber.cost_gold && state.stone >= bLumber.cost_stone);
-      DOM.btnBuildQuarry.disabled = !thBuilt || !(state.gold >= bQuarry.cost_gold && state.wood >= bQuarry.cost_wood);
+      DOM.btnBuildBasic.disabled = !(state.wood >= hBasic.cost_wood && state.stone >= hBasic.cost_stone);
+      DOM.btnBuildLumberMill.disabled = !(state.gold >= bLumber.cost_gold && state.stone >= bLumber.cost_stone);
+      DOM.btnBuildQuarry.disabled = !(state.gold >= bQuarry.cost_gold && state.wood >= bQuarry.cost_wood);
       
       const btnBuildFarm = document.getElementById('btn-build-farm');
-      if (btnBuildFarm) btnBuildFarm.disabled = !thBuilt || !(state.wood >= bFarm.cost_wood && state.stone >= bFarm.cost_stone);
+      if (btnBuildFarm) btnBuildFarm.disabled = !(state.wood >= bFarm.cost_wood && state.stone >= bFarm.cost_stone);
 
-      DOM.btnBuildBonfire.disabled = !thBuilt || !(state.wood >= bBonfire.cost_wood && state.stone >= bBonfire.cost_stone);
-      DOM.btnBuildMarket.disabled = !thBuilt || !(state.wood >= bMarket.cost_wood && state.stone >= bMarket.cost_stone);
+      const hasHired = state.currentColonists >= 1;
+      
+      const reqBonfire = document.getElementById('req-bonfire-colonist');
+      if (reqBonfire) {
+        reqBonfire.style.color = hasHired ? 'var(--color-success)' : '#f87171';
+        reqBonfire.className = `cost-badge ${hasHired ? 'affordable' : 'expensive'}`;
+      }
+      DOM.btnBuildBonfire.disabled = !(state.wood >= bBonfire.cost_wood && state.stone >= bBonfire.cost_stone && hasHired);
+
+      const reqMarket = document.getElementById('req-market-colonist');
+      if (reqMarket) {
+        reqMarket.style.color = hasHired ? 'var(--color-success)' : '#f87171';
+        reqMarket.className = `cost-badge ${hasHired ? 'affordable' : 'expensive'}`;
+      }
+      DOM.btnBuildMarket.disabled = !(state.wood >= bMarket.cost_wood && state.stone >= bMarket.cost_stone && hasHired);
 
       // Botón contratar colono (Condición: colonos actuales < maxPopulation)
       const spaceAvailable = state.currentColonists < state.maxPopulation;
@@ -4215,41 +3988,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           salesTabBtn.removeAttribute('title');
         }
       }
-
-      // Cooldown de Recolección Manual (Global)
-      const cooldown = state.gatherCooldown || 0;
-      const keys = ['wood', 'stone', 'berries'];
-      const emojis = { wood: '🪵', stone: '🪨', berries: '🍓' };
-      const labels = { wood: 'Madera', stone: 'Piedra', berries: 'Frutos' };
-      const dayDuration = CONFIG.System && CONFIG.System.day_duration ? CONFIG.System.day_duration.duration : 30.0;
-      const nightDuration = CONFIG.System && CONFIG.System.night_duration ? CONFIG.System.night_duration.duration : 20.0;
-      
-      keys.forEach(k => {
-        const btn = document.getElementById(`btn-gather-${k}`);
-        const container = document.getElementById(`gather-cooldown-container-${k}`);
-        const bar = document.getElementById(`gather-cooldown-bar-${k}`);
-        
-        if (cooldown > 0) {
-          if (btn) {
-            btn.disabled = true;
-            const hourDuration = state.timePhase === 'day' ? (dayDuration / 14) : (nightDuration / 10);
-            const secs = Math.ceil(cooldown * hourDuration);
-            btn.innerHTML = `⏳ ${secs}s`;
-          }
-          if (container) container.style.display = 'block';
-          if (bar) {
-            const pct = (1.0 - cooldown) * 100;
-            bar.style.width = `${pct}%`;
-          }
-        } else {
-          if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = `${emojis[k]} Recolectar ${labels[k]} (+${CONFIG.BasicGathering[k + '_manual'].yield})`;
-          }
-          if (container) container.style.display = 'none';
-          if (bar) bar.style.width = '0%';
-        }
-      });
     }
 
     function toggleCostAffordability(element, currentAmount, costAmount) {
@@ -4390,19 +4128,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
             } else {
               state[key] = parsed[key];
             }
-          }
-          
-          // Compatibilidad para inicializar Ayuntamiento si no existe en el save antiguo
-          if (!parsed.hasOwnProperty('townHall')) {
-            state.townHall = { built: true, tier: 1, isUpgrading: false, upgradeElapsed: 0 };
-            state.maxBuildingTier = 1;
-          }
-          
-          if (typeof state.gatherCooldown === 'undefined') {
-            state.gatherCooldown = 0;
-          }
-          if (typeof state.gatherType === 'undefined') {
-            state.gatherType = null;
           }
           
           // Asegurar inicialización de variables de alimentación

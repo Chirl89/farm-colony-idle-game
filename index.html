@@ -1809,7 +1809,7 @@ Processing;pot_auto;Cocinar Automático Caldero;0;0;0;0.1;1;cookedFood;Consumes:
 Processing;pot_manual;Cocinar Manual Caldero;0;0;0;0.1;1;cookedFood;Consumes:1:food
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
-Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;40;gold;Consumes:10;cookedFood
+Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;40;gold;Consumes:10:cookedFood
 Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cookedFood`;;
 
     let CROPS = {
@@ -2265,9 +2265,9 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
         }
       } else {
         if (building.workerAssigned > 0) {
-          building.workerAssigned = 0;
+          building.workerAssigned -= 1;
           state.freeColonists += 1;
-          showToast("Colono retirado del edificio");
+          showToast("Aldeano retirado del edificio");
         }
       }
       recalculateRates();
@@ -2345,13 +2345,13 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           
           recalculateMaxPopulation();
           
-          showToast(`¡Casa #${idx + 1} mejorada a Casa Mejorada! (+1 Capacidad de población)`, "success");
+          showToast(`¡Choza #${idx + 1} mejorada a Cabaña! (+1 Capacidad de población)`, "success");
           updateUI();
         } else {
-          showToast("Recursos insuficientes para mejorar a Casa Mejorada (Requiere 40 Madera y 30 Piedra)", "warning");
+          showToast("Recursos insuficientes para mejorar a Cabaña (Requiere 40 Madera y 30 Piedra)", "warning");
         }
       } else if (house.tier === 2) {
-        // Upgrade to Tier 3 (Mansión): 50 Gold, 80 Wood, 60 Stone
+        // Upgrade to Tier 3 (Casa Grande): 50 Gold, 80 Wood, 60 Stone
         if (state.gold >= 50 && state.wood >= 80 && state.stone >= 60) {
           state.gold -= 50;
           state.wood -= 80;
@@ -2360,10 +2360,10 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           
           recalculateMaxPopulation();
           
-          showToast(`¡Casa Mejorada #${idx + 1} mejorada a Mansión! (+2 Capacidad de población adicional)`, "success");
+          showToast(`¡Cabaña #${idx + 1} mejorada a Casa Grande! (+2 Capacidad de población adicional)`, "success");
           updateUI();
         } else {
-          showToast("Recursos insuficientes para mejorar a Mansión (Requiere 50 Oro, 80 Madera y 60 Piedra)", "warning");
+          showToast("Recursos insuficientes para mejorar a Casa Grande (Requiere 50 Oro, 80 Madera y 60 Piedra)", "warning");
         }
       }
     }
@@ -2378,11 +2378,11 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           workerAssigned: 0,
           tier: 1
         });
-        showToast(`¡Aserradero construido! (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/día por trabajador asignado)`, "success");
+        showToast(`¡Cabaña de Leñador construida! (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/día por trabajador asignado)`, "success");
         recalculateRates();
         updateUI();
       } else {
-        showToast("Recursos insuficientes para construir el Aserradero", "warning");
+        showToast("Recursos insuficientes para construir la Cabaña de Leñador", "warning");
       }
     }
 
@@ -2398,7 +2398,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           state.wood -= 80;
           state.stone -= 50;
           mill.tier = 2;
-          showToast(`¡Aserradero #${idx + 1} mejorado a Aserradero de Vapor! (Tasa de producción duplicada)`, "success");
+          showToast(`¡Cabaña de Leñador #${idx + 1} mejorada a Aserradero! (Tasa de producción duplicada e incrementada la capacidad de trabajadores a 2)`, "success");
           recalculateRates();
           updateUI();
         } else {
@@ -2411,7 +2411,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           state.wood -= 150;
           state.stone -= 100;
           mill.tier = 3;
-          showToast(`¡Aserradero #${idx + 1} mejorado a Complejo Forestal! (Tasa de producción cuadruplicada)`, "success");
+          showToast(`¡Aserradero #${idx + 1} mejorado a Gremio de Leñadores! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
           recalculateRates();
           updateUI();
         } else {
@@ -2430,11 +2430,11 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           workerAssigned: 0,
           tier: 1
         });
-        showToast(`¡Cantera construida! (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador asignado)`, "success");
+        showToast(`¡Foso de Piedra construido! (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador asignado)`, "success");
         recalculateRates();
         updateUI();
       } else {
-        showToast("Recursos insuficientes para construir la Cantera", "warning");
+        showToast("Recursos insuficientes para construir el Foso de Piedra", "warning");
       }
     }
 
@@ -2450,7 +2450,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           state.wood -= 60;
           state.stone -= 80;
           quarry.tier = 2;
-          showToast(`¡Cantera #${idx + 1} mejorada a Cantera de Vapor! (Tasa de producción duplicada)`, "success");
+          showToast(`¡Foso de Piedra #${idx + 1} mejorado a Cantera! (Tasa de producción duplicada e incrementada la capacidad de trabajadores a 2)`, "success");
           recalculateRates();
           updateUI();
         } else {
@@ -2463,7 +2463,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           state.wood -= 120;
           state.stone -= 150;
           quarry.tier = 3;
-          showToast(`¡Cantera #${idx + 1} mejorada a Complejo Minero! (Tasa de producción cuadruplicada)`, "success");
+          showToast(`¡Cantera #${idx + 1} mejorada a Gran Mina de Piedra! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
           recalculateRates();
           updateUI();
         } else {
@@ -2848,7 +2848,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
             if (b.workerAssigned > 0) {
               const millCfg = CONFIG.ProductionRate.lumbermill_prod;
               const tier = b.tier || 1;
-              const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
+              const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
               const woodPassive = ((millCfg.yield * multiplier * b.workerAssigned) / dayDuration) * delta * eff;
               state.wood += woodPassive;
               resourcesGeneratedThisSecond.wood += woodPassive;
@@ -2861,7 +2861,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
             if (b.workerAssigned > 0) {
               const quarryCfg = CONFIG.ProductionRate.quarry_prod;
               const tier = b.tier || 1;
-              const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
+              const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
               const stonePassive = ((quarryCfg.yield * multiplier * b.workerAssigned) / dayDuration) * delta * eff;
               state.stone += stonePassive;
               resourcesGeneratedThisSecond.stone += stonePassive;
@@ -3083,8 +3083,10 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           const isWorking = mill.workerAssigned > 0;
           const tier = mill.tier || 1;
           const baseYield = CONFIG.ProductionRate.lumbermill_prod.yield;
-          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
-          const yieldVal = baseYield * multiplier;
+          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
+          const eff = getWorkEfficiency();
+          const yieldVal = baseYield * multiplier * mill.workerAssigned * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
           
           const titleText = document.getElementById(`mill-title-${idx}`);
           const prodText = document.getElementById(`mill-prod-${idx}`);
@@ -3096,7 +3098,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           let bName = tier === 1 ? 'Cabaña de Leñador' : (tier === 2 ? 'Aserradero' : 'Gremio de Leñadores');
           
           if (titleText) titleText.innerHTML = `🪵 ${bName} #${idx + 1}`;
-          if (prodText) prodText.innerText = isWorking ? `+${yieldVal.toFixed(0)} Madera/día` : '0 Madera/día';
+          if (prodText) prodText.innerText = isWorking ? `+${displayYield} Madera/día` : '0 Madera/día';
           if (allocText) allocText.innerText = `${mill.workerAssigned} / ${tier}`;
           if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
           if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
@@ -3166,8 +3168,10 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           const isWorking = quarry.workerAssigned > 0;
           const tier = quarry.tier || 1;
           const baseYield = CONFIG.ProductionRate.quarry_prod.yield;
-          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
-          const yieldVal = baseYield * multiplier;
+          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
+          const eff = getWorkEfficiency();
+          const yieldVal = baseYield * multiplier * quarry.workerAssigned * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
           
           const titleText = document.getElementById(`quarry-title-${idx}`);
           const prodText = document.getElementById(`quarry-prod-${idx}`);
@@ -3179,7 +3183,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           let bName = tier === 1 ? 'Foso de Piedra' : (tier === 2 ? 'Cantera' : 'Gran Mina de Piedra');
           
           if (titleText) titleText.innerHTML = `🪨 ${bName} #${idx + 1}`;
-          if (prodText) prodText.innerText = isWorking ? `+${yieldVal.toFixed(0)} Piedra/día` : '0 Piedra/día';
+          if (prodText) prodText.innerText = isWorking ? `+${displayYield} Piedra/día` : '0 Piedra/día';
           if (allocText) allocText.innerText = `${quarry.workerAssigned} / ${tier}`;
           if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
           if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
@@ -3281,7 +3285,10 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
           const crop = CROPS[farm.crop];
           const rate = crop ? (crop.yield / crop.duration) : 0;
           const isWorking = farm.workerAssigned > 0 || farm.isRunning;
-          const prodText = isWorking ? `+${rate.toFixed(0)} Comida/día` : '0 Comida/día';
+          const eff = getWorkEfficiency();
+          const yieldVal = rate * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+          const prodText = isWorking ? `+${displayYield} Comida/día` : '0 Comida/día';
           
           const farmProd = document.getElementById(`farm-prod-${idx}`);
           if (farmProd) farmProd.innerText = prodText;
@@ -3511,7 +3518,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
-            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Mercado construido</div>`;
+            container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Puesto de Mercado construido</div>`;
           }
           return;
         }
@@ -3519,9 +3526,8 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
         state.markets.forEach((market, idx) => {
           html += `
             <div class="building-box" id="market-box-${idx}" style="position: relative;">
-              <div class="building-tier-badge">Tier 1</div>
               <div class="building-box-header">
-                <span class="building-box-title">📈 Mercado #${idx + 1}</span>
+                <span class="building-box-title">📈 Puesto de Mercado #${idx + 1}</span>
                 <span class="building-box-prod" id="market-status-${idx}">Inactivo</span>
               </div>
               
@@ -3580,7 +3586,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
         state.lumberMills.forEach(m => {
           if (m.workerAssigned > 0) {
             const tier = m.tier || 1;
-            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
+            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
             woodRate += baseYield * multiplier * m.workerAssigned;
           }
         });
@@ -3598,7 +3604,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
         state.quarries.forEach(q => {
           if (q.workerAssigned > 0) {
             const tier = q.tier || 1;
-            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 2.0 : 4.0);
+            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
             stoneRate += baseYield * multiplier * q.workerAssigned;
           }
         });
@@ -3632,8 +3638,9 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
             else rec = CONFIG.Processing.kitchen_auto;
 
             if (rec) {
-              foodRate -= rec.consume_amount / rec.duration;
-              cookedRate += rec.yield / rec.duration;
+              const mult = b.workerAssigned > 0 ? b.workerAssigned : (b.isRunning ? 1 : 0);
+              foodRate -= (rec.consume_amount / rec.duration) * mult;
+              cookedRate += (rec.yield / rec.duration) * mult;
             }
           }
         });
@@ -3995,12 +4002,12 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
     }
 
     function updateStaticTextsFromConfig() {
-      // Viviendas y Colonos
+      // Viviendas y Aldeanos
       document.getElementById('cost-basic-wood').innerHTML = `🪵 ${CONFIG.Building.basic_house.cost_wood} Madera`;
       document.getElementById('cost-basic-stone').innerHTML = `🪨 ${CONFIG.Building.basic_house.cost_stone} Piedra`;
       
       document.getElementById('cost-hire-gold').innerHTML = `🪙 ${CONFIG.Building.hire_colonist.cost_gold} Oro`;
-      document.getElementById('btn-hire-colonist').innerHTML = `🧑‍🌾 Contratar Colono (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
+      document.getElementById('btn-hire-colonist').innerHTML = `🧑‍🌾 Contratar Aldeano (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
 
       // Edificios
       document.getElementById('cost-lumbermill-gold').innerHTML = `🪙 ${CONFIG.Building.lumbermill.cost_gold} Oro`;
@@ -4030,7 +4037,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       const lumberDesc = document.querySelector('#cost-lumbermill-gold').parentElement.parentElement.querySelector('.building-desc');
       if (lumberDesc) lumberDesc.innerHTML = `Habilita leñadores industriales (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/día por trabajador).`;
       const quarryDesc = document.querySelector('#cost-quarry-gold').parentElement.parentElement.querySelector('.building-desc');
-      if (quarryDesc) quarryDesc.innerHTML = `Habilita mineros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador).`;
+      if (quarryDesc) quarryDesc.innerHTML = `Habilita canteros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador).`;
 
       // Comercio - Ventas manuales
       const foodSaleVal = document.getElementById('btn-sell-food').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
@@ -4412,9 +4419,9 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       state.starvingColonists = remaining;
       
       if (state.starvingColonists > 0) {
-        showToast(`⚠️ ${state.starvingColonists} colonos están hambrientos esta mañana por falta de alimento.`, "warning");
+        showToast(`⚠️ ${state.starvingColonists} aldeanos están hambrientos esta mañana por falta de alimento.`, "warning");
       } else {
-        showToast("☀️ Los colonos han desayunado correctamente.", "success");
+        showToast("☀️ Los aldeanos han desayunado correctamente.", "success");
       }
       recalculateRates();
       updateUI();
@@ -4442,9 +4449,9 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       state.starvingColonists = fedN + starvedC + starvedR;
       
       if (state.starvingColonists > 0) {
-        showToast(`⚠️ ${state.starvingColonists} colonos no cenaron suficiente y dormirán hambrientos.`, "warning");
+        showToast(`⚠️ ${state.starvingColonists} aldeanos no cenaron suficiente y dormirán hambrientos.`, "warning");
       } else {
-        showToast("🌙 Los colonos han cenado y se preparan para dormir.", "success");
+        showToast("🌙 Los aldeanos han cenado y se preparan para dormir.", "success");
       }
       recalculateRates();
       updateUI();
@@ -4457,8 +4464,8 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       const priority = state.foodPriority || ['cooked', 'raw'];
       
       const foodLabels = {
-        cooked: '🍲 Cocinada (2/colono al día)',
-        raw: '🌾 Comida Cruda (4/colono al día)'
+        cooked: '🍲 Cocinada (2/aldeano al día)',
+        raw: '🌾 Comida Cruda (4/aldeano al día)'
       };
       
       const allowConsume = {
@@ -4497,7 +4504,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
       updateUI();
       
       const label = type === 'cooked' ? 'Cocinada' : 'Cruda';
-      showToast(`Consumo de Comida ${label} ${checked ? 'permitido' : 'prohibido'} para colonos`, "info");
+      showToast(`Consumo de Comida ${label} ${checked ? 'permitido' : 'prohibido'} para aldeanos`, "info");
     }
 
     function moveFoodPriority(idx, dir) {
@@ -4515,7 +4522,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
 
     // LIBERAR TODOS LOS TRABAJADORES (QoL)
     function resetAllAssignments() {
-      if (confirm("¿Estás seguro de que quieres liberar a todos tus colonos asignados?")) {
+      if (confirm("¿Estás seguro de que quieres liberar a todos tus aldeanos asignados?")) {
         state.jobs.wood = 0;
         state.jobs.stone = 0;
         state.jobs.berries = 0;
@@ -4527,7 +4534,7 @@ Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1;cooke
         if (Array.isArray(state.bonfires)) state.bonfires.forEach(b => b.workerAssigned = 0);
         
         fixColonistAllocation();
-        showToast("Todos los colonos han sido liberados de sus tareas", "info");
+        showToast("Todos los aldeanos han sido liberados de sus tareas", "info");
         recalculateRates();
         updateUI();
       }

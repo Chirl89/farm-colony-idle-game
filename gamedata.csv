@@ -2,9 +2,9 @@ Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Duration;Yield_Amount;Yield_Ty
 BasicGathering;wood_manual;Recolección de Madera;0;0;0;0;1;wood;
 BasicGathering;stone_manual;Recolección de Piedra;0;0;0;0;1;stone;
 BasicGathering;berries_manual;Recolección de Frutos;0;0;0;0;1;food;
-BasicGathering;wood_auto;Leñador;0;0;0;1;1;wood;
-BasicGathering;stone_auto;Cantero;0;0;0;1;1;stone;
-BasicGathering;berries_auto;Recolector de Frutos;0;0;0;1;1;food;
+BasicGathering;wood_auto;Leñador;0;0;0;1;5;wood;
+BasicGathering;stone_auto;Cantero;0;0;0;1;5;stone;
+BasicGathering;berries_auto;Recolector de Frutos;0;0;0;1;5;food;
 Building;basic_house;Choza;0;20;15;0;1;maxPopulation;
 Building;upgraded_house;Mejorar Choza;0;40;30;0;1;maxPopulationUpgrade;
 Building;lumbermill;Cabaña de Leñador;80;0;40;0;0;;
@@ -34,5 +34,5 @@ Processing;pot_auto;Cocinar Automático Caldero;0;0;0;0.1;1;cookedFood;Consumes:
 Processing;pot_manual;Cocinar Manual Caldero;0;0;0;0.1;1;cookedFood;Consumes:1:food
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;0.05;1;cookedFood;Consumes:1:food
-Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;5;gold;Consumes:1:cookedFood
-Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;5;gold;Consumes:1:cookedFood
+Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;0;40;gold;Consumes:10:cookedFood
+Sales;market_cooked;Venta Automática Cocinada;0;0;0;0.1;4;gold;Consumes:1:cookedFood

@@ -5,7 +5,7 @@ Timing;basic_house;Construcción Choza;0.1
 Timing;upgraded_house;Mejora Choza a Cabaña;2
 Timing;lumbermill;Construcción Cabaña de Leñador;5
 Timing;quarry;Construcción Foso de Piedra;5
-Timing;farm;Construcción Granja;5
+Timing;farm;Construcción Granja;0.1
 Timing;market;Construcción Puesto de Mercado;5
 Timing;bonfire;Construcción Fogata;5
 Timing;townhall;Construcción Ayuntamiento T1;0.1
@@ -27,3 +27,7 @@ Timing;market_food;Tiempo Venta Automática Comida;0.1
 Timing;market_wood;Tiempo Venta Automática Madera;0.1
 Timing;market_stone;Tiempo Venta Automática Piedra;0.1
 Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1
+Timing;farm_plow;Tiempo de Arar Granja;0.5
+Timing;farm_sow;Tiempo de Sembrar Granja;0.5
+Timing;farm_water;Tiempo de Riego Inicial;0.25
+Timing;farm_water_daily;Tiempo de Riego Diario;0.0417

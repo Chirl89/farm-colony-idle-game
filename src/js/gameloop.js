@@ -145,7 +145,7 @@ function recalculateRates() {
         if (crop) {
           const farmTier = f.tier || 1;
           const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
-          foodRate += (crop.yield * tierMultiplier) / (1.5 + 2 * crop.duration);
+          foodRate += (crop.yield * tierMultiplier) / getFarmCycleTotal(crop);
         }
       }
     });
@@ -591,22 +591,32 @@ function gameTick() {
 
       const crop = CROPS[farm.activeCrop || farm.crop] || CROPS.wheat;
       
+      const plowDur = (CONFIG.Timing && CONFIG.Timing.farm_plow) ? CONFIG.Timing.farm_plow.duration : 0.5;
+      const sowDur = (CONFIG.Timing && CONFIG.Timing.farm_sow) ? CONFIG.Timing.farm_sow.duration : 0.5;
+      const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
+      const growDur = crop ? (crop.duration / 2) : 1.5;
+      const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
+
       // Si la granja necesita riego diario
       if (farm.needsWatering) {
         if (state.timePhase === 'day' && farm.workerAssigned > 0) {
           farm.waterElapsed = (farm.waterElapsed || 0) + (delta / dayDuration) * getWorkEfficiency();
-          if (farm.waterElapsed >= 0.25) {
+          if (farm.waterElapsed >= waterDailyDur) {
             farm.needsWatering = false;
             farm.waterElapsed = 0;
+            farm.wateringsCompleted = (farm.wateringsCompleted || 0) + 1;
           }
         }
         return; // Detiene la progresión del crecimiento mientras necesite riego
       }
-      let stageDuration = 0.5;
-      if (farm.stage === 'water' || farm.stage === 'water2') {
-        stageDuration = 0.25;
+
+      let stageDuration = plowDur;
+      if (farm.stage === 'sow') {
+        stageDuration = sowDur;
+      } else if (farm.stage === 'water' || farm.stage === 'water2') {
+        stageDuration = waterDur;
       } else if (farm.stage === 'grow' || farm.stage === 'grow2') {
-        stageDuration = crop.duration;
+        stageDuration = growDur;
       }
 
       let elapsedIncrement = 0;
@@ -650,8 +660,10 @@ function gameTick() {
             state.gold -= nextCrop.cost;
             farm.stage = 'plow';
             farm.activeCrop = nextCropKey;
+            farm.wateringsCompleted = 0;
           } else {
             farm.stage = 'idle';
+            farm.wateringsCompleted = 0;
             showToast(`Oro insuficiente para reiniciar cultivo en Granja #${idx + 1}`, "warning");
           }
           recalculateRates();

@@ -71,7 +71,11 @@ Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;0.05;
 Timing;market_food;Tiempo Venta Automática Comida;0.1;
 Timing;market_wood;Tiempo Venta Automática Madera;0.1;
 Timing;market_stone;Tiempo Venta Automática Piedra;0.1;
-Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1;`
+Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1;
+Timing;farm_plow;Tiempo de Arar Granja;0.5;
+Timing;farm_sow;Tiempo de Sembrar Granja;0.5;
+Timing;farm_water;Tiempo de Riego Inicial;0.25;
+Timing;farm_water_daily;Tiempo de Riego Diario;0.0417;`
 };
 
 // Variable CONFIG global (se inicializará con fallbacks inmediatamente)

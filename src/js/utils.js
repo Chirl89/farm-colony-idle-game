@@ -115,3 +115,78 @@ async function createBackupZip(versionName) {
   URL.revokeObjectURL(url);
   showToast(`💾 Backup "${versionName}" descargado`, 'success');
 }
+
+function getFarmCycleTotal(crop) {
+  const plowDur = (CONFIG.Timing && CONFIG.Timing.farm_plow) ? CONFIG.Timing.farm_plow.duration : 0.5;
+  const sowDur = (CONFIG.Timing && CONFIG.Timing.farm_sow) ? CONFIG.Timing.farm_sow.duration : 0.5;
+  const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
+  const growDur = crop ? (crop.duration / 2) : 1.5;
+  const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
+
+  const totalGrowth = growDur * 2;
+  const totalWaterings = Math.ceil(growDur) * 2;
+  return plowDur + sowDur + 2 * waterDur + totalGrowth + totalWaterings * waterDailyDur;
+}
+
+function getFarmCycleElapsed(farm, crop) {
+  const plowDur = (CONFIG.Timing && CONFIG.Timing.farm_plow) ? CONFIG.Timing.farm_plow.duration : 0.5;
+  const sowDur = (CONFIG.Timing && CONFIG.Timing.farm_sow) ? CONFIG.Timing.farm_sow.duration : 0.5;
+  const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
+  const growDur = crop ? (crop.duration / 2) : 1.5;
+  const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
+
+  const expectedWaterings = Math.ceil(growDur);
+
+  const t0 = 0;
+  const t1 = plowDur;
+  const t2 = t1 + sowDur;
+  const t3 = t2 + waterDur;
+  const t4 = t3 + growDur + expectedWaterings * waterDailyDur;
+  const t5 = t4 + waterDur;
+  const t6 = t5 + growDur + expectedWaterings * waterDailyDur;
+
+  if (farm.stage === 'idle') return 0;
+
+  let startVal = 0;
+  let endVal = 0;
+  let localPct = 0;
+
+  if (farm.stage === 'plow') {
+    startVal = t0;
+    endVal = t1;
+    localPct = Math.min(1, farm.stageElapsed / plowDur);
+  } else if (farm.stage === 'sow') {
+    startVal = t1;
+    endVal = t2;
+    localPct = Math.min(1, farm.stageElapsed / sowDur);
+  } else if (farm.stage === 'water') {
+    startVal = t2;
+    endVal = t3;
+    localPct = Math.min(1, farm.stageElapsed / waterDur);
+  } else if (farm.stage === 'grow') {
+    startVal = t3;
+    endVal = t4;
+    const stageExpected = growDur + expectedWaterings * waterDailyDur;
+    const stageElapsedTotal = farm.stageElapsed + (farm.wateringsCompleted || 0) * waterDailyDur + (farm.needsWatering ? farm.waterElapsed : 0);
+    localPct = stageExpected > 0 ? Math.min(1, stageElapsedTotal / stageExpected) : 1;
+    if (farm.stageElapsed >= growDur && !farm.needsWatering) {
+      localPct = 1;
+    }
+  } else if (farm.stage === 'water2') {
+    startVal = t4;
+    endVal = t5;
+    localPct = Math.min(1, farm.stageElapsed / waterDur);
+  } else if (farm.stage === 'grow2') {
+    startVal = t5;
+    endVal = t6;
+    const wateringsInGrow2 = Math.max(0, (farm.wateringsCompleted || 0) - expectedWaterings);
+    const stageExpected = growDur + expectedWaterings * waterDailyDur;
+    const stageElapsedTotal = farm.stageElapsed + wateringsInGrow2 * waterDailyDur + (farm.needsWatering ? farm.waterElapsed : 0);
+    localPct = stageExpected > 0 ? Math.min(1, stageElapsedTotal / stageExpected) : 1;
+    if (farm.stageElapsed >= growDur && !farm.needsWatering) {
+      localPct = 1;
+    }
+  }
+
+  return startVal + localPct * (endVal - startVal);
+}

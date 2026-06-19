@@ -432,6 +432,14 @@ function renderFarms() {
               <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
                 <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
               </div>
+              
+              <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; justify-content: space-between; margin-top: 0.25rem;">
+                <span>Progreso Global:</span>
+                <span id="farm-global-pct-${idx}">0%</span>
+              </div>
+              <div class="progress-bar-container" style="height: 4px; margin: 0.1rem 0; background-color: rgba(255,255,255,0.05);">
+                <div class="progress-bar-fill" id="farm-global-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%;"></div>
+              </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
@@ -517,42 +525,47 @@ function renderFarms() {
         let requiresWorker = false;
         let isNightGrow = false;
 
+        const plowDur = (CONFIG.Timing && CONFIG.Timing.farm_plow) ? CONFIG.Timing.farm_plow.duration : 0.5;
+        const sowDur = (CONFIG.Timing && CONFIG.Timing.farm_sow) ? CONFIG.Timing.farm_sow.duration : 0.5;
+        const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
+        const growDur = activeCropObj ? (activeCropObj.duration / 2) : 1.5;
+
         switch (farm.stage) {
           case 'plow':
             stageName = 'Arando';
             stageEmoji = '🪵';
-            stageDuration = 0.5;
+            stageDuration = plowDur;
             requiresWorker = true;
             break;
           case 'sow':
             stageName = 'Sembrando';
             stageEmoji = '🌱';
-            stageDuration = 0.5;
+            stageDuration = sowDur;
             requiresWorker = true;
             break;
           case 'water':
             stageName = 'Regando';
             stageEmoji = '💧';
-            stageDuration = 0.25;
+            stageDuration = waterDur;
             requiresWorker = true;
             break;
           case 'grow':
             stageName = 'Creciendo';
             stageEmoji = '🌿';
-            stageDuration = activeCropObj.duration;
+            stageDuration = growDur;
             requiresWorker = false;
             isNightGrow = true;
             break;
           case 'water2':
             stageName = 'Regando';
             stageEmoji = '💧';
-            stageDuration = 0.25;
+            stageDuration = waterDur;
             requiresWorker = true;
             break;
           case 'grow2':
             stageName = 'Creciendo';
             stageEmoji = '🌿';
-            stageDuration = activeCropObj.duration;
+            stageDuration = growDur;
             requiresWorker = false;
             isNightGrow = true;
             break;
@@ -566,10 +579,11 @@ function renderFarms() {
         if (farm.stage !== 'idle') {
           let pct = 0;
           let text = '';
+          const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
           
           if (farm.needsWatering) {
-            pct = Math.min(100, ((farm.waterElapsed || 0) / 0.25) * 100);
-            const rem = Math.max(0.25 - (farm.waterElapsed || 0), 0).toFixed(2);
+            pct = Math.min(100, ((farm.waterElapsed || 0) / waterDailyDur) * 100);
+            const rem = Math.max(waterDailyDur - (farm.waterElapsed || 0), 0).toFixed(2);
             if (state.timePhase === 'night') {
               text = `💧 Regar (Pausado: Es de noche) (Faltan ${rem}d)`;
             } else if (farm.workerAssigned === 0) {
@@ -599,6 +613,17 @@ function renderFarms() {
             btn.innerText = 'Cultivando...';
             btn.disabled = true;
           }
+
+          // Progreso Global (Activo)
+          const globalPBar = document.getElementById(`farm-global-progress-${idx}`);
+          const globalPctText = document.getElementById(`farm-global-pct-${idx}`);
+          if (globalPBar || globalPctText) {
+            const totalDur = getFarmCycleTotal(crop);
+            const elapsedDur = getFarmCycleElapsed(farm, crop);
+            const globalPct = Math.min(100, (elapsedDur / totalDur) * 100);
+            if (globalPBar) globalPBar.style.width = `${globalPct}%`;
+            if (globalPctText) globalPctText.innerText = `${globalPct.toFixed(0)}%`;
+          }
         } else {
           if (pBar) pBar.style.width = `0%`;
           if (statusText) statusText.innerText = 'Inactiva';
@@ -606,6 +631,12 @@ function renderFarms() {
             btn.innerText = 'Cultivar';
             btn.disabled = state.gold < (crop ? crop.cost : 0);
           }
+
+          // Progreso Global (Inactivo)
+          const globalPBar = document.getElementById(`farm-global-progress-${idx}`);
+          const globalPctText = document.getElementById(`farm-global-pct-${idx}`);
+          if (globalPBar) globalPBar.style.width = `0%`;
+          if (globalPctText) globalPctText.innerText = `0%`;
         }
       }
     });

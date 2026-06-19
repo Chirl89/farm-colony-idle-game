@@ -294,6 +294,9 @@ function loadGame() {
           if (typeof f.waterElapsed === 'undefined') {
             f.waterElapsed = 0;
           }
+          if (typeof f.wateringsCompleted === 'undefined') {
+            f.wateringsCompleted = 0;
+          }
           delete f.isRunning;
           delete f.elapsed;
         });

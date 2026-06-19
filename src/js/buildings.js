@@ -145,6 +145,7 @@ function startFarmCycle(idx) {
     farm.activeCrop = farm.crop;
     farm.needsWatering = false;
     farm.waterElapsed = 0;
+    farm.wateringsCompleted = 0;
     recalculateRates();
     updateUI();
   } else {
@@ -407,6 +408,7 @@ function buildFarm() {
       activeCrop: 'wheat',
       needsWatering: false,
       waterElapsed: 0,
+      wateringsCompleted: 0,
       isUnderConstruction: true,
       constructionElapsed: 0,
       constructionDuration: (cfg && cfg.duration) || 5

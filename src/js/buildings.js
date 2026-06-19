@@ -266,7 +266,7 @@ function buildLumberMill() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 5
+      constructionDuration: (cfg && cfg.duration) || 5
     });
     showToast("🏗️ Comenzando construcción de Cabaña de Leñador. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -334,7 +334,7 @@ function buildQuarry() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 5
+      constructionDuration: (cfg && cfg.duration) || 5
     });
     showToast("🏗️ Comenzando construcción de Foso de Piedra. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -405,7 +405,7 @@ function buildFarm() {
       activeCrop: 'wheat',
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 5
+      constructionDuration: (cfg && cfg.duration) || 5
     });
     showToast("🏗️ Comenzando construcción de Granja. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -434,7 +434,7 @@ function buildMarket() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 5
+      constructionDuration: (cfg && cfg.duration) || 5
     });
     showToast("🏗️ Comenzando construcción de Puesto de Mercado. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -463,7 +463,7 @@ function buildBonfire() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 5
+      constructionDuration: (cfg && cfg.duration) || 5
     });
     showToast("🏗️ Comenzando construcción de Fogata. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -556,7 +556,7 @@ function buildTownHall() {
     state.townHall.tier = 1;
     state.townHall.isUnderConstruction = true;
     state.townHall.constructionElapsed = 0;
-    state.townHall.constructionDuration = 1;
+    state.townHall.constructionDuration = (cfg && cfg.duration) || 1;
     state.playerConstructing = { type: 'townHall' };
     showToast("🏗️ Comenzando construcción del Ayuntamiento. ¡El jugador ha iniciado la construcción!", "info");
     recalculateRates();

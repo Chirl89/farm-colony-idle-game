@@ -1,1 +1,29 @@
-Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Duration;Yield_Amount;Yield_Type;Extra_Info;
+Category;Type;Name;Duration
+Timing;day_duration;Duración del Día;30
+Timing;night_duration;Duración de la Noche;30
+Timing;basic_house;Construcción Choza;1
+Timing;upgraded_house;Mejora Choza a Cabaña;2
+Timing;lumbermill;Construcción Cabaña de Leñador;5
+Timing;quarry;Construcción Foso de Piedra;5
+Timing;farm;Construcción Granja;5
+Timing;market;Construcción Puesto de Mercado;5
+Timing;bonfire;Construcción Fogata;5
+Timing;townhall;Construcción Ayuntamiento T1;1
+Timing;townhall_t2;Mejora Ayuntamiento T2;2
+Timing;townhall_t3;Mejora Ayuntamiento T3;3
+Timing;wood_auto;Tiempo Leñador;1
+Timing;stone_auto;Tiempo Cantero;1
+Timing;berries_auto;Tiempo Recolector de Frutos;1
+Timing;wheat;Tiempo Crecimiento Trigo;3
+Timing;potato;Tiempo Crecimiento Patata;5
+Timing;carrot;Tiempo Crecimiento Zanahoria;10
+Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;0.2
+Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;0.2
+Timing;pot_auto;Tiempo Cocinar Automático Caldero;0.1
+Timing;pot_manual;Tiempo Cocinar Manual Caldero;0.1
+Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;0.05
+Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;0.05
+Timing;market_food;Tiempo Venta Automática Comida;0.1
+Timing;market_wood;Tiempo Venta Automática Madera;0.1
+Timing;market_stone;Tiempo Venta Automática Piedra;0.1
+Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1

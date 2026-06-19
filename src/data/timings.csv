@@ -1,14 +1,14 @@
 Category;Type;Name;Duration
-Timing;day_duration;Duración del Día;30
-Timing;night_duration;Duración de la Noche;30
-Timing;basic_house;Construcción Choza;1
+Timing;day_duration;Duración del Día;2
+Timing;night_duration;Duración de la Noche;2
+Timing;basic_house;Construcción Choza;0.1
 Timing;upgraded_house;Mejora Choza a Cabaña;2
 Timing;lumbermill;Construcción Cabaña de Leñador;5
 Timing;quarry;Construcción Foso de Piedra;5
 Timing;farm;Construcción Granja;5
 Timing;market;Construcción Puesto de Mercado;5
 Timing;bonfire;Construcción Fogata;5
-Timing;townhall;Construcción Ayuntamiento T1;1
+Timing;townhall;Construcción Ayuntamiento T1;0.1
 Timing;townhall_t2;Mejora Ayuntamiento T2;2
 Timing;townhall_t3;Mejora Ayuntamiento T3;3
 Timing;wood_auto;Tiempo Leñador;1

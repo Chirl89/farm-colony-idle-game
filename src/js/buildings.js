@@ -135,14 +135,16 @@ function startFarmCycle(idx) {
   if (!state.farms || !state.farms[idx]) return;
   const farm = state.farms[idx];
   if (farm.isUnderConstruction) return;
-  if (farm.isRunning) return;
+  if (farm.stage !== 'idle') return;
 
   const crop = CROPS[farm.crop];
   if (state.gold >= crop.cost) {
     state.gold -= crop.cost;
-    farm.elapsed = 0;
-    farm.isRunning = true;
+    farm.stageElapsed = 0;
+    farm.stage = 'plow';
     farm.activeCrop = farm.crop;
+    farm.needsWatering = false;
+    farm.waterElapsed = 0;
     recalculateRates();
     updateUI();
   } else {
@@ -400,9 +402,11 @@ function buildFarm() {
       id: state.farms.length,
       workerAssigned: 0,
       crop: 'wheat',
-      elapsed: 0,
-      isRunning: false,
+      stage: 'idle',
+      stageElapsed: 0,
       activeCrop: 'wheat',
+      needsWatering: false,
+      waterElapsed: 0,
       isUnderConstruction: true,
       constructionElapsed: 0,
       constructionDuration: (cfg && cfg.duration) || 5

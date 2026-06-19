@@ -139,11 +139,13 @@ function recalculateRates() {
   }
   if (state.farms) {
     state.farms.forEach(f => {
-      if ((f.workerAssigned > 0 || f.isRunning) && !f.isUnderConstruction) {
-        const cropKey = (f.isRunning ? f.activeCrop : f.crop) || f.crop || 'wheat';
+      if (f.stage !== 'idle' && !f.isUnderConstruction) {
+        const cropKey = f.activeCrop || f.crop || 'wheat';
         const crop = CROPS[cropKey];
         if (crop) {
-          foodRate += crop.yield / crop.duration;
+          const farmTier = f.tier || 1;
+          const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
+          foodRate += (crop.yield * tierMultiplier) / (1.5 + 2 * crop.duration);
         }
       }
     });
@@ -272,6 +274,17 @@ function gameTick() {
       feedColonistsMorning();
       state.timePhase = 'day';
       state.phaseElapsed = 0;
+      
+      // Al amanecer, las granjas que estén creciendo necesitan ser regadas de nuevo
+      if (Array.isArray(state.farms)) {
+        state.farms.forEach(farm => {
+          if (!farm.isUnderConstruction && (farm.stage === 'grow' || farm.stage === 'grow2')) {
+            farm.needsWatering = true;
+            farm.waterElapsed = 0;
+          }
+        });
+      }
+      
       showToast(`☀️ ¡Amanece un nuevo día! Día ${state.currentDay}.`, "success");
     }
   }
@@ -453,38 +466,7 @@ function gameTick() {
       });
     }
 
-    // 2. Progreso de agricultura en Granjas
-    if (Array.isArray(state.farms)) {
-      state.farms.forEach((farm, idx) => {
-        const hasWorker = farm.workerAssigned > 0;
-        
-        if (!farm.isUnderConstruction && !farm.isRunning && hasWorker) {
-          const crop = CROPS[farm.crop];
-          if (crop && state.gold >= crop.cost) {
-            state.gold -= crop.cost;
-            farm.elapsed = 0;
-            farm.isRunning = true;
-            farm.activeCrop = farm.crop;
-            recalculateRates();
-          }
-        }
-        
-        if (!farm.isUnderConstruction && farm.isRunning) {
-          const crop = CROPS[farm.activeCrop || farm.crop];
-          if (crop) {
-            farm.elapsed += (1 / dayDuration) * delta * eff;
-            if (farm.elapsed >= crop.duration) {
-              farm.isRunning = false;
-              farm.elapsed = 0;
-              state.food += crop.yield;
-              resourcesGeneratedThisSecond.food += crop.yield;
-              showToast(`¡Cosecha de ${crop.name} lista en Granja #${idx + 1}! +${crop.yield} Comida`, "success");
-              recalculateRates();
-            }
-          }
-        }
-      });
-    }
+
 
     // 3b. Procesamiento en Hogueras/Ollas/Cocinas
     if (Array.isArray(state.bonfires)) {
@@ -600,6 +582,82 @@ function gameTick() {
         }
       });
     }
+  }
+
+  // Progreso de agricultura en Granjas (Corre de día y de noche)
+  if (Array.isArray(state.farms)) {
+    state.farms.forEach((farm, idx) => {
+      if (farm.isUnderConstruction || farm.stage === 'idle') return;
+
+      const crop = CROPS[farm.activeCrop || farm.crop] || CROPS.wheat;
+      
+      // Si la granja necesita riego diario
+      if (farm.needsWatering) {
+        if (state.timePhase === 'day' && farm.workerAssigned > 0) {
+          farm.waterElapsed = (farm.waterElapsed || 0) + (delta / dayDuration) * getWorkEfficiency();
+          if (farm.waterElapsed >= 0.25) {
+            farm.needsWatering = false;
+            farm.waterElapsed = 0;
+          }
+        }
+        return; // Detiene la progresión del crecimiento mientras necesite riego
+      }
+      let stageDuration = 0.5;
+      if (farm.stage === 'water' || farm.stage === 'water2') {
+        stageDuration = 0.25;
+      } else if (farm.stage === 'grow' || farm.stage === 'grow2') {
+        stageDuration = crop.duration;
+      }
+
+      let elapsedIncrement = 0;
+      if (farm.stage === 'grow' || farm.stage === 'grow2') {
+        const currentPhaseDuration = state.timePhase === 'day' ? dayDuration : nightDuration;
+        elapsedIncrement = delta / currentPhaseDuration;
+      } else {
+        if (state.timePhase === 'day' && farm.workerAssigned > 0) {
+          elapsedIncrement = (delta / dayDuration) * getWorkEfficiency();
+        }
+      }
+
+      farm.stageElapsed = (farm.stageElapsed || 0) + elapsedIncrement;
+
+      if (farm.stageElapsed >= stageDuration) {
+        farm.stageElapsed = 0;
+        if (farm.stage === 'plow') {
+          farm.stage = 'sow';
+        } else if (farm.stage === 'sow') {
+          farm.stage = 'water';
+        } else if (farm.stage === 'water') {
+          farm.stage = 'grow';
+        } else if (farm.stage === 'grow') {
+          farm.stage = 'water2';
+        } else if (farm.stage === 'water2') {
+          farm.stage = 'grow2';
+        } else if (farm.stage === 'grow2') {
+          // Cosechar!
+          const farmTier = farm.tier || 1;
+          const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
+          const harvestedYield = crop.yield * tierMultiplier;
+          
+          state.food += harvestedYield;
+          resourcesGeneratedThisSecond.food += harvestedYield;
+          showToast(`¡Cosecha de ${crop.name} lista en Granja #${idx + 1}! +${harvestedYield.toFixed(0)} Comida`, "success");
+
+          // Reiniciar el ciclo si hay oro disponible para la semilla seleccionada
+          const nextCropKey = farm.crop || 'wheat';
+          const nextCrop = CROPS[nextCropKey];
+          if (state.gold >= nextCrop.cost) {
+            state.gold -= nextCrop.cost;
+            farm.stage = 'plow';
+            farm.activeCrop = nextCropKey;
+          } else {
+            farm.stage = 'idle';
+            showToast(`Oro insuficiente para reiniciar cultivo en Granja #${idx + 1}`, "warning");
+          }
+          recalculateRates();
+        }
+      }
+    });
   }
 
   // Resetear acumulador de recursos cada segundo

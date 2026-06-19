@@ -369,7 +369,7 @@ function renderFarms() {
   if (!container) return;
   const count = state.farms ? state.farms.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.farms ? state.farms.map(f => f.isUnderConstruction ? '1' : '0').join(',') : '';
+  const currentStatus = state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0')).join(',') : '';
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastFarmsConstructionStatus) {
     lastFarmsConstructionStatus = currentStatus;
     if (count === 0) {
@@ -421,7 +421,7 @@ function renderFarms() {
             </div>
             
             <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-              <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
+              <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)" ${farm.stage !== 'idle' ? 'disabled' : ''}>
                 ${cropsOptionsHtml}
               </select>
               
@@ -482,8 +482,11 @@ function renderFarms() {
         }
       } else {
         const select = document.getElementById(`farm-select-${idx}`);
-        if (select && select.value !== farm.crop) {
-          select.value = farm.crop;
+        if (select) {
+          if (select.value !== farm.crop) {
+            select.value = farm.crop;
+          }
+          select.disabled = farm.stage !== 'idle';
         }
         
         const pBar = document.getElementById(`farm-progress-${idx}`);
@@ -494,8 +497,11 @@ function renderFarms() {
         if (allocText) allocText.innerText = farm.workerAssigned;
         
         const crop = CROPS[farm.crop];
-        const rate = crop ? (crop.yield / crop.duration) : 0;
-        const isWorking = farm.workerAssigned > 0 || farm.isRunning;
+        const farmTier = farm.tier || 1;
+        const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
+        const cycleDuration = 1.5 + 2 * (crop ? crop.duration : 1);
+        const rate = crop ? ((crop.yield * tierMultiplier) / cycleDuration) : 0;
+        const isWorking = farm.stage !== 'idle';
         const eff = getWorkEfficiency();
         const yieldVal = rate * eff;
         const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
@@ -503,18 +509,103 @@ function renderFarms() {
         
         const farmProd = document.getElementById(`farm-prod-${idx}`);
         if (farmProd) farmProd.innerText = prodText;
-        
-        if (btn) btn.disabled = farm.isRunning || state.gold < (crop ? crop.cost : 0);
 
-        if (farm.isRunning) {
-          const activeCropObj = CROPS[farm.activeCrop || farm.crop];
-          const pct = Math.min(100, (farm.elapsed / activeCropObj.duration) * 100);
+        const activeCropObj = CROPS[farm.activeCrop || farm.crop] || CROPS.wheat;
+        let stageName = '';
+        let stageEmoji = '';
+        let stageDuration = 0;
+        let requiresWorker = false;
+        let isNightGrow = false;
+
+        switch (farm.stage) {
+          case 'plow':
+            stageName = 'Arando';
+            stageEmoji = '🪵';
+            stageDuration = 0.5;
+            requiresWorker = true;
+            break;
+          case 'sow':
+            stageName = 'Sembrando';
+            stageEmoji = '🌱';
+            stageDuration = 0.5;
+            requiresWorker = true;
+            break;
+          case 'water':
+            stageName = 'Regando';
+            stageEmoji = '💧';
+            stageDuration = 0.25;
+            requiresWorker = true;
+            break;
+          case 'grow':
+            stageName = 'Creciendo';
+            stageEmoji = '🌿';
+            stageDuration = activeCropObj.duration;
+            requiresWorker = false;
+            isNightGrow = true;
+            break;
+          case 'water2':
+            stageName = 'Regando';
+            stageEmoji = '💧';
+            stageDuration = 0.25;
+            requiresWorker = true;
+            break;
+          case 'grow2':
+            stageName = 'Creciendo';
+            stageEmoji = '🌿';
+            stageDuration = activeCropObj.duration;
+            requiresWorker = false;
+            isNightGrow = true;
+            break;
+          default:
+            stageName = 'Inactiva';
+            stageEmoji = '';
+            stageDuration = 0;
+            requiresWorker = false;
+        }
+
+        if (farm.stage !== 'idle') {
+          let pct = 0;
+          let text = '';
+          
+          if (farm.needsWatering) {
+            pct = Math.min(100, ((farm.waterElapsed || 0) / 0.25) * 100);
+            const rem = Math.max(0.25 - (farm.waterElapsed || 0), 0).toFixed(2);
+            if (state.timePhase === 'night') {
+              text = `💧 Regar (Pausado: Es de noche) (Faltan ${rem}d)`;
+            } else if (farm.workerAssigned === 0) {
+              text = `💧 Regar (Pausado: Asigna aldeano) (Faltan ${rem}d)`;
+            } else {
+              text = `💧 Regando (Faltan ${rem}d)`;
+            }
+          } else {
+            pct = Math.min(100, ((farm.stageElapsed || 0) / stageDuration) * 100);
+            const rem = Math.max(stageDuration - (farm.stageElapsed || 0), 0).toFixed(2);
+            
+            text = `${stageEmoji} ${stageName} (Faltan ${rem}d)`;
+            if (isNightGrow && state.timePhase === 'night') {
+              text = `🌙 Sigue creciendo de noche (${rem}d)`;
+            } else if (requiresWorker && (state.timePhase === 'night' || farm.workerAssigned === 0)) {
+              if (state.timePhase === 'night') {
+                text = `${stageEmoji} ${stageName} (Pausado: Es de noche) (${rem}d)`;
+              } else {
+                text = `${stageEmoji} ${stageName} (Pausado: Asigna aldeano) (${rem}d)`;
+              }
+            }
+          }
+          
           if (pBar) pBar.style.width = `${pct}%`;
-          const rem = Math.max(activeCropObj.duration - farm.elapsed, 0).toFixed(0);
-          if (statusText) statusText.innerText = `Cultivando (Faltan ${rem}d)`;
+          if (statusText) statusText.innerText = text;
+          if (btn) {
+            btn.innerText = 'Cultivando...';
+            btn.disabled = true;
+          }
         } else {
           if (pBar) pBar.style.width = `0%`;
-          if (statusText) statusText.innerText = farm.workerAssigned > 0 ? 'Esperando Oro...' : 'Inactiva';
+          if (statusText) statusText.innerText = 'Inactiva';
+          if (btn) {
+            btn.innerText = 'Cultivar';
+            btn.disabled = state.gold < (crop ? crop.cost : 0);
+          }
         }
       }
     });

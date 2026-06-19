@@ -225,8 +225,8 @@ function loadGame() {
             id: idx,
             workerAssigned: assigned,
             crop: plot.crop || 'wheat',
-            elapsed: 0,
-            isRunning: false,
+            stage: 'idle',
+            stageElapsed: 0,
             activeCrop: plot.crop || 'wheat'
           });
         });
@@ -238,8 +238,8 @@ function loadGame() {
             id: i,
             workerAssigned: 0,
             crop: 'wheat',
-            elapsed: 0,
-            isRunning: false,
+            stage: 'idle',
+            stageElapsed: 0,
             activeCrop: 'wheat'
           });
         }
@@ -276,8 +276,26 @@ function loadGame() {
       }
       if (Array.isArray(state.farms)) {
         state.farms.forEach(f => {
-          f.isRunning = false;
-          f.elapsed = 0;
+          if (typeof f.stage === 'undefined') {
+            f.stage = f.isRunning ? 'grow' : 'idle';
+          }
+          if (typeof f.stageElapsed === 'undefined') {
+            f.stageElapsed = f.elapsed || 0;
+          }
+          if (typeof f.activeCrop === 'undefined') {
+            f.activeCrop = f.crop || 'wheat';
+          }
+          if (typeof f.tier === 'undefined') {
+            f.tier = 1;
+          }
+          if (typeof f.needsWatering === 'undefined') {
+            f.needsWatering = false;
+          }
+          if (typeof f.waterElapsed === 'undefined') {
+            f.waterElapsed = 0;
+          }
+          delete f.isRunning;
+          delete f.elapsed;
         });
       }
       if (Array.isArray(state.bonfires)) {

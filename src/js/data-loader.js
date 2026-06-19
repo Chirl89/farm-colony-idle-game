@@ -1,19 +1,19 @@
 // DEFAULT_CSV_DATA fallbacks
 const DEFAULT_CSV_DATA = {
   buildings: `Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Duration;Yield_Amount;Yield_Type;Extra_Info;
-Building;basic_house;Choza;0;5;3;0;1;maxPopulation;;
-Building;upgraded_house;Mejorar Choza;0;40;30;0;1;maxPopulationUpgrade;;
-Building;lumbermill;Cabaña de Leñador;80;0;40;0;0;;;
-Building;quarry;Foso de Piedra;100;40;0;0;0;;;
-Building;farm;Granja;0;30;20;0;0;;;
-Building;market;Puesto de Mercado;0;60;50;0;0;;;
+Building;basic_house;Choza;0;5;3;1;1;maxPopulation;;
+Building;upgraded_house;Mejorar Choza;0;40;30;2;1;maxPopulationUpgrade;;
+Building;lumbermill;Cabaña de Leñador;80;0;40;5;0;;;
+Building;quarry;Foso de Piedra;100;40;0;5;0;;;
+Building;farm;Granja;0;30;20;5;0;;;
+Building;market;Puesto de Mercado;0;60;50;5;0;;;
 Building;hire_colonist;Contratar Aldeano;5;0;0;0;1;colonist;;
-Building;bonfire;Fogata;0;40;20;0;0;;;
+Building;bonfire;Fogata;0;40;20;5;0;;;
 Building;pot_upgrade;Mejorar a Caldero;50;0;30;0;0;;;
 Building;kitchen_upgrade;Mejorar a Cocina de Taberna;100;50;0;0;0;;;
-Building;townhall;Ayuntamiento T1;0;10;5;0;0;;;
-Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;0;;;
-Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`,
+Building;townhall;Ayuntamiento T1;0;10;5;1;0;;;
+Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;2;0;;;
+Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;3;0;;`,
   prices: `Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Duration;Yield_Amount;Yield_Type;Extra_Info;
 Sales;sell_food_manual;Venta Manual Comida;0;0;0;0;3;gold;Consumes:1:food;
 Sales;sell_wood_manual;Venta Manual Madera;0;0;0;0;1;gold;Consumes:1:wood;
@@ -112,6 +112,7 @@ function parseCSV(csvText) {
         cost_gold: cost_gold,
         cost_wood: cost_wood,
         cost_stone: cost_stone,
+        duration: duration,
         yield_type: yield_type,
         yield_amount: yield_amount
       };

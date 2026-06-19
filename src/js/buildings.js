@@ -27,13 +27,13 @@ function assignBuildingWorker(type, index, val) {
   if (!list || !list[index]) return;
   const building = list[index];
   
-  // Las viviendas no usan aldeanos una vez terminadas de construir
-  if (type === 'houses' && !building.isUnderConstruction) {
+  // Las viviendas no usan aldeanos una vez terminadas de construir y si no se están mejorando
+  if (type === 'houses' && !building.isUnderConstruction && !building.isUpgrading) {
     return;
   }
   
   const isIndustrial = type === 'lumberMills' || type === 'quarries' || type === 'bonfires';
-  const maxWorkers = building.isUnderConstruction ? 2 : (isIndustrial ? (building.tier || 1) : 1);
+  const maxWorkers = (building.isUnderConstruction || building.isUpgrading) ? 2 : (isIndustrial ? (building.tier || 1) : 1);
   
   if (val > 0) {
     if (state.freeColonists > 0) {
@@ -52,6 +52,35 @@ function assignBuildingWorker(type, index, val) {
       building.workerAssigned -= 1;
       state.freeColonists += 1;
       showToast("Aldeano retirado del edificio");
+    }
+  }
+  recalculateRates();
+  updateUI();
+}
+
+function assignTownHallWorker(val) {
+  if (!state.townHall.built) return;
+  if (!state.townHall.isUnderConstruction && !state.townHall.isUpgrading) return;
+  
+  const maxWorkers = 2;
+  
+  if (val > 0) {
+    if (state.freeColonists > 0) {
+      if ((state.townHall.workerAssigned || 0) >= maxWorkers) {
+        showToast(`El Ayuntamiento ya tiene el máximo de aldeanos asignados (${maxWorkers})`, "warning");
+        return;
+      }
+      state.townHall.workerAssigned = (state.townHall.workerAssigned || 0) + 1;
+      state.freeColonists -= 1;
+      showToast("Aldeano asignado a la construcción del Ayuntamiento");
+    } else {
+      showToast("No tienes aldeanos libres disponibles", "warning");
+    }
+  } else {
+    if ((state.townHall.workerAssigned || 0) > 0) {
+      state.townHall.workerAssigned -= 1;
+      state.freeColonists += 1;
+      showToast("Aldeano retirado de la construcción del Ayuntamiento");
     }
   }
   recalculateRates();
@@ -151,13 +180,13 @@ function buildBasicHouse() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: 1
+      constructionDuration: (cfg && cfg.duration) || 1,
+      workerAssigned: 0
     });
     
-    state.playerConstructing = { type: 'houses', index: idx };
     recalculateMaxPopulation();
     
-    showToast("🏗️ Comenzando construcción de la Choza. ¡El jugador ha iniciado la construcción!", "info");
+    showToast("🏗️ Comenzando construcción de la Choza. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
   } else {
@@ -169,6 +198,11 @@ function upgradeHouseItem(idx) {
   if (!state.houses || !state.houses[idx]) return;
   const house = state.houses[idx];
   
+  if (house.isUnderConstruction || house.isUpgrading) {
+    showToast("Esta vivienda ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  
   if (house.tier === 1) {
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar viviendas a Tier 2.", "warning");
@@ -178,11 +212,15 @@ function upgradeHouseItem(idx) {
     if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
       state.wood -= cfg.cost_wood;
       state.stone -= cfg.cost_stone;
-      house.tier = 2;
       
-      recalculateMaxPopulation();
+      house.isUpgrading = true;
+      house.upgradingToTier = 2;
+      house.constructionElapsed = 0;
+      house.constructionDuration = (cfg && cfg.duration) || 2;
+      house.workerAssigned = 0;
       
-      showToast(`¡Choza #${idx + 1} mejorada a Cabaña! (+1 Capacidad de población)`, "success");
+      showToast(`🏗️ Comenzando mejora de Choza #${idx + 1} a Cabaña. ¡Asigna constructores para comenzar!`, "info");
+      recalculateRates();
       updateUI();
     } else {
       showToast("Recursos insuficientes para mejorar a Cabaña (Requiere 40 Madera y 30 Piedra)", "warning");
@@ -197,11 +235,15 @@ function upgradeHouseItem(idx) {
       state.gold -= 50;
       state.wood -= 80;
       state.stone -= 60;
-      house.tier = 3;
       
-      recalculateMaxPopulation();
+      house.isUpgrading = true;
+      house.upgradingToTier = 3;
+      house.constructionElapsed = 0;
+      house.constructionDuration = 3;
+      house.workerAssigned = 0;
       
-      showToast(`¡Cabaña #${idx + 1} mejorada a Casa Grande! (+2 Capacidad de población adicional)`, "success");
+      showToast(`🏗️ Comenzando mejora de Cabaña #${idx + 1} a Casa Grande. ¡Asigna constructores para comenzar!`, "info");
+      recalculateRates();
       updateUI();
     } else {
       showToast("Recursos insuficientes para mejorar a Casa Grande (Requiere 50 Oro, 80 Madera y 60 Piedra)", "warning");
@@ -526,6 +568,10 @@ function buildTownHall() {
 
 function upgradeTownHall() {
   if (!state.townHall.built) return;
+  if (state.townHall.isUnderConstruction || state.townHall.isUpgrading) {
+    showToast("El Ayuntamiento ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
   const currentTier = state.townHall.tier;
   if (currentTier >= 3) {
     showToast("El Ayuntamiento ya está al nivel máximo.", "info");
@@ -546,9 +592,13 @@ function upgradeTownHall() {
     state.wood -= cfg.cost_wood;
     state.stone -= cfg.cost_stone;
     
-    state.townHall.tier += 1;
-    state.maxBuildingTier = state.townHall.tier;
-    showToast(`¡Ayuntamiento mejorado al Nivel ${state.townHall.tier}! Construcciones de Tier ${state.maxBuildingTier} desbloqueadas.`, "success");
+    state.townHall.isUpgrading = true;
+    state.townHall.upgradingToTier = currentTier + 1;
+    state.townHall.constructionElapsed = 0;
+    state.townHall.constructionDuration = (cfg && cfg.duration) || (currentTier === 1 ? 2 : 3);
+    state.townHall.workerAssigned = 0;
+    
+    showToast(`🏗️ Comenzando mejora de Ayuntamiento a Nivel ${currentTier + 1}. ¡Asigna constructores para comenzar!`, "info");
     recalculateRates();
     updateUI();
   } else {
@@ -609,6 +659,8 @@ function resetAllAssignments() {
     if (Array.isArray(state.farms)) state.farms.forEach(b => b.workerAssigned = 0);
     if (Array.isArray(state.markets)) state.markets.forEach(b => b.workerAssigned = 0);
     if (Array.isArray(state.bonfires)) state.bonfires.forEach(b => b.workerAssigned = 0);
+    if (Array.isArray(state.houses)) state.houses.forEach(b => b.workerAssigned = 0);
+    if (state.townHall) state.townHall.workerAssigned = 0;
     
     fixColonistAllocation();
     showToast("Todos los aldeanos han sido liberados de sus tareas", "info");

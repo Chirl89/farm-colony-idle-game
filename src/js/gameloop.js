@@ -288,19 +288,44 @@ function gameTick() {
     // Ticking de construcciones en curso
     const dayDelta = delta / dayDuration;
 
-    // 0. Progreso de construcción del Ayuntamiento
-    if (state.townHall && state.townHall.isUnderConstruction) {
+    // 0. Progreso de construcción/mejora del Ayuntamiento
+    if (state.townHall && (state.townHall.isUnderConstruction || state.townHall.isUpgrading)) {
       const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
-      if (isPlayerOnTH) {
-        const playerSpeed = 0.25;
-        state.townHall.constructionElapsed = (state.townHall.constructionElapsed || 0) + dayDelta * playerSpeed;
-        if (state.townHall.constructionElapsed >= (state.townHall.constructionDuration || 1)) {
+      const playerSpeed = isPlayerOnTH ? 0.25 : 0.0;
+      
+      const workers = state.townHall.workerAssigned || 0;
+      const workerSpeed = workers >= 2 ? 1.0 : (workers === 1 ? 0.5 : 0.0);
+      
+      const totalSpeed = playerSpeed + workerSpeed;
+      if (totalSpeed > 0) {
+        state.townHall.constructionElapsed = (state.townHall.constructionElapsed || 0) + dayDelta * totalSpeed;
+        const duration = state.townHall.constructionDuration || 1;
+        
+        if (state.townHall.constructionElapsed >= duration) {
+          const wasUpgrading = state.townHall.isUpgrading;
+          const targetTier = state.townHall.upgradingToTier || 1;
+          
           state.townHall.isUnderConstruction = false;
+          state.townHall.isUpgrading = false;
           state.townHall.constructionElapsed = 0;
-          state.townHall.tier = 1;
-          state.maxBuildingTier = 1;
-          state.playerConstructing = null;
-          showToast("✅ Ayuntamiento ¡construcción completada! Construcciones de Tier 1 desbloqueadas.", "success");
+          state.townHall.tier = targetTier;
+          state.maxBuildingTier = targetTier;
+          delete state.townHall.upgradingToTier;
+          
+          if (isPlayerOnTH) {
+            state.playerConstructing = null;
+          }
+          
+          if (workers > 0) {
+            state.freeColonists += workers;
+            state.townHall.workerAssigned = 0;
+          }
+          
+          if (wasUpgrading) {
+            showToast(`✅ Ayuntamiento mejorado al Nivel ${state.townHall.tier}! Construcciones de Tier ${state.maxBuildingTier} desbloqueadas.`, "success");
+          } else {
+            showToast("✅ Ayuntamiento ¡construcción completada! Construcciones de Tier 1 desbloqueadas.", "success");
+          }
           recalculateRates();
           if (typeof updateUI === 'function') updateUI();
         }
@@ -319,7 +344,7 @@ function gameTick() {
     buildingTypes.forEach(bt => {
       if (Array.isArray(state[bt.key])) {
         state[bt.key].forEach((building, idx) => {
-          if (building.isUnderConstruction) {
+          if (building.isUnderConstruction || building.isUpgrading) {
             const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === bt.key && state.playerConstructing.index === idx;
             const playerSpeed = isPlayerOnIt ? 0.25 : 0.0;
             
@@ -332,8 +357,17 @@ function gameTick() {
               
               const duration = building.constructionDuration || bt.defaultDuration;
               if (building.constructionElapsed >= duration) {
-                building.isUnderConstruction = false;
-                building.constructionElapsed = 0;
+                const wasUpgrading = building.isUpgrading;
+                
+                if (wasUpgrading) {
+                  building.isUpgrading = false;
+                  building.tier = building.upgradingToTier || (building.tier + 1);
+                  delete building.upgradingToTier;
+                  building.constructionElapsed = 0;
+                } else {
+                  building.isUnderConstruction = false;
+                  building.constructionElapsed = 0;
+                }
                 
                 if (isPlayerOnIt) {
                   state.playerConstructing = null;
@@ -347,9 +381,18 @@ function gameTick() {
                 
                 if (bt.key === 'houses') {
                   if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
-                  showToast(`✅ Choza #${idx + 1} ¡construcción completada! (+1 Capacidad de población)`, "success");
+                  if (wasUpgrading) {
+                    const tierNames = { 2: 'Cabaña', 3: 'Casa Grande' };
+                    showToast(`✅ Choza #${idx + 1} mejorada a ${tierNames[building.tier] || 'Edificio'}!`, "success");
+                  } else {
+                    showToast(`✅ Choza #${idx + 1} ¡construcción completada! (+1 Capacidad de población)`, "success");
+                  }
                 } else {
-                  showToast(`✅ ${bt.name} #${idx + 1} ¡construcción completada!`, "success");
+                  if (wasUpgrading) {
+                    showToast(`✅ ${bt.name} #${idx + 1} mejorada a Tier ${building.tier}!`, "success");
+                  } else {
+                    showToast(`✅ ${bt.name} #${idx + 1} ¡construcción completada!`, "success");
+                  }
                 }
                 
                 recalculateRates();

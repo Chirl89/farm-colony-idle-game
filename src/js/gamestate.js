@@ -48,7 +48,7 @@ const DEFAULT_STATE = {
   currentDay: 1,
   timePhase: 'day',
   phaseElapsed: 0,
-  townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1 },
+  townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1, workerAssigned: 0 },
   maxBuildingTier: 0,
   playerConstructing: null
 };
@@ -60,6 +60,7 @@ var state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 var lastRenderedTownHallBuilt = null;
 var lastRenderedTownHallTier = null;
 var lastRenderedTownHallUnderConst = null;
+var lastRenderedTownHallUpgrading = null;
 
 // Clave de guardado persistente
 const SAVE_KEY = 'aetheria_farm_colony_save';
@@ -79,6 +80,7 @@ function loadGame() {
   lastRenderedTownHallBuilt = null;
   lastRenderedTownHallTier = null;
   lastRenderedTownHallUnderConst = null;
+  lastRenderedTownHallUpgrading = null;
   try {
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
@@ -114,19 +116,21 @@ function loadGame() {
           upgradeElapsed: 0, 
           isUnderConstruction: false, 
           constructionElapsed: 0, 
-          constructionDuration: 1 
+          constructionDuration: 1,
+          workerAssigned: 0
         };
         state.maxBuildingTier = hasProgress ? 1 : 0;
       }
       
       if (!state.townHall) {
-        state.townHall = { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1 };
+        state.townHall = { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1, workerAssigned: 0 };
       } else {
         if (typeof state.townHall.built === 'undefined') state.townHall.built = false;
         if (typeof state.townHall.tier === 'undefined') state.townHall.tier = 1;
         if (typeof state.townHall.isUnderConstruction === 'undefined') state.townHall.isUnderConstruction = false;
         if (typeof state.townHall.constructionElapsed === 'undefined') state.townHall.constructionElapsed = 0;
         if (typeof state.townHall.constructionDuration === 'undefined') state.townHall.constructionDuration = 1;
+        if (typeof state.townHall.workerAssigned === 'undefined') state.townHall.workerAssigned = 0;
       }
       
       if (typeof state.playerConstructing === 'undefined') {
@@ -324,6 +328,7 @@ function resetGame(isTestMode = false) {
   lastRenderedTownHallBuilt = null;
   lastRenderedTownHallTier = null;
   lastRenderedTownHallUnderConst = null;
+  lastRenderedTownHallUpgrading = null;
   localStorage.removeItem(SAVE_KEY);
   state = JSON.parse(JSON.stringify(DEFAULT_STATE));
   

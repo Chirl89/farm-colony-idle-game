@@ -527,7 +527,7 @@ function renderHouses() {
   if (!container) return;
   const count = state.houses ? state.houses.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.houses ? state.houses.map(h => h.isUnderConstruction ? '1' : '0').join(',') : '';
+  const currentStatus = state.houses ? state.houses.map(h => (h.isUnderConstruction ? '1' : '0') + '_' + (h.isUpgrading ? '1' : '0') + '_' + h.tier).join(',') : '';
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastHousesConstructionStatus) {
     lastHousesConstructionStatus = currentStatus;
     if (count === 0) {
@@ -538,13 +538,19 @@ function renderHouses() {
     }
     let html = '';
     state.houses.forEach((house, idx) => {
-      if (house.isUnderConstruction) {
+      if (house.isUnderConstruction || house.isUpgrading) {
+        const badgeText = house.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = house.isUpgrading ? 
+          (house.upgradingToTier === 2 ? `🏗️ Cabaña #${idx + 1} (Mejorando...)` : `🏗️ Casa Grande #${idx + 1} (Mejorando...)`) : 
+          `🏗️ Choza #${idx + 1} (En construcción)`;
+        const prodText = house.isUpgrading ? 'Mejorando...' : 'En construcción';
+        
         html += `
           <div class="building-box" id="house-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="house-tier-badge-${idx}">Construyendo</div>
+            <div class="building-tier-badge" id="house-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="house-title-${idx}">🏗️ Choza #${idx + 1} (En construcción)</span>
-              <span class="building-box-prod" id="house-prod-${idx}">En construcción</span>
+              <span class="building-box-title" id="house-title-${idx}">${titleText}</span>
+              <span class="building-box-prod" id="house-prod-${idx}">${prodText}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="house-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
@@ -588,7 +594,7 @@ function renderHouses() {
   
   if (count > 0) {
     state.houses.forEach((house, idx) => {
-      if (house.isUnderConstruction) {
+      if (house.isUnderConstruction || house.isUpgrading) {
         const pBar = document.getElementById(`house-progress-${idx}`);
         const pct = Math.min(100, (house.constructionElapsed / house.constructionDuration) * 100);
         if (pBar) pBar.style.width = `${pct}%`;
@@ -1130,14 +1136,19 @@ function renderTownHallUI() {
   const built = state.townHall.built;
   const tier = state.townHall.tier;
   const underConst = state.townHall.isUnderConstruction;
+  const upgrading = state.townHall.isUpgrading;
   
-  if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier && lastRenderedTownHallUnderConst === underConst) {
-    if (underConst) {
+  if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier && lastRenderedTownHallUnderConst === underConst && lastRenderedTownHallUpgrading === upgrading) {
+    if (underConst || upgrading) {
       const pBar = document.getElementById('townhall-progress-bar');
-      const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / (state.townHall.constructionDuration || 2)) * 100);
+      const duration = state.townHall.constructionDuration || 1;
+      const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / duration) * 100);
       if (pBar) pBar.style.width = `${pct}%`;
       const pText = document.getElementById('townhall-progress-text');
       if (pText) pText.innerText = `Progreso: ${pct.toFixed(0)}%`;
+      
+      const allocVal = document.getElementById('townhall-alloc');
+      if (allocVal) allocVal.innerText = `${state.townHall.workerAssigned || 0} / 2`;
       
       const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
       const btn = document.getElementById('btn-construct-townhall');
@@ -1161,6 +1172,7 @@ function renderTownHallUI() {
   lastRenderedTownHallBuilt = built;
   lastRenderedTownHallTier = tier;
   lastRenderedTownHallUnderConst = underConst;
+  lastRenderedTownHallUpgrading = upgrading;
   
   const cfg = CONFIG.Building.townhall;
   const cfg_t2 = CONFIG.Building.townhall_t2;
@@ -1187,23 +1199,40 @@ function renderTownHallUI() {
         </div>
       </div>
     `;
-  } else if (state.townHall.isUnderConstruction) {
-    const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / (state.townHall.constructionDuration || 2)) * 100);
+  } else if (state.townHall.isUnderConstruction || state.townHall.isUpgrading) {
+    const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / (state.townHall.constructionDuration || 1)) * 100);
     const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
+    const titleText = state.townHall.isUpgrading ? 
+      `Ayuntamiento (Mejorando a Nivel ${state.townHall.upgradingToTier})` : 
+      `Ayuntamiento (En construcción)`;
     
     container.innerHTML = `
       <div class="building-item" style="border: 1px dashed #3b82f6; background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 8px;">
         <div class="building-info" style="width: 100%;">
-          <span class="building-name" style="font-size: 1.1rem; font-weight: 700; color: #60a5fa;">Ayuntamiento (En construcción)</span>
-          <span class="building-desc" style="margin-top: 0.25rem;">Se está construyendo la sede central de tu villa.</span>
+          <span class="building-name" style="font-size: 1.1rem; font-weight: 700; color: #60a5fa;">${titleText}</span>
+          <span class="building-desc" style="margin-top: 0.25rem;">
+            ${state.townHall.isUpgrading ? `Mejorando la sede administrativa de la colonia.` : `Se está construyendo la sede central de tu villa.`}
+          </span>
           <div class="progress-bar-container" style="height: 10px; margin: 0.75rem 0; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; width: 100%;">
             <div class="progress-bar-fill" id="townhall-progress-bar" style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); transition: width 0.1s ease-out;"></div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
             <span id="townhall-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: ${pct.toFixed(0)}%</span>
-            <button class="btn ${isPlayerOnTH ? 'btn-primary' : 'btn-secondary'}" id="btn-construct-townhall" onclick="togglePlayerConstruct('townHall')" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; ${isPlayerOnTH ? 'background: hsl(var(--color-primary)); border-color: hsl(var(--color-primary)); color: #fff;' : ''}">
-              ${isPlayerOnTH ? '🔨 Construyendo...' : '🔨 Iniciar Construcción'}
-            </button>
+            
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Aldeanos:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignTownHallWorker(-1)">-</button>
+                  <span class="allocator-val" id="townhall-alloc">${state.townHall.workerAssigned || 0}</span>
+                  <button class="allocator-btn" onclick="assignTownHallWorker(1)">+</button>
+                </div>
+              </div>
+              
+              <button class="btn ${isPlayerOnTH ? 'btn-primary' : 'btn-secondary'}" id="btn-construct-townhall" onclick="togglePlayerConstruct('townHall')" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; ${isPlayerOnTH ? 'background: hsl(var(--color-primary)); border-color: hsl(var(--color-primary)); color: #fff;' : ''}">
+                ${isPlayerOnTH ? '🔨 Construyendo...' : '🔨 Iniciar Construcción'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

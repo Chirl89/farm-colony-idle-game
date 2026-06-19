@@ -2045,9 +2045,8 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       currentDay: 1,
       timePhase: 'day',
       phaseElapsed: 0,
-      townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1 },
-      maxBuildingTier: 0,
-      playerConstructing: null
+      townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0 },
+      maxBuildingTier: 0
     };
 
     // ESTADO ACTIVO
@@ -2218,7 +2217,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
       state.gatherCooldown = 1.0;
       state.gatherType = 'wood';
-      state.playerConstructing = null;
       showToast("Comenzando a recolectar madera...", "info");
       updateUI();
     }
@@ -2227,7 +2225,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
       state.gatherCooldown = 1.0;
       state.gatherType = 'stone';
-      state.playerConstructing = null;
       showToast("Comenzando a recolectar piedra...", "info");
       updateUI();
     }
@@ -2236,7 +2233,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
       state.gatherCooldown = 1.0;
       state.gatherType = 'berries';
-      state.playerConstructing = null;
       showToast("Comenzando a recolectar frutos...", "info");
       updateUI();
     }
@@ -2296,13 +2292,8 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (!list || !list[index]) return;
       const building = list[index];
       
-      // Las viviendas no usan aldeanos una vez terminadas de construir
-      if (type === 'houses' && !building.isUnderConstruction) {
-        return;
-      }
-      
       const isIndustrial = type === 'lumberMills' || type === 'quarries' || type === 'bonfires';
-      const maxWorkers = building.isUnderConstruction ? 2 : (isIndustrial ? (building.tier || 1) : 1);
+      const maxWorkers = isIndustrial ? (building.tier || 1) : 1;
       
       if (val > 0) {
         if (state.freeColonists > 0) {
@@ -2327,45 +2318,10 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       updateUI();
     }
 
-    function togglePlayerConstruct(type, index) {
-      if (state.playerConstructing && state.playerConstructing.type === type && state.playerConstructing.index === index) {
-        state.playerConstructing = null;
-        showToast("Construcción manual pausada");
-      } else {
-        state.playerConstructing = { type: type, index: index };
-        
-        let bName = 'Edificio';
-        if (type === 'townHall') {
-          bName = 'Ayuntamiento';
-        } else if (type === 'houses') {
-          const house = state.houses[index];
-          const tierNames = { 1: 'Choza', 2: 'Cabaña', 3: 'Casa Grande' };
-          bName = (house ? tierNames[house.tier || 1] : 'Choza') + ` #${index + 1}`;
-        } else {
-          const list = state[type];
-          if (list && list[index]) {
-            const names = {
-              lumberMills: 'Aserradero',
-              quarries: 'Cantera',
-              farms: 'Granja',
-              bonfires: 'Fogata',
-              markets: 'Puesto de Mercado'
-            };
-            bName = `${names[type] || 'Edificio'} #${index + 1}`;
-          }
-        }
-        showToast(`El jugador ha comenzado a construir: ${bName}`);
-      }
-      recalculateRates();
-      updateUI();
-    }
-
     // AGRICULTURA DE GRANJA INDIVIDUAL
     function changeFarmCrop(idx, cropKey) {
       if (state.farms && state.farms[idx]) {
-        const farm = state.farms[idx];
-        if (farm.isUnderConstruction) return;
-        farm.crop = cropKey;
+        state.farms[idx].crop = cropKey;
         recalculateRates();
         updateUI();
       }
@@ -2374,7 +2330,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function startFarmCycle(idx) {
       if (!state.farms || !state.farms[idx]) return;
       const farm = state.farms[idx];
-      if (farm.isUnderConstruction) return;
       if (farm.isRunning) return;
 
       const crop = CROPS[farm.crop];
@@ -2396,41 +2351,28 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const cap2 = 2;
       const cap3 = 4;
       
-      state.basicHouses = state.houses.filter(h => h.tier === 1 && !h.isUnderConstruction).length;
-      state.upgradedHouses = state.houses.filter(h => h.tier === 2 && !h.isUnderConstruction).length;
-      state.luxuryHouses = state.houses.filter(h => h.tier === 3 && !h.isUnderConstruction).length;
+      state.basicHouses = state.houses.filter(h => h.tier === 1).length;
+      state.upgradedHouses = state.houses.filter(h => h.tier === 2).length;
+      state.luxuryHouses = state.houses.filter(h => h.tier === 3).length;
       
       state.maxPopulation = state.basicHouses * cap1 + state.upgradedHouses * cap2 + state.luxuryHouses * cap3;
     }
 
     function buildBasicHouse() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.basic_house;
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
         state.stone -= cfg.cost_stone;
         
         if (!state.houses) state.houses = [];
-        const idx = state.houses.length;
-        state.houses.push({
-          id: idx,
-          tier: 1,
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 1
-        });
+        state.houses.push({ id: state.houses.length, tier: 1 });
         
-        state.playerConstructing = { type: 'houses', index: idx };
         recalculateMaxPopulation();
         
-        showToast("🏗️ Comenzando construcción de la Choza. ¡El jugador ha iniciado la construcción!", "info");
-        recalculateRates();
+        showToast(`¡Casa Básica construida! (+${cfg.yield_amount} Capacidad de población)`, "success");
         updateUI();
       } else {
-        showToast("Recursos insuficientes para construir la Choza", "warning");
+        showToast("Recursos insuficientes para construir la Casa Básica", "warning");
       }
     }
 
@@ -2479,10 +2421,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     function buildLumberMill() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.lumbermill;
       if (state.gold >= cfg.cost_gold && state.stone >= cfg.cost_stone) {
         state.gold -= cfg.cost_gold;
@@ -2490,12 +2428,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         state.lumberMills.push({
           id: state.lumberMills.length,
           workerAssigned: 0,
-          tier: 1,
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 5
+          tier: 1
         });
-        showToast("🏗️ Comenzando construcción de Cabaña de Leñador. ¡Asigna constructores para comenzar!", "info");
+        showToast(`¡Cabaña de Leñador construida! (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/día por trabajador asignado)`, "success");
         recalculateRates();
         updateUI();
       } else {
@@ -2506,7 +2441,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function upgradeLumberMill(idx) {
       if (!state.lumberMills || !state.lumberMills[idx]) return;
       const mill = state.lumberMills[idx];
-      if (mill.isUnderConstruction) return;
       const tier = mill.tier || 1;
       
       if (tier === 1) {
@@ -2547,10 +2481,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     function buildQuarry() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.quarry;
       if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood) {
         state.gold -= cfg.cost_gold;
@@ -2558,12 +2488,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         state.quarries.push({
           id: state.quarries.length,
           workerAssigned: 0,
-          tier: 1,
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 5
+          tier: 1
         });
-        showToast("🏗️ Comenzando construcción de Foso de Piedra. ¡Asigna constructores para comenzar!", "info");
+        showToast(`¡Foso de Piedra construido! (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador asignado)`, "success");
         recalculateRates();
         updateUI();
       } else {
@@ -2574,7 +2501,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function upgradeQuarry(idx) {
       if (!state.quarries || !state.quarries[idx]) return;
       const quarry = state.quarries[idx];
-      if (quarry.isUnderConstruction) return;
       const tier = quarry.tier || 1;
       
       if (tier === 1) {
@@ -2615,10 +2541,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     }
 
     function buildFarm() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.farm;
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
@@ -2629,12 +2551,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           crop: 'wheat',
           elapsed: 0,
           isRunning: false,
-          activeCrop: 'wheat',
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 5
+          activeCrop: 'wheat'
         });
-        showToast("🏗️ Comenzando construcción de Granja. ¡Asigna constructores para comenzar!", "info");
+        showToast("¡Granja construida! Habilitadas las parcelas agrícolas.", "success");
         recalculateRates();
         updateUI();
       } else {
@@ -2662,10 +2581,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
     // MERCADO
     function buildMarket() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.market;
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
@@ -2676,12 +2591,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           elapsed: 0,
           isRunning: false,
           sales: { food: 0, stone: 0, wood: 0 },
-          tier: 1,
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 5
+          tier: 1
         });
-        showToast("🏗️ Comenzando construcción de Puesto de Mercado. ¡Asigna constructores para comenzar!", "info");
+        showToast("¡Puesto de Mercado construido con éxito! Habilitadas las ventas automáticas con mercaderes.", "success");
         recalculateRates();
         updateUI();
       } else {
@@ -2691,10 +2603,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
     // HOGUERA Y COCINADO
     function buildBonfire() {
-      if (!state.townHall.built || state.townHall.isUnderConstruction) {
-        showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
-        return;
-      }
       const cfg = CONFIG.Building.bonfire;
       if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
         state.wood -= cfg.cost_wood;
@@ -2705,12 +2613,9 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           elapsed: 0,
           isRunning: false,
           mode: 'none',
-          tier: 1,
-          isUnderConstruction: true,
-          constructionElapsed: 0,
-          constructionDuration: 5
+          tier: 1
         });
-        showToast("🏗️ Comenzando construcción de Fogata. ¡Asigna constructores para comenzar!", "info");
+        showToast("¡Fogata construida con éxito! Habilitados los modos manual y automático de cocina.", "success");
         recalculateRates();
         updateUI();
       } else {
@@ -2721,7 +2626,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function upgradeBonfire(idx) {
       if (!state.bonfires || !state.bonfires[idx]) return;
       const bonfire = state.bonfires[idx];
-      if (bonfire.isUnderConstruction) return;
       
       if (bonfire.tier === 1) {
         if (state.maxBuildingTier < 2) {
@@ -2765,7 +2669,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function cookManually(idx) {
       if (!state.bonfires || !state.bonfires[idx]) return;
       const bonfire = state.bonfires[idx];
-      if (bonfire.isUnderConstruction) return;
       if (bonfire.isRunning) {
         let bName = bonfire.tier === 1 ? 'Esta fogata' : (bonfire.tier === 2 ? 'Este caldero' : 'Esta cocina de taberna');
         showToast(`${bName} ya está procesando un lote`, "warning");
@@ -2976,115 +2879,51 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       // Si es de día, procesamos la recolección automática y producción pasiva
       if (isDay) {
         const eff = getWorkEfficiency();
-
-        // Ticking de construcciones en curso
-        const dayDelta = delta / dayDuration;
-
-        // 0. Progreso de construcción del Ayuntamiento
-        if (state.townHall && state.townHall.isUnderConstruction) {
-          // Sin autoconstrucción: El Ayuntamiento solo progresa si el jugador lo construye activamente.
-          const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
-          if (isPlayerOnTH) {
-            const playerSpeed = 0.25;
-            state.townHall.constructionElapsed = (state.townHall.constructionElapsed || 0) + dayDelta * playerSpeed;
-            if (state.townHall.constructionElapsed >= (state.townHall.constructionDuration || 1)) {
-              state.townHall.isUnderConstruction = false;
-              state.townHall.constructionElapsed = 0;
-              state.townHall.tier = 1;
-              state.maxBuildingTier = 1;
-              state.playerConstructing = null;
-              showToast("✅ Ayuntamiento ¡construcción completada! Construcciones de Tier 1 desbloqueadas.", "success");
-              recalculateRates();
-              updateUI();
-            }
-          }
+        // 1. Recolección Automática básica
+        if (!state.jobsProgress) {
+          state.jobsProgress = { wood: 0, stone: 0, berries: 0 };
         }
-
-        const buildingTypes = [
-          { key: 'houses', name: 'Choza', defaultDuration: 1 },
-          { key: 'lumberMills', name: 'Cabaña de Leñador', defaultDuration: 5 },
-          { key: 'quarries', name: 'Foso de Piedra', defaultDuration: 5 },
-          { key: 'farms', name: 'Granja', defaultDuration: 5 },
-          { key: 'bonfires', name: 'Fogata', defaultDuration: 5 },
-          { key: 'markets', name: 'Puesto de Mercado', defaultDuration: 5 }
-        ];
-
-        buildingTypes.forEach(bt => {
-          if (Array.isArray(state[bt.key])) {
-            state[bt.key].forEach((building, idx) => {
-              if (building.isUnderConstruction) {
-                // Sin autoconstrucción: El progreso de construcción no avanza pasivamente.
-                // Debe ser construido activamente por el jugador (velocidad 0.25) o por colonos asignados (velocidad 0.5 por colono, máx 2).
-                const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === bt.key && state.playerConstructing.index === idx;
-                const playerSpeed = isPlayerOnIt ? 0.25 : 0.0;
-                
-                const workers = building.workerAssigned || 0;
-                const workerSpeed = workers >= 2 ? 1.0 : (workers === 1 ? 0.5 : 0.0);
-                
-                const totalSpeed = workerSpeed + playerSpeed;
-                if (totalSpeed > 0) {
-                  building.constructionElapsed = (building.constructionElapsed || 0) + dayDelta * totalSpeed;
-                  
-                  const duration = building.constructionDuration || bt.defaultDuration;
-                  if (building.constructionElapsed >= duration) {
-                    building.isUnderConstruction = false;
-                    building.constructionElapsed = 0;
-                    
-                    if (isPlayerOnIt) {
-                      state.playerConstructing = null;
-                    }
-                    
-                    // Liberar constructores al pool de colonos sin empleo
-                    if (workers > 0) {
-                      state.freeColonists += workers;
-                      building.workerAssigned = 0;
-                    }
-                    
-                    if (bt.key === 'houses') {
-                      recalculateMaxPopulation();
-                      showToast(`✅ Choza #${idx + 1} ¡construcción completada! (+1 Capacidad de población)`, "success");
-                    } else {
-                      showToast(`✅ ${bt.name} #${idx + 1} ¡construcción completada!`, "success");
-                    }
-                    
-                    recalculateRates();
-                    updateUI();
-                  }
-                }
-              }
-            });
-          }
-        });
-
-        // 1. Recolección Automática básica (Continua)
+        
         // Madera auto
         if (state.jobs.wood > 0) {
           const cfg = CONFIG.BasicGathering.wood_auto;
-          const woodAdded = ((cfg.yield * state.jobs.wood) / (dayDuration * cfg.duration)) * delta * eff;
-          state.wood += woodAdded;
-          resourcesGeneratedThisSecond.wood += woodAdded;
+          state.jobsProgress.wood += (1 / dayDuration) * delta * eff;
+          if (state.jobsProgress.wood >= cfg.duration) {
+            state.jobsProgress.wood = 0;
+            const woodAdded = state.jobs.wood * cfg.yield;
+            state.wood += woodAdded;
+            resourcesGeneratedThisSecond.wood += woodAdded;
+          }
         }
         
         // Piedra auto
         if (state.jobs.stone > 0) {
           const cfg = CONFIG.BasicGathering.stone_auto;
-          const stoneAdded = ((cfg.yield * state.jobs.stone) / (dayDuration * cfg.duration)) * delta * eff;
-          state.stone += stoneAdded;
-          resourcesGeneratedThisSecond.stone += stoneAdded;
+          state.jobsProgress.stone += (1 / dayDuration) * delta * eff;
+          if (state.jobsProgress.stone >= cfg.duration) {
+            state.jobsProgress.stone = 0;
+            const stoneAdded = state.jobs.stone * cfg.yield;
+            state.stone += stoneAdded;
+            resourcesGeneratedThisSecond.stone += stoneAdded;
+          }
         }
 
         // Frutos auto (Comida)
         if (state.jobs.berries > 0) {
           const cfg = CONFIG.BasicGathering.berries_auto;
-          const foodAdded = ((cfg.yield * state.jobs.berries) / (dayDuration * cfg.duration)) * delta * eff;
-          state.food += foodAdded;
-          resourcesGeneratedThisSecond.food += foodAdded;
+          state.jobsProgress.berries += (1 / dayDuration) * delta * eff;
+          if (state.jobsProgress.berries >= cfg.duration) {
+            state.jobsProgress.berries = 0;
+            const foodAdded = state.jobs.berries * cfg.yield;
+            state.food += foodAdded;
+            resourcesGeneratedThisSecond.food += foodAdded;
+          }
         }
 
         // 1b. Producción Pasiva de Aserraderos y Canteras (cada tick de 100ms) - Rebalanceado por día
         if (Array.isArray(state.lumberMills)) {
           state.lumberMills.forEach(b => {
-            if (b.workerAssigned > 0 && !b.isUnderConstruction) {
+            if (b.workerAssigned > 0) {
               const millCfg = CONFIG.ProductionRate.lumbermill_prod;
               const tier = b.tier || 1;
               const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
@@ -3097,7 +2936,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         
         if (Array.isArray(state.quarries)) {
           state.quarries.forEach(b => {
-            if (b.workerAssigned > 0 && !b.isUnderConstruction) {
+            if (b.workerAssigned > 0) {
               const quarryCfg = CONFIG.ProductionRate.quarry_prod;
               const tier = b.tier || 1;
               const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
@@ -3114,7 +2953,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
             const hasWorker = farm.workerAssigned > 0;
             
             // Auto-sembrar
-            if (!farm.isUnderConstruction && !farm.isRunning && hasWorker) {
+            if (!farm.isRunning && hasWorker) {
               const crop = CROPS[farm.crop];
               if (state.gold >= crop.cost) {
                 state.gold -= crop.cost;
@@ -3126,7 +2965,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
             }
             
             // Progreso
-            if (!farm.isUnderConstruction && farm.isRunning) {
+            if (farm.isRunning) {
               const crop = CROPS[farm.activeCrop || farm.crop];
               // El progreso del cultivo avanza en días de juego (1 día de progreso = 1 día de juego completo)
               // Ritmo: 1 día de progreso por cada dayDuration segundos de día real
@@ -3164,7 +3003,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
             if (!autoRec || !manualRec) return;
 
-            if (!bonfire.isUnderConstruction && !bonfire.isRunning && hasWorker) {
+            if (!bonfire.isRunning && hasWorker) {
               if (state.food >= autoRec.consume_amount) {
                 state.food -= autoRec.consume_amount;
                 bonfire.elapsed = 0;
@@ -3174,7 +3013,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
               }
             }
 
-            if (!bonfire.isUnderConstruction && bonfire.isRunning) {
+            if (bonfire.isRunning) {
               const speedMultiplier = bonfire.mode === 'auto' ? (bonfire.workerAssigned || 1) : 1;
               bonfire.elapsed += (1 / dayDuration) * delta * eff * speedMultiplier;
               const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
@@ -3201,7 +3040,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           state.markets.forEach((market, idx) => {
             const hasWorker = market.workerAssigned > 0;
             
-            if (!market.isUnderConstruction && !market.isRunning && hasWorker) {
+            if (!market.isRunning && hasWorker) {
               const minCooked = parseInt(state.autoSellCookedMin) || 0;
               const minFood = parseInt(state.autoSellFoodMin) || 0;
               const minStone = parseInt(state.autoSellStoneMin) || 0;
@@ -3247,7 +3086,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
               }
             }
             
-            if (!market.isUnderConstruction && market.isRunning) {
+            if (market.isRunning) {
               market.elapsed += delta * eff;
               const duration = market.targetDuration || 0.1;
               if (market.elapsed >= duration) {
@@ -3276,15 +3115,12 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
     // ACTUALIZACIONES DE UI DE PROGRESO Y BOTONES
     // RENDERIZAR CAJITAS DE EDIFICIOS INDIVIDUALES
-    let lastLumberMillsConstructionStatus = '';
     function renderLumberMills() {
       const container = document.getElementById('active-lumbermills-list');
       if (!container) return;
       const count = state.lumberMills ? state.lumberMills.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.lumberMills ? state.lumberMills.map(m => m.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastLumberMillsConstructionStatus) {
-        lastLumberMillsConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Aserradero construido</div>`;
@@ -3293,139 +3129,83 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.lumberMills.forEach((mill, idx) => {
-          if (mill.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="mill-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="mill-tier-badge-${idx}">Construyendo</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="mill-title-${idx}">🏗️ Cabaña de Leñador #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="mill-prod-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="mill-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="mill-btn-${idx}" onclick="togglePlayerConstruct('lumberMills', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="mill-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
+          html += `
+            <div class="building-box" id="mill-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="mill-tier-badge-${idx}">Tier ${mill.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="mill-title-${idx}">🪵 Cabaña de Leñador #${idx + 1}</span>
+                <span class="building-box-prod" id="mill-prod-${idx}">0 Madera/día</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="mill-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
                 </div>
               </div>
-            `;
-          } else {
-            html += `
-              <div class="building-box" id="mill-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="mill-tier-badge-${idx}">Tier ${mill.tier || 1}</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="mill-title-${idx}">🪵 Cabaña de Leñador #${idx + 1}</span>
-                  <span class="building-box-prod" id="mill-prod-${idx}">0 Madera/día</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                  <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
-                  <div class="colonist-allocator">
-                    <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
-                    <span class="allocator-val" id="mill-alloc-${idx}">0</span>
-                    <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
-                  </div>
-                </div>
-                <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-                  <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
-                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
-                    Mejorar
-                  </button>
-                </div>
+              <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
+                  Mejorar
+                </button>
               </div>
-            `;
-          }
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.lumberMills.forEach((mill, idx) => {
-          if (mill.isUnderConstruction) {
-            const pBar = document.getElementById(`mill-progress-${idx}`);
-            const pct = Math.min(100, (mill.constructionElapsed / mill.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`mill-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${mill.workerAssigned} / 2`;
-            
-            const btn = document.getElementById(`mill-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'lumberMills' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
-            }
-          } else {
-            const isWorking = mill.workerAssigned > 0;
-            const tier = mill.tier || 1;
-            const baseYield = CONFIG.ProductionRate.lumbermill_prod.yield;
-            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
-            const eff = getWorkEfficiency();
-            const yieldVal = baseYield * multiplier * mill.workerAssigned * eff;
-            const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
-            
-            const titleText = document.getElementById(`mill-title-${idx}`);
-            const prodText = document.getElementById(`mill-prod-${idx}`);
-            const allocText = document.getElementById(`mill-alloc-${idx}`);
-            const tierBadge = document.getElementById(`mill-tier-badge-${idx}`);
-            const tierText = document.getElementById(`mill-tier-text-${idx}`);
-            const upgradeBtn = document.getElementById(`mill-upgrade-btn-${idx}`);
-            
-            let bName = tier === 1 ? 'Cabaña de Leñador' : (tier === 2 ? 'Aserradero' : 'Gremio de Leñadores');
-            
-            if (titleText) titleText.innerHTML = `🪵 ${bName} #${idx + 1}`;
-            if (prodText) prodText.innerText = isWorking ? `+${displayYield} Madera/día` : '0 Madera/día';
-            if (allocText) allocText.innerText = `${mill.workerAssigned} / ${tier}`;
-            if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
-            if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
-            
-            if (upgradeBtn) {
-              if (tier === 1) {
-                upgradeBtn.innerText = `Mejorar (🪙100, 🪵80, 🪨50)`;
-                const canAfford = state.gold >= 100 && state.wood >= 80 && state.stone >= 50;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else if (tier === 2) {
-                upgradeBtn.innerText = `Mejorar (🪙200, 🪵150, 🪨100)`;
-                const canAfford = state.gold >= 200 && state.wood >= 150 && state.stone >= 100;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else {
-                upgradeBtn.style.display = 'none';
-              }
+          const isWorking = mill.workerAssigned > 0;
+          const tier = mill.tier || 1;
+          const baseYield = CONFIG.ProductionRate.lumbermill_prod.yield;
+          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
+          const eff = getWorkEfficiency();
+          const yieldVal = baseYield * multiplier * mill.workerAssigned * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+          
+          const titleText = document.getElementById(`mill-title-${idx}`);
+          const prodText = document.getElementById(`mill-prod-${idx}`);
+          const allocText = document.getElementById(`mill-alloc-${idx}`);
+          const tierBadge = document.getElementById(`mill-tier-badge-${idx}`);
+          const tierText = document.getElementById(`mill-tier-text-${idx}`);
+          const upgradeBtn = document.getElementById(`mill-upgrade-btn-${idx}`);
+          
+          let bName = tier === 1 ? 'Cabaña de Leñador' : (tier === 2 ? 'Aserradero' : 'Gremio de Leñadores');
+          
+          if (titleText) titleText.innerHTML = `🪵 ${bName} #${idx + 1}`;
+          if (prodText) prodText.innerText = isWorking ? `+${displayYield} Madera/día` : '0 Madera/día';
+          if (allocText) allocText.innerText = `${mill.workerAssigned} / ${tier}`;
+          if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
+          if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
+          
+          if (upgradeBtn) {
+            if (tier === 1) {
+              upgradeBtn.innerText = `Mejorar (🪙100, 🪵80, 🪨50)`;
+              const canAfford = state.gold >= 100 && state.wood >= 80 && state.stone >= 50;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
+            } else if (tier === 2) {
+              upgradeBtn.innerText = `Mejorar (🪙200, 🪵150, 🪨100)`;
+              const canAfford = state.gold >= 200 && state.wood >= 150 && state.stone >= 100;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
+            } else {
+              upgradeBtn.style.display = 'none';
             }
           }
         });
       }
     }
 
-    let lastQuarriesConstructionStatus = '';
     function renderQuarries() {
       const container = document.getElementById('active-quarries-list');
       if (!container) return;
       const count = state.quarries ? state.quarries.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.quarries ? state.quarries.map(q => q.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastQuarriesConstructionStatus) {
-        lastQuarriesConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Cantera construida</div>`;
@@ -3434,139 +3214,83 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.quarries.forEach((quarry, idx) => {
-          if (quarry.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="quarry-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="quarry-tier-badge-${idx}">Construyendo</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="quarry-title-${idx}">🏗️ Foso de Piedra #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="quarry-prod-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="quarry-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="quarry-btn-${idx}" onclick="togglePlayerConstruct('quarries', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
+          html += `
+            <div class="building-box" id="quarry-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="quarry-tier-badge-${idx}">Tier ${quarry.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="quarry-title-${idx}">🪨 Foso de Piedra #${idx + 1}</span>
+                <span class="building-box-prod" id="quarry-prod-${idx}">0 Piedra/día</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
                 </div>
               </div>
-            `;
-          } else {
-            html += `
-              <div class="building-box" id="quarry-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="quarry-tier-badge-${idx}">Tier ${quarry.tier || 1}</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="quarry-title-${idx}">🪨 Foso de Piedra #${idx + 1}</span>
-                  <span class="building-box-prod" id="quarry-prod-${idx}">0 Piedra/día</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                  <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
-                  <div class="colonist-allocator">
-                    <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
-                    <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
-                    <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
-                  </div>
-                </div>
-                <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-                  <span id="quarry-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
-                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="quarry-upgrade-btn-${idx}" onclick="upgradeQuarry(${idx})">
-                    Mejorar
-                  </button>
-                </div>
+              <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span id="quarry-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="quarry-upgrade-btn-${idx}" onclick="upgradeQuarry(${idx})">
+                  Mejorar
+                </button>
               </div>
-            `;
-          }
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.quarries.forEach((quarry, idx) => {
-          if (quarry.isUnderConstruction) {
-            const pBar = document.getElementById(`quarry-progress-${idx}`);
-            const pct = Math.min(100, (quarry.constructionElapsed / quarry.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`quarry-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${quarry.workerAssigned} / 2`;
-            
-            const btn = document.getElementById(`quarry-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'quarries' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
-            }
-          } else {
-            const isWorking = quarry.workerAssigned > 0;
-            const tier = quarry.tier || 1;
-            const baseYield = CONFIG.ProductionRate.quarry_prod.yield;
-            const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
-            const eff = getWorkEfficiency();
-            const yieldVal = baseYield * multiplier * quarry.workerAssigned * eff;
-            const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
-            
-            const titleText = document.getElementById(`quarry-title-${idx}`);
-            const prodText = document.getElementById(`quarry-prod-${idx}`);
-            const allocText = document.getElementById(`quarry-alloc-${idx}`);
-            const tierBadge = document.getElementById(`quarry-tier-badge-${idx}`);
-            const tierText = document.getElementById(`quarry-tier-text-${idx}`);
-            const upgradeBtn = document.getElementById(`quarry-upgrade-btn-${idx}`);
-            
-            let bName = tier === 1 ? 'Foso de Piedra' : (tier === 2 ? 'Cantera' : 'Gran Mina de Piedra');
-            
-            if (titleText) titleText.innerHTML = `🪨 ${bName} #${idx + 1}`;
-            if (prodText) prodText.innerText = isWorking ? `+${displayYield} Piedra/día` : '0 Piedra/día';
-            if (allocText) allocText.innerText = `${quarry.workerAssigned} / ${tier}`;
-            if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
-            if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
-            
-            if (upgradeBtn) {
-              if (tier === 1) {
-                upgradeBtn.innerText = `Mejorar (🪙120, 🪵60, 🪨80)`;
-                const canAfford = state.gold >= 120 && state.wood >= 60 && state.stone >= 80;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else if (tier === 2) {
-                upgradeBtn.innerText = `Mejorar (🪙240, 🪵120, 🪨150)`;
-                const canAfford = state.gold >= 240 && state.wood >= 120 && state.stone >= 150;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else {
-                upgradeBtn.style.display = 'none';
-              }
+          const isWorking = quarry.workerAssigned > 0;
+          const tier = quarry.tier || 1;
+          const baseYield = CONFIG.ProductionRate.quarry_prod.yield;
+          const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
+          const eff = getWorkEfficiency();
+          const yieldVal = baseYield * multiplier * quarry.workerAssigned * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+          
+          const titleText = document.getElementById(`quarry-title-${idx}`);
+          const prodText = document.getElementById(`quarry-prod-${idx}`);
+          const allocText = document.getElementById(`quarry-alloc-${idx}`);
+          const tierBadge = document.getElementById(`quarry-tier-badge-${idx}`);
+          const tierText = document.getElementById(`quarry-tier-text-${idx}`);
+          const upgradeBtn = document.getElementById(`quarry-upgrade-btn-${idx}`);
+          
+          let bName = tier === 1 ? 'Foso de Piedra' : (tier === 2 ? 'Cantera' : 'Gran Mina de Piedra');
+          
+          if (titleText) titleText.innerHTML = `🪨 ${bName} #${idx + 1}`;
+          if (prodText) prodText.innerText = isWorking ? `+${displayYield} Piedra/día` : '0 Piedra/día';
+          if (allocText) allocText.innerText = `${quarry.workerAssigned} / ${tier}`;
+          if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
+          if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
+          
+          if (upgradeBtn) {
+            if (tier === 1) {
+              upgradeBtn.innerText = `Mejorar (🪙120, 🪵60, 🪨80)`;
+              const canAfford = state.gold >= 120 && state.wood >= 60 && state.stone >= 80;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
+            } else if (tier === 2) {
+              upgradeBtn.innerText = `Mejorar (🪙240, 🪵120, 🪨150)`;
+              const canAfford = state.gold >= 240 && state.wood >= 120 && state.stone >= 150;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
+            } else {
+              upgradeBtn.style.display = 'none';
             }
           }
         });
       }
     }
 
-    let lastFarmsConstructionStatus = '';
     function renderFarms() {
       const container = document.getElementById('active-farms-list');
       if (!container) return;
       const count = state.farms ? state.farms.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.farms ? state.farms.map(f => f.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastFarmsConstructionStatus) {
-        lastFarmsConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Granja construida</div>`;
@@ -3575,157 +3299,101 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.farms.forEach((farm, idx) => {
-          if (farm.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="farm-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="farm-tier-badge-${idx}">Construyendo</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="farm-title-${idx}">🌾 Granja #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="farm-prod-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="farm-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="farm-btn-${idx}" onclick="togglePlayerConstruct('farms', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="farm-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
-                </div>
+          let cropsOptionsHtml = '';
+          Object.keys(CROPS).forEach(key => {
+            const crop = CROPS[key];
+            const emoji = key === 'wheat' ? '🌾' : (key === 'potato' ? '🥔' : '🥕');
+            cropsOptionsHtml += `<option value="${key}">${emoji} ${crop.name} (Costo: ${crop.cost}🪙, Duración: ${crop.duration} días, Rend: ${crop.yield} Comida)</option>`;
+          });
+          html += `
+            <div class="building-box" id="farm-box-${idx}">
+              <div class="building-box-header">
+                <span class="building-box-title">🌾 Granja #${idx + 1}</span>
+                <span class="building-box-prod" id="farm-prod-${idx}">0 Comida/día</span>
               </div>
-            `;
-          } else {
-            let cropsOptionsHtml = '';
-            Object.keys(CROPS).forEach(key => {
-              const crop = CROPS[key];
-              const emoji = key === 'wheat' ? '🌾' : (key === 'potato' ? '🥔' : '🥕');
-              cropsOptionsHtml += `<option value="${key}">${emoji} ${crop.name} (Costo: ${crop.cost}🪙, Duración: ${crop.duration} días, Rend: ${crop.yield} Comida)</option>`;
-            });
-            html += `
-              <div class="building-box" id="farm-box-${idx}">
-                <div class="building-box-header">
-                  <span class="building-box-title" id="farm-title-${idx}">🌾 Granja #${idx + 1}</span>
-                  <span class="building-box-prod" id="farm-prod-${idx}">0 Comida/día</span>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
+                  ${cropsOptionsHtml}
+                </select>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.1rem;">
+                  <span id="farm-status-${idx}" style="font-size: 0.75rem; color: var(--color-text-muted);">Inactiva</span>
                 </div>
                 
-                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                  <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
-                    ${cropsOptionsHtml}
-                  </select>
-                  
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.1rem;">
-                    <span id="farm-status-${idx}" style="font-size: 0.75rem; color: var(--color-text-muted);">Inactiva</span>
-                  </div>
-                  
-                  <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-                    <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
-                  </div>
+                <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                  <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
                 </div>
+              </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                  <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
-                    Sembrar
-                  </button>
-                  
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="farm-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
-                    </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
+                  Sembrar
+                </button>
+                
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
+                  <div class="colonist-allocator">
+                    <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
+                    <span class="allocator-val" id="farm-alloc-${idx}">0</span>
+                    <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
                   </div>
                 </div>
               </div>
-            `;
-          }
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.farms.forEach((farm, idx) => {
-          if (farm.isUnderConstruction) {
-            const pBar = document.getElementById(`farm-progress-${idx}`);
-            const pct = Math.min(100, (farm.constructionElapsed / farm.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`farm-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${farm.workerAssigned} / 2`;
-            
-            const btn = document.getElementById(`farm-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'farms' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
-            }
-          } else {
-            const select = document.getElementById(`farm-select-${idx}`);
-            if (select && select.value !== farm.crop) {
-              select.value = farm.crop;
-            }
-            
-            const pBar = document.getElementById(`farm-progress-${idx}`);
-            const btn = document.getElementById(`farm-btn-${idx}`);
-            const statusText = document.getElementById(`farm-status-${idx}`);
-            const allocText = document.getElementById(`farm-alloc-${idx}`);
-            
-            if (allocText) allocText.innerText = farm.workerAssigned;
-            
-            const crop = CROPS[farm.crop];
-            const rate = crop ? (crop.yield / crop.duration) : 0;
-            const isWorking = farm.workerAssigned > 0 || farm.isRunning;
-            const eff = getWorkEfficiency();
-            const yieldVal = rate * eff;
-            const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
-            const prodText = isWorking ? `+${displayYield} Comida/día` : '0 Comida/día';
-            
-            const farmProd = document.getElementById(`farm-prod-${idx}`);
-            if (farmProd) farmProd.innerText = prodText;
-            
-            if (btn) btn.disabled = farm.isRunning || state.gold < (crop ? crop.cost : 0);
+          const select = document.getElementById(`farm-select-${idx}`);
+          if (select && select.value !== farm.crop) {
+            select.value = farm.crop;
+          }
+          
+          const pBar = document.getElementById(`farm-progress-${idx}`);
+          const btn = document.getElementById(`farm-btn-${idx}`);
+          const statusText = document.getElementById(`farm-status-${idx}`);
+          const allocText = document.getElementById(`farm-alloc-${idx}`);
+          
+          if (allocText) allocText.innerText = farm.workerAssigned;
+          
+          const crop = CROPS[farm.crop];
+          const rate = crop ? (crop.yield / crop.duration) : 0;
+          const isWorking = farm.workerAssigned > 0 || farm.isRunning;
+          const eff = getWorkEfficiency();
+          const yieldVal = rate * eff;
+          const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+          const prodText = isWorking ? `+${displayYield} Comida/día` : '0 Comida/día';
+          
+          const farmProd = document.getElementById(`farm-prod-${idx}`);
+          if (farmProd) farmProd.innerText = prodText;
+          
+          if (btn) btn.disabled = farm.isRunning || state.gold < (crop ? crop.cost : 0);
 
-            if (farm.isRunning) {
-              const activeCropObj = CROPS[farm.activeCrop || farm.crop];
-              const pct = Math.min(100, (farm.elapsed / activeCropObj.duration) * 100);
-              if (pBar) pBar.style.width = `${pct}%`;
-              const rem = Math.max(activeCropObj.duration - farm.elapsed, 0).toFixed(0);
-              if (statusText) statusText.innerText = `Cultivando (Faltan ${rem}d)`;
-            } else {
-              if (pBar) pBar.style.width = `0%`;
-              if (statusText) statusText.innerText = farm.workerAssigned > 0 ? 'Esperando Oro...' : 'Inactiva';
-            }
+          if (farm.isRunning) {
+            const activeCropObj = CROPS[farm.activeCrop || farm.crop];
+            const pct = Math.min(100, (farm.elapsed / activeCropObj.duration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            const rem = Math.max(activeCropObj.duration - farm.elapsed, 0).toFixed(0);
+            if (statusText) statusText.innerText = `Cultivando (Faltan ${rem}d)`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = farm.workerAssigned > 0 ? 'Esperando Oro...' : 'Inactiva';
           }
         });
       }
     }
 
 
-    let lastHousesConstructionStatus = '';
     function renderHouses() {
       const container = document.getElementById('active-houses-list');
       if (!container) return;
       const count = state.houses ? state.houses.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.houses ? state.houses.map(h => h.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastHousesConstructionStatus) {
-        lastHousesConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna vivienda construida</div>`;
@@ -3734,133 +3402,77 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.houses.forEach((house, idx) => {
-          if (house.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="house-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="house-tier-badge-${idx}">Construyendo</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="house-title-${idx}">🏗️ Choza #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="house-prod-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="house-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="house-btn-${idx}" onclick="togglePlayerConstruct('houses', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('houses', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="house-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('houses', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
-                </div>
+          html += `
+            <div class="building-box" id="house-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="house-tier-badge-${idx}">Tier ${house.tier}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="house-title-${idx}">🏠 Choza #${idx + 1}</span>
+                <span class="building-box-prod" id="house-prod-${idx}">+1 Capacidad</span>
               </div>
-            `;
-          } else {
-            html += `
-              <div class="building-box" id="house-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="house-tier-badge-${idx}">Tier ${house.tier}</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="house-title-${idx}">🏠 Choza #${idx + 1}</span>
-                  <span class="building-box-prod" id="house-prod-${idx}">+1 Capacidad</span>
-                </div>
-                
-                <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                  <span id="house-tier-text-${idx}" style="font-size: 0.75rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Choza)</span>
-                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="house-upgrade-btn-${idx}" onclick="upgradeHouseItem(${idx})">
-                    Mejorar
-                  </button>
-                </div>
+              
+              <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <span id="house-tier-text-${idx}" style="font-size: 0.75rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Choza)</span>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="house-upgrade-btn-${idx}" onclick="upgradeHouseItem(${idx})">
+                  Mejorar
+                </button>
               </div>
-            `;
-          }
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.houses.forEach((house, idx) => {
-          if (house.isUnderConstruction) {
-            const pBar = document.getElementById(`house-progress-${idx}`);
-            const pct = Math.min(100, (house.constructionElapsed / house.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`house-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${house.workerAssigned || 0} / 2`;
-            
-            const btn = document.getElementById(`house-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'houses' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
+          const titleText = document.getElementById(`house-title-${idx}`);
+          const prodText = document.getElementById(`house-prod-${idx}`);
+          const tierText = document.getElementById(`house-tier-text-${idx}`);
+          const upgradeBtn = document.getElementById(`house-upgrade-btn-${idx}`);
+          const tierBadge = document.getElementById(`house-tier-badge-${idx}`);
+          
+          const hUpgraded = CONFIG.Building.upgraded_house;
+          
+          if (house.tier === 1) {
+            if (titleText) titleText.innerHTML = `🏠 Choza #${idx + 1}`;
+            if (prodText) prodText.innerText = `+1 Capacidad`;
+            if (tierText) tierText.innerText = `Nivel 1 (Choza)`;
+            if (tierBadge) tierBadge.innerText = `Tier 1`;
+            if (upgradeBtn) {
+              upgradeBtn.innerText = `Mejorar (🪵${hUpgraded.cost_wood}, 🪨${hUpgraded.cost_stone})`;
+              const canAfford = state.wood >= hUpgraded.cost_wood && state.stone >= hUpgraded.cost_stone;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
+            }
+          } else if (house.tier === 2) {
+            if (titleText) titleText.innerHTML = `🏘️ Cabaña #${idx + 1}`;
+            if (prodText) prodText.innerText = `+2 Capacidad`;
+            if (tierText) tierText.innerText = `Nivel 2 (Cabaña)`;
+            if (tierBadge) tierBadge.innerText = `Tier 2`;
+            if (upgradeBtn) {
+              upgradeBtn.innerText = `Mejorar (🪙50, 🪵80, 🪨60)`;
+              const canAfford = state.gold >= 50 && state.wood >= 80 && state.stone >= 60;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
             }
           } else {
-            const titleText = document.getElementById(`house-title-${idx}`);
-            const prodText = document.getElementById(`house-prod-${idx}`);
-            const tierText = document.getElementById(`house-tier-text-${idx}`);
-            const upgradeBtn = document.getElementById(`house-upgrade-btn-${idx}`);
-            const tierBadge = document.getElementById(`house-tier-badge-${idx}`);
-            
-            const hUpgraded = CONFIG.Building.upgraded_house;
-            
-            if (house.tier === 1) {
-              if (titleText) titleText.innerHTML = `🏠 Choza #${idx + 1}`;
-              if (prodText) prodText.innerText = `+1 Capacidad`;
-              if (tierText) tierText.innerText = `Nivel 1 (Choza)`;
-              if (tierBadge) tierBadge.innerText = `Tier 1`;
-              if (upgradeBtn) {
-                upgradeBtn.innerText = `Mejorar (🪵${hUpgraded.cost_wood}, 🪨${hUpgraded.cost_stone})`;
-                const canAfford = state.wood >= hUpgraded.cost_wood && state.stone >= hUpgraded.cost_stone;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              }
-            } else if (house.tier === 2) {
-              if (titleText) titleText.innerHTML = `🏘️ Cabaña #${idx + 1}`;
-              if (prodText) prodText.innerText = `+2 Capacidad`;
-              if (tierText) tierText.innerText = `Nivel 2 (Cabaña)`;
-              if (tierBadge) tierBadge.innerText = `Tier 2`;
-              if (upgradeBtn) {
-                upgradeBtn.innerText = `Mejorar (🪙50, 🪵80, 🪨60)`;
-                const canAfford = state.gold >= 50 && state.wood >= 80 && state.stone >= 60;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              }
-            } else {
-              if (titleText) titleText.innerHTML = `🏰 Casa Grande #${idx + 1}`;
-              if (prodText) prodText.innerText = `+4 Capacidad`;
-              if (tierText) tierText.innerText = `Nivel 3 (Casa Grande)`;
-              if (tierBadge) tierBadge.innerText = `Tier 3`;
-              if (upgradeBtn) {
-                upgradeBtn.style.display = 'none';
-              }
+            if (titleText) titleText.innerHTML = `🏰 Casa Grande #${idx + 1}`;
+            if (prodText) prodText.innerText = `+4 Capacidad`;
+            if (tierText) tierText.innerText = `Nivel 3 (Casa Grande)`;
+            if (tierBadge) tierBadge.innerText = `Tier 3`;
+            if (upgradeBtn) {
+              upgradeBtn.style.display = 'none';
             }
           }
         });
       }
     }
 
-    let lastBonfiresConstructionStatus = '';
     function renderBonfires() {
       const container = document.getElementById('active-bonfires-list');
       if (!container) return;
       const count = state.bonfires ? state.bonfires.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.bonfires ? state.bonfires.map(b => b.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastBonfiresConstructionStatus) {
-        lastBonfiresConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Fogata construida</div>`;
@@ -3869,175 +3481,119 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.bonfires.forEach((bonfire, idx) => {
-          if (bonfire.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Construyendo</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="bonfire-title-${idx}">🏗️ Fogata #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="bonfire-status-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="bonfire-construct-btn-${idx}" onclick="togglePlayerConstruct('bonfires', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="bonfire-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
-                </div>
+          html += `
+            <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${bonfire.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="bonfire-title-${idx}">🔥 Fogata #${idx + 1}</span>
+                <span class="building-box-prod" id="bonfire-status-${idx}">Inactiva</span>
               </div>
-            `;
-          } else {
-            html += `
-              <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
-                <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${bonfire.tier || 1}</div>
-                <div class="building-box-header">
-                  <span class="building-box-title" id="bonfire-title-${idx}">🔥 Fogata #${idx + 1}</span>
-                  <span class="building-box-prod" id="bonfire-status-${idx}">Inactiva</span>
-                </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
+                  Cocinar Manual
+                </button>
                 
-                <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-                  <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                  <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
-                    Cocinar Manual
-                  </button>
-                  
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="bonfire-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, 1)">+</button>
-                    </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
+                  <div class="colonist-allocator">
+                    <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, -1)">-</button>
+                    <span class="allocator-val" id="bonfire-alloc-${idx}">0</span>
+                    <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, 1)">+</button>
                   </div>
                 </div>
-
-                <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                  <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
-                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
-                    Mejorar
-                  </button>
-                </div>
               </div>
-            `;
-          }
+
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
+                  Mejorar
+                </button>
+              </div>
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.bonfires.forEach((bonfire, idx) => {
-          if (bonfire.isUnderConstruction) {
-            const pBar = document.getElementById(`bonfire-progress-${idx}`);
-            const pct = Math.min(100, (bonfire.constructionElapsed / bonfire.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`bonfire-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${bonfire.workerAssigned} / 2`;
-            
-            const btn = document.getElementById(`bonfire-construct-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'bonfires' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
-            }
+          const pBar = document.getElementById(`bonfire-progress-${idx}`);
+          const btn = document.getElementById(`bonfire-btn-${idx}`);
+          const statusText = document.getElementById(`bonfire-status-${idx}`);
+          const allocText = document.getElementById(`bonfire-alloc-${idx}`);
+          const titleText = document.getElementById(`bonfire-title-${idx}`);
+          const tierText = document.getElementById(`bonfire-tier-text-${idx}`);
+          const upgradeBtn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
+          const tierBadge = document.getElementById(`bonfire-tier-badge-${idx}`);
+          
+          let autoRec, manualRec;
+          let bName = 'Fogata';
+          if (bonfire.tier === 1) {
+            autoRec = CONFIG.Processing.bonfire_auto;
+            manualRec = CONFIG.Processing.bonfire_manual;
+            bName = 'Fogata';
+          } else if (bonfire.tier === 2) {
+            autoRec = CONFIG.Processing.pot_auto;
+            manualRec = CONFIG.Processing.pot_manual;
+            bName = 'Caldero';
           } else {
-            const pBar = document.getElementById(`bonfire-progress-${idx}`);
-            const btn = document.getElementById(`bonfire-btn-${idx}`);
-            const statusText = document.getElementById(`bonfire-status-${idx}`);
-            const allocText = document.getElementById(`bonfire-alloc-${idx}`);
-            const titleText = document.getElementById(`bonfire-title-${idx}`);
-            const tierText = document.getElementById(`bonfire-tier-text-${idx}`);
-            const upgradeBtn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
-            const tierBadge = document.getElementById(`bonfire-tier-badge-${idx}`);
-            
-            let autoRec, manualRec;
-            let bName = 'Fogata';
+            autoRec = CONFIG.Processing.kitchen_auto;
+            manualRec = CONFIG.Processing.kitchen_manual;
+            bName = 'Cocina de Taberna';
+          }
+
+          if (titleText) titleText.innerText = `${bonfire.tier === 1 ? '🔥' : (bonfire.tier === 2 ? '🍲' : '🍳')} ${bName} #${idx + 1}`;
+          if (tierText) tierText.innerText = `Nivel ${bonfire.tier} (${bName})`;
+          if (tierBadge) tierBadge.innerText = `Tier ${bonfire.tier}`;
+          
+          // Actualizar botón de mejora
+          if (upgradeBtn) {
             if (bonfire.tier === 1) {
-              autoRec = CONFIG.Processing.bonfire_auto;
-              manualRec = CONFIG.Processing.bonfire_manual;
-              bName = 'Fogata';
+              const potUp = CONFIG.Building.pot_upgrade;
+              upgradeBtn.innerText = `Mejorar a Caldero (🪙50, 🪨30)`;
+              const canAfford = state.gold >= potUp.cost_gold && state.stone >= potUp.cost_stone;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
             } else if (bonfire.tier === 2) {
-              autoRec = CONFIG.Processing.pot_auto;
-              manualRec = CONFIG.Processing.pot_manual;
-              bName = 'Caldero';
+              const kitUp = CONFIG.Building.kitchen_upgrade;
+              upgradeBtn.innerText = `Mejorar a Cocina de Taberna (🪙100, 🪵50)`;
+              const canAfford = state.gold >= kitUp.cost_gold && state.wood >= kitUp.cost_wood;
+              upgradeBtn.disabled = !canAfford;
+              upgradeBtn.style.display = 'block';
             } else {
-              autoRec = CONFIG.Processing.kitchen_auto;
-              manualRec = CONFIG.Processing.kitchen_manual;
-              bName = 'Cocina de Taberna';
+              upgradeBtn.style.display = 'none';
             }
+          }
 
-            if (titleText) titleText.innerText = `${bonfire.tier === 1 ? '🔥' : (bonfire.tier === 2 ? '🍲' : '🍳')} ${bName} #${idx + 1}`;
-            if (tierText) tierText.innerText = `Nivel ${bonfire.tier} (${bName})`;
-            if (tierBadge) tierBadge.innerText = `Tier ${bonfire.tier}`;
-            
-            // Actualizar botón de mejora
-            if (upgradeBtn) {
-              if (bonfire.tier === 1) {
-                const potUp = CONFIG.Building.pot_upgrade;
-                upgradeBtn.innerText = `Mejorar a Caldero (🪙50, 🪨30)`;
-                const canAfford = state.gold >= potUp.cost_gold && state.stone >= potUp.cost_stone;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else if (bonfire.tier === 2) {
-                const kitUp = CONFIG.Building.kitchen_upgrade;
-                upgradeBtn.innerText = `Mejorar a Cocina de Taberna (🪙100, 🪵50)`;
-                const canAfford = state.gold >= kitUp.cost_gold && state.wood >= kitUp.cost_wood;
-                upgradeBtn.disabled = !canAfford;
-                upgradeBtn.style.display = 'block';
-              } else {
-                upgradeBtn.style.display = 'none';
-              }
-            }
-
-            const minFood = autoRec ? autoRec.consume_amount : 1;
-            if (allocText) allocText.innerText = `${bonfire.workerAssigned} / ${bonfire.tier || 1}`;
-            if (btn) btn.disabled = bonfire.isRunning || state.food < minFood;
-    
-            if (bonfire.isRunning) {
-              const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
-              const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
-              if (pBar) pBar.style.width = `${pct}%`;
-              const rem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
-              if (statusText) statusText.innerText = `Cocinando (Faltan ${rem}d)`;
-            } else {
-              if (pBar) pBar.style.width = `0%`;
-              if (statusText) statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando comida (Mín. ${minFood})...` : 'Inactiva';
-            }
+          const minFood = autoRec ? autoRec.consume_amount : 1;
+          if (allocText) allocText.innerText = `${bonfire.workerAssigned} / ${bonfire.tier || 1}`;
+          if (btn) btn.disabled = bonfire.isRunning || state.food < minFood;
+ 
+          if (bonfire.isRunning) {
+            const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
+            const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            const rem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
+            if (statusText) statusText.innerText = `Cocinando (Faltan ${rem}d)`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando comida (Mín. ${minFood})...` : 'Inactiva';
           }
         });
       }
     }
 
-    let lastMarketsConstructionStatus = '';
     function renderMarkets() {
       const container = document.getElementById('active-markets-list');
       if (!container) return;
       const count = state.markets ? state.markets.length : 0;
       const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-      const currentStatus = state.markets ? state.markets.map(m => m.isUnderConstruction ? '1' : '0').join(',') : '';
-      if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastMarketsConstructionStatus) {
-        lastMarketsConstructionStatus = currentStatus;
+      if (container.children.length !== count || hasPlaceholder || count === 0) {
         if (count === 0) {
           if (!container.querySelector('.placeholder-text')) {
             container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Puesto de Mercado construido</div>`;
@@ -4046,102 +3602,48 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         }
         let html = '';
         state.markets.forEach((market, idx) => {
-          if (market.isUnderConstruction) {
-            html += `
-              <div class="building-box" id="market-box-${idx}" style="position: relative;">
-                <div class="building-box-header">
-                  <span class="building-box-title" id="market-title-${idx}">🏗️ Puesto de Mercado #${idx + 1} (En construcción)</span>
-                  <span class="building-box-prod" id="market-status-${idx}">En construcción</span>
-                </div>
-                <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-                  <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="market-construct-btn-${idx}" onclick="togglePlayerConstruct('markets', ${idx})">
-                    🔨 Iniciar Construcción
-                  </button>
-                  <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                    <div class="colonist-allocator">
-                      <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
-                      <span class="allocator-val" id="market-alloc-${idx}">0</span>
-                      <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
-                    </div>
-                  </div>
-                </div>
+          html += `
+            <div class="building-box" id="market-box-${idx}" style="position: relative;">
+              <div class="building-box-header">
+                <span class="building-box-title">📈 Puesto de Mercado #${idx + 1}</span>
+                <span class="building-box-prod" id="market-status-${idx}">Inactivo</span>
               </div>
-            `;
-          } else {
-            html += `
-              <div class="building-box" id="market-box-${idx}" style="position: relative;">
-                <div class="building-box-header">
-                  <span class="building-box-title" id="market-title-${idx}">📈 Puesto de Mercado #${idx + 1}</span>
-                  <span class="building-box-prod" id="market-status-${idx}">Inactivo</span>
-                </div>
-                
-                <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-                  <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
-                </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
+              </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                  <span style="font-size: 0.75rem; color: var(--color-text-muted);">Asignar mercader:</span>
-                  
-                  <div class="colonist-allocator">
-                    <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
-                    <span class="allocator-val" id="market-alloc-${idx}">0</span>
-                    <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
-                  </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Asignar mercader:</span>
+                
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="market-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
                 </div>
               </div>
-            `;
-          }
+            </div>
+          `;
         });
         container.innerHTML = html;
       }
       
       if (count > 0) {
         state.markets.forEach((market, idx) => {
-          if (market.isUnderConstruction) {
-            const pBar = document.getElementById(`market-progress-${idx}`);
-            const pct = Math.min(100, (market.constructionElapsed / market.constructionDuration) * 100);
-            if (pBar) pBar.style.width = `${pct}%`;
-            
-            const allocText = document.getElementById(`market-alloc-${idx}`);
-            if (allocText) allocText.innerText = `${market.workerAssigned} / 2`;
-            
-            const btn = document.getElementById(`market-construct-btn-${idx}`);
-            const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'markets' && state.playerConstructing.index === idx;
-            if (btn) {
-              if (isPlayerOnIt) {
-                btn.innerText = '🔨 Construyendo...';
-                btn.className = 'btn btn-primary';
-                btn.style.background = 'hsl(var(--color-primary))';
-                btn.style.borderColor = 'hsl(var(--color-primary))';
-              } else {
-                btn.innerText = '🔨 Iniciar Construcción';
-                btn.className = 'btn btn-secondary';
-                btn.style.background = '';
-                btn.style.borderColor = '';
-              }
-            }
-          } else {
-            const pBar = document.getElementById(`market-progress-${idx}`);
-            const statusText = document.getElementById(`market-status-${idx}`);
-            const allocText = document.getElementById(`market-alloc-${idx}`);
-            const titleText = document.getElementById(`market-title-${idx}`);
-            
-            if (titleText) titleText.innerHTML = `📈 Puesto de Mercado #${idx + 1}`;
-            if (allocText) allocText.innerText = `${market.workerAssigned} / 1`;
+          const pBar = document.getElementById(`market-progress-${idx}`);
+          const statusText = document.getElementById(`market-status-${idx}`);
+          const allocText = document.getElementById(`market-alloc-${idx}`);
+          
+          if (allocText) allocText.innerText = market.workerAssigned;
 
-            if (market.isRunning) {
-              const duration = market.targetDuration || 0.1;
-              const pct = Math.min(100, (market.elapsed / duration) * 100);
-              if (pBar) pBar.style.width = `${pct}%`;
-              if (statusText) statusText.innerText = `Vendiendo...`;
-            } else {
-              if (pBar) pBar.style.width = `0%`;
-              if (statusText) statusText.innerText = market.workerAssigned > 0 ? 'Comerciando' : 'Inactivo';
-            }
+          if (market.isRunning) {
+            const duration = market.targetDuration || 0.1;
+            const pct = Math.min(100, (market.elapsed / duration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            if (statusText) statusText.innerText = `Vendiendo...`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) statusText.innerText = market.workerAssigned > 0 ? 'Comerciando' : 'Inactivo';
           }
         });
       }
@@ -4160,7 +3662,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (state.lumberMills && CONFIG.ProductionRate && CONFIG.ProductionRate.lumbermill_prod) {
         const baseYield = CONFIG.ProductionRate.lumbermill_prod.yield;
         state.lumberMills.forEach(m => {
-          if (m.workerAssigned > 0 && !m.isUnderConstruction) {
+          if (m.workerAssigned > 0) {
             const tier = m.tier || 1;
             const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
             woodRate += baseYield * multiplier * m.workerAssigned;
@@ -4178,7 +3680,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (state.quarries && CONFIG.ProductionRate && CONFIG.ProductionRate.quarry_prod) {
         const baseYield = CONFIG.ProductionRate.quarry_prod.yield;
         state.quarries.forEach(q => {
-          if (q.workerAssigned > 0 && !q.isUnderConstruction) {
+          if (q.workerAssigned > 0) {
             const tier = q.tier || 1;
             const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
             stoneRate += baseYield * multiplier * q.workerAssigned;
@@ -4195,7 +3697,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       }
       if (state.farms) {
         state.farms.forEach(f => {
-          if ((f.workerAssigned > 0 || f.isRunning) && !f.isUnderConstruction) {
+          if (f.workerAssigned > 0 || f.isRunning) {
             const cropKey = (f.isRunning ? f.activeCrop : f.crop) || f.crop || 'wheat';
             const crop = CROPS[cropKey];
             if (crop) {
@@ -4207,7 +3709,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       let cookedRate = 0;
       if (state.bonfires) {
         state.bonfires.forEach(b => {
-          if ((b.workerAssigned > 0 || b.isRunning) && !b.isUnderConstruction) {
+          if (b.workerAssigned > 0 || b.isRunning) {
             let rec;
             if (b.tier === 1) rec = CONFIG.Processing.bonfire_auto;
             else if (b.tier === 2) rec = CONFIG.Processing.pot_auto;
@@ -4227,7 +3729,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
       // 5. Oro (Gold)
       let goldRate = 0;
-      const activeMarkets = state.markets ? state.markets.filter(m => m.workerAssigned > 0 && !m.isUnderConstruction).length : 0;
+      const activeMarkets = state.markets ? state.markets.filter(m => m.workerAssigned > 0).length : 0;
       if (activeMarkets > 0 && CONFIG.Sales) {
         if (state.autoSellCooked && CONFIG.Sales.market_cooked) {
           const mCooked = CONFIG.Sales.market_cooked;
@@ -4290,8 +3792,10 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
     // Actualizar visualización de tasas de recursos
     function updateRatesUI() {
+      const isDay = state.timePhase === 'day';
+      
       function formatRate(value) {
-        const rateVal = value;
+        const rateVal = isDay ? value : 0;
         if (rateVal > 0.001) {
           return `+${rateVal.toFixed(0)}/d`;
         } else if (rateVal < -0.001) {
@@ -4303,30 +3807,38 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
 
       if (DOM.rateGold) {
         DOM.rateGold.textContent = formatRate(calculatedRates.gold);
-        DOM.rateGold.className = (calculatedRates.gold > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+        DOM.rateGold.className = (isDay && calculatedRates.gold > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
       }
 
       DOM.rateWood.textContent = formatRate(calculatedRates.wood);
-      DOM.rateWood.className = (calculatedRates.wood > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+      DOM.rateWood.className = (isDay && calculatedRates.wood > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
 
       DOM.rateStone.textContent = formatRate(calculatedRates.stone);
-      DOM.rateStone.className = (calculatedRates.stone > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+      DOM.rateStone.className = (isDay && calculatedRates.stone > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
 
       DOM.rateFood.textContent = formatRate(calculatedRates.food);
-      if (calculatedRates.food > 0.001) {
-        DOM.rateFood.className = 'resource-rate rate-positive';
-      } else if (calculatedRates.food < -0.001) {
-        DOM.rateFood.className = 'resource-rate rate-negative';
+      if (isDay) {
+        if (calculatedRates.food > 0.001) {
+          DOM.rateFood.className = 'resource-rate rate-positive';
+        } else if (calculatedRates.food < -0.001) {
+          DOM.rateFood.className = 'resource-rate rate-negative';
+        } else {
+          DOM.rateFood.className = 'resource-rate rate-neutral';
+        }
       } else {
         DOM.rateFood.className = 'resource-rate rate-neutral';
       }
 
       if (DOM.rateCooked) {
         DOM.rateCooked.textContent = formatRate(calculatedRates.cooked);
-        if (calculatedRates.cooked > 0.001) {
-          DOM.rateCooked.className = 'resource-rate rate-positive';
-        } else if (calculatedRates.cooked < -0.001) {
-          DOM.rateCooked.className = 'resource-rate rate-negative';
+        if (isDay) {
+          if (calculatedRates.cooked > 0.001) {
+            DOM.rateCooked.className = 'resource-rate rate-positive';
+          } else if (calculatedRates.cooked < -0.001) {
+            DOM.rateCooked.className = 'resource-rate rate-negative';
+          } else {
+            DOM.rateCooked.className = 'resource-rate rate-neutral';
+          }
         } else {
           DOM.rateCooked.className = 'resource-rate rate-neutral';
         }
@@ -4471,7 +3983,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     // AYUNTAMIENTO LÓGICA Y RENDER
     let lastRenderedTownHallBuilt = null;
     let lastRenderedTownHallTier = null;
-    let lastRenderedTownHallUnderConst = null;
 
     function renderTownHallUI() {
       const container = document.getElementById('townhall-ui-container');
@@ -4479,38 +3990,11 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       
       const built = state.townHall.built;
       const tier = state.townHall.tier;
-      const underConst = state.townHall.isUnderConstruction;
-      
-      if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier && lastRenderedTownHallUnderConst === underConst) {
-        if (underConst) {
-          const pBar = document.getElementById('townhall-progress-bar');
-          const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / (state.townHall.constructionDuration || 2)) * 100);
-          if (pBar) pBar.style.width = `${pct}%`;
-          const pText = document.getElementById('townhall-progress-text');
-          if (pText) pText.innerText = `Progreso: ${pct.toFixed(0)}%`;
-          
-          const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
-          const btn = document.getElementById('btn-construct-townhall');
-          if (btn) {
-            if (isPlayerOnTH) {
-              btn.innerText = '🔨 Construyendo...';
-              btn.className = 'btn btn-primary';
-              btn.style.background = 'hsl(var(--color-primary))';
-              btn.style.borderColor = 'hsl(var(--color-primary))';
-            } else {
-              btn.innerText = '🔨 Iniciar Construcción';
-              btn.className = 'btn btn-secondary';
-              btn.style.background = '';
-              btn.style.borderColor = '';
-            }
-          }
-        }
+      if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier) {
         return;
       }
-      
       lastRenderedTownHallBuilt = built;
       lastRenderedTownHallTier = tier;
-      lastRenderedTownHallUnderConst = underConst;
       
       const cfg = CONFIG.Building.townhall;
       const cfg_t2 = CONFIG.Building.townhall_t2;
@@ -4534,27 +4018,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
               <button class="btn btn-secondary" id="btn-build-townhall" onclick="buildTownHall()" style="background: hsl(var(--color-primary)); color: #fff; border-color: hsl(var(--color-primary));">
                 Construir Ayuntamiento
               </button>
-            </div>
-          </div>
-        `;
-      } else if (state.townHall.isUnderConstruction) {
-        const pct = Math.min(100, ((state.townHall.constructionElapsed || 0) / (state.townHall.constructionDuration || 2)) * 100);
-        const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
-        
-        container.innerHTML = `
-          <div class="building-item" style="border: 1px dashed #3b82f6; background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 8px;">
-            <div class="building-info" style="width: 100%;">
-              <span class="building-name" style="font-size: 1.1rem; font-weight: 700; color: #60a5fa;">Ayuntamiento (En construcción)</span>
-              <span class="building-desc" style="margin-top: 0.25rem;">Se está construyendo la sede central de tu villa.</span>
-              <div class="progress-bar-container" style="height: 10px; margin: 0.75rem 0; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; width: 100%;">
-                <div class="progress-bar-fill" id="townhall-progress-bar" style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); transition: width 0.1s ease-out;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                <span id="townhall-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: ${pct.toFixed(0)}%</span>
-                <button class="btn ${isPlayerOnTH ? 'btn-primary' : 'btn-secondary'}" id="btn-construct-townhall" onclick="togglePlayerConstruct('townHall')" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; ${isPlayerOnTH ? 'background: hsl(var(--color-primary)); border-color: hsl(var(--color-primary)); color: #fff;' : ''}">
-                  ${isPlayerOnTH ? '🔨 Construyendo...' : '🔨 Iniciar Construcción'}
-                </button>
-              </div>
             </div>
           </div>
         `;
@@ -4616,11 +4079,8 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         state.stone -= cfg.cost_stone;
         state.townHall.built = true;
         state.townHall.tier = 1;
-        state.townHall.isUnderConstruction = true;
-        state.townHall.constructionElapsed = 0;
-        state.townHall.constructionDuration = 1;
-        state.playerConstructing = { type: 'townHall' };
-        showToast("🏗️ Comenzando construcción del Ayuntamiento. ¡El jugador ha iniciado la construcción!", "info");
+        state.maxBuildingTier = 1;
+        showToast("¡Ayuntamiento construido con éxito! Construcciones de Tier 1 desbloqueadas.", "success");
         recalculateRates();
         updateUI();
       } else {
@@ -4720,7 +4180,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       }
 
       // Botones comprar construcciones
-      const thBuilt = state.townHall.built && !state.townHall.isUnderConstruction;
+      const thBuilt = state.townHall.built;
       DOM.btnBuildBasic.disabled = !thBuilt || !(state.wood >= hBasic.cost_wood && state.stone >= hBasic.cost_stone);
       DOM.btnBuildLumberMill.disabled = !thBuilt || !(state.gold >= bLumber.cost_gold && state.stone >= bLumber.cost_stone);
       DOM.btnBuildQuarry.disabled = !thBuilt || !(state.gold >= bQuarry.cost_gold && state.wood >= bQuarry.cost_wood);
@@ -4891,7 +4351,7 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       if (val > 0) {
         if (state.freeColonists > 0) {
           const building = list.find(b => {
-            const maxWorkers = b.isUnderConstruction ? 2 : (type === 'bonfire' ? (b.tier || 1) : 1);
+            const maxWorkers = type === 'bonfire' ? (b.tier || 1) : 1;
             return (b.workerAssigned || 0) < maxWorkers;
           });
           if (building) {
@@ -4931,7 +4391,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function loadGame() {
       lastRenderedTownHallBuilt = null;
       lastRenderedTownHallTier = null;
-      lastRenderedTownHallUnderConst = null;
       try {
         const saved = localStorage.getItem(SAVE_KEY);
         if (saved) {
@@ -4953,39 +4412,8 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
           
           // Compatibilidad para inicializar Ayuntamiento si no existe en el save antiguo
           if (!parsed.hasOwnProperty('townHall')) {
-            // Si el save antiguo tiene casas o edificios de producción, asumimos que ya estaba jugando y marcamos el ayto como construido.
-            // De lo contrario, es una partida nueva o sin progreso, y debe empezar con el ayuntamiento sin construir.
-            const hasProgress = (parsed.houses && parsed.houses.length > 0) || 
-                                (parsed.basicHouses && parsed.basicHouses > 0) ||
-                                (parsed.lumberMills && parsed.lumberMills.length > 0) ||
-                                (parsed.quarries && parsed.quarries.length > 0) ||
-                                (parsed.farms && parsed.farms.length > 0) ||
-                                (parsed.markets && parsed.markets.length > 0);
-            
-            state.townHall = { 
-              built: hasProgress, 
-              tier: 1, 
-              isUpgrading: false, 
-              upgradeElapsed: 0, 
-              isUnderConstruction: false, 
-              constructionElapsed: 0, 
-              constructionDuration: 1 
-            };
-            state.maxBuildingTier = hasProgress ? 1 : 0;
-          }
-          
-          if (!state.townHall) {
-            state.townHall = { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1 };
-          } else {
-            if (typeof state.townHall.built === 'undefined') state.townHall.built = false;
-            if (typeof state.townHall.tier === 'undefined') state.townHall.tier = 1;
-            if (typeof state.townHall.isUnderConstruction === 'undefined') state.townHall.isUnderConstruction = false;
-            if (typeof state.townHall.constructionElapsed === 'undefined') state.townHall.constructionElapsed = 0;
-            if (typeof state.townHall.constructionDuration === 'undefined') state.townHall.constructionDuration = 1;
-          }
-          
-          if (typeof state.playerConstructing === 'undefined') {
-            state.playerConstructing = null;
+            state.townHall = { built: true, tier: 1, isUpgrading: false, upgradeElapsed: 0 };
+            state.maxBuildingTier = 1;
           }
           
           if (typeof state.gatherCooldown === 'undefined') {
@@ -5176,7 +4604,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
     function resetGame(isTestMode = false) {
       lastRenderedTownHallBuilt = null;
       lastRenderedTownHallTier = null;
-      lastRenderedTownHallUnderConst = null;
       localStorage.removeItem(SAVE_KEY);
       state = JSON.parse(JSON.stringify(DEFAULT_STATE));
       
@@ -5188,19 +4615,13 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
         state.cookedFood = 10000;
       }
       
-      // Limpiar el contenido renderizado de forma segura
-      const listIds = [
-        'active-houses-list',
-        'active-bonfires-list',
-        'active-lumbermills-list',
-        'active-quarries-list',
-        'active-farms-list',
-        'active-markets-list'
-      ];
-      listIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '';
-      });
+      // Limpiar el contenido renderizado para forzar placeholders
+      if (document.getElementById('active-houses-list')) document.getElementById('active-houses-list').innerHTML = '';
+      if (document.getElementById('active-bonfires-list')) document.getElementById('active-bonfires-list').innerHTML = '';
+      document.getElementById('active-lumbermills-list').innerHTML = '';
+      document.getElementById('active-quarries-list').innerHTML = '';
+      document.getElementById('active-farms-list').innerHTML = '';
+      document.getElementById('active-markets-list').innerHTML = '';
       
       showToast(isTestMode ? "Iniciada partida de prueba con 10,000 recursos" : "Juego reiniciado por completo", "warning");
       recalculateRates();
@@ -5389,9 +4810,6 @@ Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;0;;`;;
       const temp = state.foodPriority[idx];
       state.foodPriority[idx] = state.foodPriority[newIdx];
       state.foodPriority[newIdx] = temp;
-      recalculateRates();
-      renderFoodPriorityList();
-      updateUI();
       
 
       showToast("Prioridad de alimentación actualizada", "info");

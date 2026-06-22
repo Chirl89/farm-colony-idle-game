@@ -99,9 +99,77 @@ function feedColonistsEvening() {
   updateUI();
 }
 
+function syncStateDurationsFromConfig() {
+  if (!CONFIG || Object.keys(CONFIG).length === 0) return;
+
+  // 1. Town Hall
+  if (state.townHall) {
+    if (state.townHall.isUnderConstruction) {
+      const cfg = CONFIG.Building && CONFIG.Building.townhall;
+      state.townHall.constructionDuration = (cfg && cfg.duration) || 10;
+    } else if (state.townHall.isUpgrading) {
+      const targetTier = state.townHall.upgradingToTier || 2;
+      const cfg = CONFIG.Building && CONFIG.Building['townhall_t' + targetTier];
+      state.townHall.constructionDuration = (cfg && cfg.duration) || (targetTier === 2 ? 25 : 40);
+    }
+  }
+
+  // 2. Edificios de producción e industriales estándar
+  const keyToConfigMap = {
+    lumberMills: 'lumbermill',
+    quarries: 'quarry',
+    farms: 'farm',
+    bonfires: 'bonfire',
+    markets: 'market',
+    granaries: 'granary'
+  };
+
+  for (let key in keyToConfigMap) {
+    const configType = keyToConfigMap[key];
+    if (Array.isArray(state[key])) {
+      state[key].forEach(b => {
+        if (b.isUnderConstruction) {
+          const cfg = CONFIG.Building && CONFIG.Building[configType];
+          b.constructionDuration = (cfg && cfg.duration) || b.constructionDuration || 5;
+        } else if (b.isUpgrading) {
+          let upgradeConfigType = configType;
+          if (configType === 'granary') {
+            const targetTier = b.upgradingToTier || 2;
+            upgradeConfigType = 'granary_t' + targetTier;
+          }
+          const cfg = CONFIG.Building && CONFIG.Building[upgradeConfigType];
+          if (cfg) {
+            b.constructionDuration = cfg.duration || b.constructionDuration || 5;
+          }
+        }
+      });
+    }
+  }
+
+  // 3. Viviendas
+  if (Array.isArray(state.houses)) {
+    state.houses.forEach(h => {
+      if (h.isUnderConstruction) {
+        const cfg = CONFIG.Building && CONFIG.Building.basic_house;
+        h.constructionDuration = (cfg && cfg.duration) || h.constructionDuration || 10;
+      } else if (h.isUpgrading) {
+        const targetTier = h.upgradingToTier || 2;
+        if (targetTier === 2) {
+          const cfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+          h.constructionDuration = (cfg && cfg.duration) || h.constructionDuration || 20;
+        } else if (targetTier === 3) {
+          const cfg = CONFIG.Timing && CONFIG.Timing.upgraded_house_t3;
+          h.constructionDuration = (cfg && cfg.duration) || 30;
+        }
+      }
+    });
+  }
+}
+
 // Recalcular la tasa de cambio diario de recursos basada en asignaciones y eficiencia
 function recalculateRates() {
   if (!CONFIG || Object.keys(CONFIG).length === 0) return;
+  syncStateDurationsFromConfig();
   const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
   
   // 1. Madera (Wood)

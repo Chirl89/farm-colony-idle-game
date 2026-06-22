@@ -77,6 +77,7 @@ Timing;day_duration;Duración del Día;30;
 Timing;night_duration;Duración de la Noche;20;
 Timing;basic_house;Construcción Choza;10;
 Timing;upgraded_house;Mejora Choza a Cabaña;20;
+Timing;upgraded_house_t3;Mejora Cabaña a Casa Grande;30;
 Timing;lumbermill;Construcción Cabaña de Leñador;15;
 Timing;quarry;Construcción Foso de Piedra;15;
 Timing;farm;Construcción Granja;15;

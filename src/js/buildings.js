@@ -223,7 +223,7 @@ function upgradeHouseItem(idx) {
       house.isUpgrading = true;
       house.upgradingToTier = 2;
       house.constructionElapsed = 0;
-      house.constructionDuration = (cfg && cfg.duration) || 2;
+      house.constructionDuration = (cfg && cfg.duration) || 20;
       house.workerAssigned = 0;
       
       showToast(`🏗️ Comenzando mejora de Choza #${idx + 1} a Cabaña. ¡Asigna constructores para comenzar!`, "info");
@@ -246,7 +246,8 @@ function upgradeHouseItem(idx) {
       house.isUpgrading = true;
       house.upgradingToTier = 3;
       house.constructionElapsed = 0;
-      house.constructionDuration = 3;
+      const houseT3Cfg = CONFIG.Timing && CONFIG.Timing.upgraded_house_t3;
+      house.constructionDuration = (houseT3Cfg && houseT3Cfg.duration) || 30;
       house.workerAssigned = 0;
       
       showToast(`🏗️ Comenzando mejora de Cabaña #${idx + 1} a Casa Grande. ¡Asigna constructores para comenzar!`, "info");
@@ -622,7 +623,7 @@ function upgradeTownHall() {
     state.townHall.isUpgrading = true;
     state.townHall.upgradingToTier = currentTier + 1;
     state.townHall.constructionElapsed = 0;
-    state.townHall.constructionDuration = (cfg && cfg.duration) || (currentTier === 1 ? 2 : 3);
+    state.townHall.constructionDuration = (cfg && cfg.duration) || (currentTier === 1 ? 25 : 40);
     state.townHall.workerAssigned = 0;
     
     showToast(`🏗️ Comenzando mejora de Ayuntamiento a Nivel ${currentTier + 1}. ¡Asigna constructores para comenzar!`, "info");

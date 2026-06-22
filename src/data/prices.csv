@@ -1,9 +1,41 @@
 Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info
-Sales;sell_food_manual;Venta Manual Comida;0;0;0;3;gold;Consumes:1:food
 Sales;sell_wood_manual;Venta Manual Madera;0;0;0;1;gold;Consumes:1:wood
 Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;1;gold;Consumes:1:stone
-Sales;market_food;Venta Automática Comida;0;0;0;3;gold;Consumes:1:food
 Sales;market_wood;Venta Automática Madera;0;0;0;1;gold;Consumes:1:wood
 Sales;market_stone;Venta Automática Piedra;0;0;0;1;gold;Consumes:1:stone
-Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;5;gold;Consumes:1:cookedFood
-Sales;market_cooked;Venta Automática Cocinada;0;0;0;4;gold;Consumes:1:cookedFood
+Sales;sell_wheat_manual;Venta Manual Trigo;0;0;0;3;gold;Consumes:1:wheat
+Sales;sell_potato_manual;Venta Manual Patata;0;0;0;4;gold;Consumes:1:potato
+Sales;sell_carrot_manual;Venta Manual Zanahoria;0;0;0;5;gold;Consumes:1:carrot
+Sales;sell_berries_manual;Venta Manual Frutos;0;0;0;2;gold;Consumes:1:berries
+Sales;sell_cooked_wheat_manual;Venta Manual Pan;0;0;0;15;gold;Consumes:1:cooked_wheat
+Sales;sell_cooked_potato_manual;Venta Manual Patata Asada;0;0;0;18;gold;Consumes:1:cooked_potato
+Sales;sell_cooked_carrot_manual;Venta Manual Zanahoria Asada;0;0;0;22;gold;Consumes:1:cooked_carrot
+Sales;sell_cooked_berries_manual;Venta Manual Mermelada;0;0;0;10;gold;Consumes:1:cooked_berries
+Sales;market_wheat;Venta Automática Trigo;0;0;0;3;gold;Consumes:1:wheat
+Sales;market_potato;Venta Automática Patata;0;0;0;4;gold;Consumes:1:potato
+Sales;market_carrot;Venta Automática Zanahoria;0;0;0;5;gold;Consumes:1:carrot
+Sales;market_berries;Venta Automática Frutos;0;0;0;2;gold;Consumes:1:berries
+Sales;market_cooked_wheat;Venta Automática Pan;0;0;0;15;gold;Consumes:1:cooked_wheat
+Sales;market_cooked_potato;Venta Automática Patata Asada;0;0;0;18;gold;Consumes:1:cooked_potato
+Sales;market_cooked_carrot;Venta Automática Zanahoria Asada;0;0;0;22;gold;Consumes:1:cooked_carrot
+Sales;market_cooked_berries;Venta Automática Mermelada;0;0;0;10;gold;Consumes:1:cooked_berries
+Sales;buy_wheat_seeds;Comprar Granos de Trigo;5;0;0;0;1;wheatSeeds;
+Sales;buy_potato_seeds;Comprar Semillas de Patata;8;0;0;0;1;potatoSeeds;
+Sales;buy_carrot_seeds;Comprar Semillas de Zanahoria;12;0;0;0;1;carrotSeeds;
+Sales;sell_wheat_seeds_manual;Venta Manual Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds;
+Sales;sell_potato_seeds_manual;Venta Manual Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds;
+Sales;sell_carrot_seeds_manual;Venta Manual Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds;
+Sales;market_wheat_seeds;Venta Automática Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds;
+Sales;market_potato_seeds;Venta Automática Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds;
+Sales;market_carrot_seeds;Venta Automática Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds;
+Sales;buy_wood;Comprar Madera;2;0;0;1;wood;;
+Sales;buy_stone;Comprar Piedra;2;0;0;1;stone;;
+Sales;buy_wheat;Comprar Trigo;5;0;0;1;wheat;;
+Sales;buy_potato;Comprar Patata;6;0;0;1;potato;;
+Sales;buy_carrot;Comprar Zanahoria;8;0;0;1;carrot;;
+Sales;buy_berries;Comprar Frutos;3;0;0;1;berries;;
+Sales;buy_cooked_wheat;Comprar Pan;20;0;0;1;cooked_wheat;;
+Sales;buy_cooked_potato;Comprar Patata Asada;24;0;0;1;cooked_potato;;
+Sales;buy_cooked_carrot;Comprar Zanahoria Asada;30;0;0;1;cooked_carrot;;
+Sales;buy_cooked_berries;Comprar Mermelada;15;0;0;1;cooked_berries;;
+

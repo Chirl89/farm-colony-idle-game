@@ -5,6 +5,14 @@ const DEFAULT_STATE = {
   stone: 0,
   food: 0,
   cookedFood: 0,
+  wheat: 0,
+  potato: 0,
+  carrot: 0,
+  berries: 0,
+  cooked_wheat: 0,
+  cooked_potato: 0,
+  cooked_carrot: 0,
+  cooked_berries: 0,
   maxPopulation: 0,
   currentColonists: 0,
   freeColonists: 0,
@@ -12,26 +20,87 @@ const DEFAULT_STATE = {
   upgradedHouses: 0,
   houses: [],
   currentSubTab: 'viviendas',
-  foodPriority: ['cooked', 'raw'],
+  foodPriority: ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'],
   starvingColonists: 0,
   fedCookedToday: 0,
   fedRawToday: 0,
   fedNoneToday: 0,
-  allowConsumeCooked: true,
-  allowConsumeRaw: true,
+  allowConsume: {
+    wheat: true,
+    potato: true,
+    carrot: true,
+    berries: true,
+    cooked_wheat: true,
+    cooked_potato: true,
+    cooked_carrot: true,
+    cooked_berries: true
+  },
   lumberMills: [],
   quarries: [],
   farms: [],
   markets: [],
   bonfires: [],
-  autoSellFood: true,
-  autoSellFoodMin: 50,
-  autoSellCooked: true,
-  autoSellCookedMin: 0,
-  autoSellWood: false,
-  autoSellWoodMin: 100,
-  autoSellStone: false,
-  autoSellStoneMin: 100,
+  granaries: [],
+  autoSell: {
+    wood: false,
+    stone: false,
+    wheat: false,
+    potato: false,
+    carrot: false,
+    berries: false,
+    cooked_wheat: false,
+    cooked_potato: false,
+    cooked_carrot: false,
+    cooked_berries: false,
+    wheat_seeds: false,
+    potato_seeds: false,
+    carrot_seeds: false
+  },
+  autoSellMin: {
+    wood: 100,
+    stone: 100,
+    wheat: 50,
+    potato: 50,
+    carrot: 50,
+    berries: 50,
+    cooked_wheat: 0,
+    cooked_potato: 0,
+    cooked_carrot: 0,
+    cooked_berries: 0,
+    wheat_seeds: 0,
+    potato_seeds: 0,
+    carrot_seeds: 0
+  },
+  autoBuy: {
+    wood: false,
+    stone: false,
+    wheat: false,
+    potato: false,
+    carrot: false,
+    berries: false,
+    cooked_wheat: false,
+    cooked_potato: false,
+    cooked_carrot: false,
+    cooked_berries: false,
+    wheat_seeds: false,
+    potato_seeds: false,
+    carrot_seeds: false
+  },
+  autoBuyMax: {
+    wood: 100,
+    stone: 100,
+    wheat: 50,
+    potato: 50,
+    carrot: 50,
+    berries: 50,
+    cooked_wheat: 20,
+    cooked_potato: 20,
+    cooked_carrot: 20,
+    cooked_berries: 20,
+    wheat_seeds: 10,
+    potato_seeds: 10,
+    carrot_seeds: 10
+  },
   gatherCooldown: 0,
   gatherType: null,
   jobs: {
@@ -50,7 +119,8 @@ const DEFAULT_STATE = {
   phaseElapsed: 0,
   townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1, workerAssigned: 0 },
   maxBuildingTier: 0,
-  playerConstructing: null
+  playerConstructing: null,
+  seeds: { wheat: 0, potato: 0, carrot: 0 }
 };
 
 // ESTADO ACTIVO
@@ -145,25 +215,87 @@ function loadGame() {
       }
       
       // Asegurar inicialización de variables de alimentación
-      if (!state.foodPriority) {
-        state.foodPriority = ['cooked', 'raw'];
-      } else {
-        state.foodPriority = state.foodPriority.filter(p => p !== 'packaged');
-        if (state.foodPriority.length === 0) state.foodPriority = ['cooked', 'raw'];
+      if (!state.foodPriority || state.foodPriority.includes('cooked') || state.foodPriority.includes('raw')) {
+        let newPriority = [];
+        const basePriority = state.foodPriority || ['cooked', 'raw'];
+        basePriority.forEach(p => {
+          if (p === 'cooked') {
+            newPriority.push('cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries');
+          } else if (p === 'raw') {
+            newPriority.push('wheat', 'potato', 'carrot', 'berries');
+          } else if (p !== 'packaged') {
+            newPriority.push(p);
+          }
+        });
+        state.foodPriority = newPriority.length > 0 ? newPriority : ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'];
       }
       if (typeof state.starvingColonists === 'undefined') state.starvingColonists = 0;
       if (typeof state.fedCookedToday === 'undefined') state.fedCookedToday = 0;
       if (typeof state.fedRawToday === 'undefined') state.fedRawToday = 0;
       if (typeof state.fedNoneToday === 'undefined') state.fedNoneToday = 0;
-      if (typeof state.allowConsumeCooked === 'undefined') state.allowConsumeCooked = true;
-      if (typeof state.allowConsumeRaw === 'undefined') state.allowConsumeRaw = true;
-      
-      // Migración para unificar frutos (berries) en comida (food)
-      if (parsed.hasOwnProperty('berries') && parsed.berries > 0) {
-        state.food = (state.food || 0) + parsed.berries;
+
+      // Migrar allowConsume
+      const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+      if (!state.allowConsume || typeof state.allowConsume !== 'object') {
+        state.allowConsume = {};
       }
-      if (state.hasOwnProperty('berries')) {
-        delete state.berries;
+      foodKeys.forEach(k => {
+        if (state.allowConsume[k] === undefined) {
+          if (k.startsWith('cooked_')) {
+            state.allowConsume[k] = parsed.hasOwnProperty('allowConsumeCooked') ? parsed.allowConsumeCooked : true;
+          } else {
+            state.allowConsume[k] = parsed.hasOwnProperty('allowConsumeRaw') ? parsed.allowConsumeRaw : true;
+          }
+        }
+      });
+
+      // Migrar autoSell, autoSellMin, autoBuy, autoBuyMax de todos los recursos
+      const allResources = [
+        'wood', 'stone',
+        'wheat', 'potato', 'carrot', 'berries',
+        'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries',
+        'wheat_seeds', 'potato_seeds', 'carrot_seeds'
+      ];
+
+      if (!state.autoSell) state.autoSell = {};
+      if (!state.autoSellMin) state.autoSellMin = {};
+      if (!state.autoBuy) state.autoBuy = {};
+      if (!state.autoBuyMax) state.autoBuyMax = {};
+
+      allResources.forEach(k => {
+        if (state.autoSell[k] === undefined) {
+          if (k === 'wood') state.autoSell[k] = parsed.autoSellWood || false;
+          else if (k === 'stone') state.autoSell[k] = parsed.autoSellStone || false;
+          else if (k === 'wheat' || k === 'potato' || k === 'carrot' || k === 'berries') state.autoSell[k] = parsed.autoSellFood || false;
+          else if (k.startsWith('cooked_')) state.autoSell[k] = parsed.autoSellCooked || false;
+          else state.autoSell[k] = false;
+        }
+        if (state.autoSellMin[k] === undefined) {
+          if (k === 'wood') state.autoSellMin[k] = parsed.autoSellWoodMin !== undefined ? parsed.autoSellWoodMin : 100;
+          else if (k === 'stone') state.autoSellMin[k] = parsed.autoSellStoneMin !== undefined ? parsed.autoSellStoneMin : 100;
+          else if (k === 'wheat' || k === 'potato' || k === 'carrot' || k === 'berries') state.autoSellMin[k] = parsed.autoSellFoodMin !== undefined ? parsed.autoSellFoodMin : 50;
+          else if (k.startsWith('cooked_')) state.autoSellMin[k] = parsed.autoSellCookedMin !== undefined ? parsed.autoSellCookedMin : 0;
+          else state.autoSellMin[k] = 0;
+        }
+        if (state.autoBuy[k] === undefined) {
+          state.autoBuy[k] = false;
+        }
+        if (state.autoBuyMax[k] === undefined) {
+          if (k === 'wood' || k === 'stone') state.autoBuyMax[k] = 100;
+          else if (k === 'wheat' || k === 'potato' || k === 'carrot' || k === 'berries') state.autoBuyMax[k] = 50;
+          else if (k.startsWith('cooked_')) state.autoBuyMax[k] = 20;
+          else state.autoBuyMax[k] = 10; // seeds
+        }
+      });
+
+      // Migración de cookedFood antigua a cooked_wheat
+      if (parsed.hasOwnProperty('cookedFood') && parsed.cookedFood > 0) {
+        state.cooked_wheat = (state.cooked_wheat || 0) + parsed.cookedFood;
+      }
+      
+      // Migración para unificar frutos (berries) en comida (food) - solo en saves antiguos
+      if (typeof parsed.wheat === 'undefined' && parsed.hasOwnProperty('berries') && parsed.berries > 0) {
+        state.berries = (state.berries || 0) + parsed.berries;
       }
 
       // --- MIGRACIONES PARA ARREGLOS DE EDIFICIOS INDUSTRIALES ---
@@ -321,6 +453,59 @@ function loadGame() {
         }
       }
       
+      if (Array.isArray(state.granaries)) {
+        state.granaries.forEach(g => {
+          g.isRunning = false;
+          g.elapsed = 0;
+          if (g.tier === undefined) g.tier = 1;
+          if (g.selectedCrop === undefined) g.selectedCrop = 'wheat';
+        });
+      } else {
+        const count = parseInt(state.granaries) || 0;
+        state.granaries = [];
+        for (let i = 0; i < count; i++) {
+          state.granaries.push({
+            id: i,
+            workerAssigned: 0,
+            tier: 1,
+            selectedCrop: 'wheat',
+            elapsed: 0,
+            isRunning: false,
+            isUnderConstruction: false,
+            constructionElapsed: 0,
+            constructionDuration: 5,
+            isUpgrading: false
+          });
+        }
+      }
+
+      if (typeof state.wheat === 'undefined') state.wheat = 0;
+      if (typeof state.potato === 'undefined') state.potato = 0;
+      if (typeof state.carrot === 'undefined') state.carrot = 0;
+      if (typeof state.berries === 'undefined') state.berries = 0;
+      if (typeof state.cooked_wheat === 'undefined') state.cooked_wheat = 0;
+      if (typeof state.cooked_potato === 'undefined') state.cooked_potato = 0;
+      if (typeof state.cooked_carrot === 'undefined') state.cooked_carrot = 0;
+      if (typeof state.cooked_berries === 'undefined') state.cooked_berries = 0;
+      
+      if (typeof state.seeds === 'undefined') {
+        state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+      } else {
+        if (typeof state.seeds.wheat === 'undefined') state.seeds.wheat = 0;
+        if (typeof state.seeds.potato === 'undefined') state.seeds.potato = 0;
+        if (typeof state.seeds.carrot === 'undefined') state.seeds.carrot = 0;
+      }
+
+      if (Array.isArray(state.bonfires)) {
+        state.bonfires.forEach(b => {
+          if (typeof b.selectedRecipe === 'undefined') {
+            b.selectedRecipe = 'wheat';
+          }
+        });
+      }
+      
+      updateGlobalFood();
+
       if (typeof recalculateRates === 'function') recalculateRates();
       if (typeof renderFoodPriorityList === 'function') renderFoodPriorityList();
       showToast("Partida cargada con éxito", "success");
@@ -357,8 +542,16 @@ function resetGame(isTestMode = false) {
     state.gold = 10000;
     state.wood = 10000;
     state.stone = 10000;
-    state.food = 10000;
-    state.cookedFood = 10000;
+    state.wheat = 10000;
+    state.potato = 10000;
+    state.carrot = 10000;
+    state.berries = 10000;
+    state.cooked_wheat = 10000;
+    state.cooked_potato = 10000;
+    state.cooked_carrot = 10000;
+    state.cooked_berries = 10000;
+    state.seeds = { wheat: 10000, potato: 10000, carrot: 10000 };
+    updateGlobalFood();
   }
   
   // Limpiar el contenido renderizado de forma segura
@@ -380,4 +573,32 @@ function resetGame(isTestMode = false) {
   if (typeof switchSubTab === 'function') switchSubTab(state.currentSubTab || 'viviendas');
   if (typeof renderFoodPriorityList === 'function') renderFoodPriorityList();
   if (typeof updateUI === 'function') updateUI();
+}
+
+function updateGlobalFood() {
+  const list = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  
+  if (!CONFIG || !CONFIG.FoodEquivalence) {
+    let total = 0;
+    list.forEach(key => {
+      const isAllowed = state.allowConsume && state.allowConsume[key] !== false;
+      if (isAllowed) {
+        const mult = key.startsWith('cooked_') ? 5 : 1;
+        total += (state[key] || 0) * mult;
+      }
+    });
+    state.food = total;
+    return;
+  }
+  
+  let total = 0;
+  list.forEach(key => {
+    const isAllowed = state.allowConsume && state.allowConsume[key] !== false;
+    if (isAllowed) {
+      const eqObj = CONFIG.FoodEquivalence[key];
+      const mult = eqObj ? eqObj.yield : 1;
+      total += (state[key] || 0) * mult;
+    }
+  });
+  state.food = total;
 }

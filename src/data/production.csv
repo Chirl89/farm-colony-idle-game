@@ -1,20 +1,28 @@
 Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info
 BasicGathering;wood_manual;Recolección de Madera;0;0;0;1;wood;
 BasicGathering;stone_manual;Recolección de Piedra;0;0;0;1;stone;
-BasicGathering;berries_manual;Recolección de Frutos;0;0;0;1;food;
+BasicGathering;berries_manual;Recolección de Frutos;0;0;0;1;berries;
 BasicGathering;wood_auto;Leñador;0;0;0;5;wood;
 BasicGathering;stone_auto;Cantero;0;0;0;5;stone;
-BasicGathering;berries_auto;Recolector de Frutos;0;0;0;8;food;
-Crop;wheat;Trigo;5;0;0;30;food;
-Crop;potato;Patata;10;0;0;100;food;
-Crop;carrot;Zanahoria;20;0;0;300;food;
-Processing;bonfire_auto;Cocinar Automático Fogata;0;0;0;1;cookedFood;Consumes:1:food
-Processing;bonfire_manual;Cocinar Manual Fogata;0;0;0;1;cookedFood;Consumes:1:food
-Processing;pot_auto;Cocinar Automático Caldero;0;0;0;1;cookedFood;Consumes:1:food
-Processing;pot_manual;Cocinar Manual Caldero;0;0;0;1;cookedFood;Consumes:1:food
-Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;1;cookedFood;Consumes:1:food
-Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;1;cookedFood;Consumes:1:food
+BasicGathering;berries_auto;Recolector de Frutos;0;0;0;8;berries;
+Crop;wheat;Trigo;5;0;0;30;wheat;
+Crop;potato;Patata;10;0;0;100;potato;
+Crop;carrot;Zanahoria;20;0;0;300;carrot;
+Processing;bonfire_auto;Cocinar Automático Fogata;0;0;0;1;cooked_selected;Consumes:1:raw_selected
+Processing;bonfire_manual;Cocinar Manual Fogata;0;0;0;1;cooked_selected;Consumes:1:raw_selected
+Processing;pot_auto;Cocinar Automático Caldero;0;0;0;1;cooked_selected;Consumes:1:raw_selected
+Processing;pot_manual;Cocinar Manual Caldero;0;0;0;1;cooked_selected;Consumes:1:raw_selected
+Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;1;cooked_selected;Consumes:1:raw_selected
+Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;1;cooked_selected;Consumes:1:raw_selected
 ProductionRate;lumbermill_prod;Producción Cabaña de Leñador;0;0;0;5;wood;
 ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;5;stone;
-System;day_duration;Duración del Día;0;0;0;0;;
-System;night_duration;Duración de la Noche;0;0;0;0;;
+Processing;granary_wheat_t1;Producir Semillas de Trigo T1;0;0;0;1;wheat_seeds;Consumes:5:wheat
+Processing;granary_wheat_t2;Producir Semillas de Trigo T2;0;0;0;1;wheat_seeds;Consumes:5:wheat
+Processing;granary_wheat_t3;Producir Semillas de Trigo T3;0;0;0;2;wheat_seeds;Consumes:10:wheat
+Processing;granary_potato_t1;Producir Semillas de Patata T1;0;0;0;1;potato_seeds;Consumes:5:potato
+Processing;granary_potato_t2;Producir Semillas de Patata T2;0;0;0;1;potato_seeds;Consumes:5:potato
+Processing;granary_potato_t3;Producir Semillas de Patata T3;0;0;0;2;potato_seeds;Consumes:10:potato
+Processing;granary_carrot_t1;Producir Semillas de Zanahoria T1;0;0;0;1;carrot_seeds;Consumes:5:carrot
+Processing;granary_carrot_t2;Producir Semillas de Zanahoria T2;0;0;0;1;carrot_seeds;Consumes:5:carrot
+Processing;granary_carrot_t3;Producir Semillas de Zanahoria T3;0;0;0;2;carrot_seeds;Consumes:10:carrot
+

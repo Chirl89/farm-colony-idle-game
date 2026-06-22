@@ -1,33 +1,46 @@
 Category;Type;Name;Duration
-Timing;day_duration;Duración del Día;2
-Timing;night_duration;Duración de la Noche;2
-Timing;basic_house;Construcción Choza;0.1
-Timing;upgraded_house;Mejora Choza a Cabaña;2
-Timing;lumbermill;Construcción Cabaña de Leñador;5
-Timing;quarry;Construcción Foso de Piedra;5
-Timing;farm;Construcción Granja;0.1
-Timing;market;Construcción Puesto de Mercado;5
-Timing;bonfire;Construcción Fogata;5
-Timing;townhall;Construcción Ayuntamiento T1;0.1
-Timing;townhall_t2;Mejora Ayuntamiento T2;2
-Timing;townhall_t3;Mejora Ayuntamiento T3;3
+Timing;day_duration;Duración del Día;30
+Timing;night_duration;Duración de la Noche;5
+Timing;basic_house;Construcción Choza;1
+Timing;upgraded_house;Mejora Choza a Cabaña;20
+Timing;lumbermill;Construcción Cabaña de Leñador;15
+Timing;quarry;Construcción Foso de Piedra;15
+Timing;farm;Construcción Granja;15
+Timing;market;Construcción Puesto de Mercado;20
+Timing;bonfire;Construcción Fogata;15
+Timing;townhall;Construcción Ayuntamiento T1;1
+Timing;townhall_t2;Mejora Ayuntamiento T2;25
+Timing;townhall_t3;Mejora Ayuntamiento T3;40
 Timing;wood_auto;Tiempo Leñador;1
 Timing;stone_auto;Tiempo Cantero;1
 Timing;berries_auto;Tiempo Recolector de Frutos;1
-Timing;wheat;Tiempo Crecimiento Trigo;3
-Timing;potato;Tiempo Crecimiento Patata;5
-Timing;carrot;Tiempo Crecimiento Zanahoria;10
-Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;0.2
-Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;0.2
-Timing;pot_auto;Tiempo Cocinar Automático Caldero;0.1
-Timing;pot_manual;Tiempo Cocinar Manual Caldero;0.1
-Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;0.05
-Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;0.05
-Timing;market_food;Tiempo Venta Automática Comida;0.1
-Timing;market_wood;Tiempo Venta Automática Madera;0.1
-Timing;market_stone;Tiempo Venta Automática Piedra;0.1
-Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1
-Timing;farm_plow;Tiempo de Arar Granja;0.5
-Timing;farm_sow;Tiempo de Sembrar Granja;0.5
-Timing;farm_water;Tiempo de Riego Inicial;0.25
-Timing;farm_water_daily;Tiempo de Riego Diario;0.0417
+Timing;lumbermill_prod;Producción Cabaña de Leñador;1
+Timing;quarry_prod;Producción Foso de Piedra;1
+Timing;wheat;Tiempo Crecimiento Trigo;30
+Timing;potato;Tiempo Crecimiento Patata;50
+Timing;carrot;Tiempo Crecimiento Zanahoria;100
+Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;5
+Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;3
+Timing;pot_auto;Tiempo Cocinar Automático Caldero;4
+Timing;pot_manual;Tiempo Cocinar Manual Caldero;2
+Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;3
+Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;1.5
+Timing;farm_plow;Tiempo de Arar Granja;3
+Timing;farm_sow;Tiempo de Sembrar Granja;3
+Timing;farm_water;Tiempo de Riego Inicial;2
+Timing;farm_water_daily;Tiempo de Riego Diario;1.5
+Timing;global_buy;Tiempo Compra Mercado;3
+Timing;global_sell;Tiempo Venta Mercado;3
+Timing;gather_cooldown;Cooldown de Recolección Manual;2
+Timing;granary;Construcción Granero;1
+Timing;granary_t2;Mejora Granero T2;25
+Timing;granary_t3;Mejora Granero T3;40
+Timing;granary_wheat_t1;Tiempo Semillas Trigo T1;3
+Timing;granary_wheat_t2;Tiempo Semillas Trigo T2;2
+Timing;granary_wheat_t3;Tiempo Semillas Trigo T3;3
+Timing;granary_potato_t1;Tiempo Semillas Patata T1;5
+Timing;granary_potato_t2;Tiempo Semillas Patata T2;3
+Timing;granary_potato_t3;Tiempo Semillas Patata T3;5
+Timing;granary_carrot_t1;Tiempo Semillas Zanahoria T1;10
+Timing;granary_carrot_t2;Tiempo Semillas Zanahoria T2;7
+Timing;granary_carrot_t3;Tiempo Semillas Zanahoria T3;10

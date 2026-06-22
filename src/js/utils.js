@@ -17,6 +17,10 @@ function initDOMReferences() {
     resCooked: document.getElementById('res-cooked'),
     resColonists: document.getElementById('res-colonists'),
     resFreeColonists: document.getElementById('res-free-colonists'),
+    resWheat: document.getElementById('res-wheat'),
+    resPotato: document.getElementById('res-potato'),
+    resCarrot: document.getElementById('res-carrot'),
+    resBerries: document.getElementById('res-berries'),
 
     rateGold: document.getElementById('rate-gold'),
     rateWood: document.getElementById('rate-wood'),
@@ -47,19 +51,10 @@ function initDOMReferences() {
     costBonfireStone: document.getElementById('cost-bonfire-stone'),
     countBonfires: document.getElementById('count-bonfires'),
 
-    autoSellFoodChk: document.getElementById('auto-sell-food-chk'),
-    autoSellFoodMin: document.getElementById('auto-sell-food-min'),
-    autoSellCookedChk: document.getElementById('auto-sell-cooked-chk'),
-    autoSellCookedMin: document.getElementById('auto-sell-cooked-min'),
-    autoSellWoodChk: document.getElementById('auto-sell-wood-chk'),
-    autoSellWoodMin: document.getElementById('auto-sell-wood-min'),
-    autoSellStoneChk: document.getElementById('auto-sell-stone-chk'),
-    autoSellStoneMin: document.getElementById('auto-sell-stone-min'),
-
-    btnSellFood: document.getElementById('btn-sell-food'),
-    btnSellCooked: document.getElementById('btn-sell-cooked'),
-    btnSellWood: document.getElementById('btn-sell-wood'),
-    btnSellStone: document.getElementById('btn-sell-stone'),
+    btnBuildGranary: document.getElementById('btn-build-granary'),
+    costGranaryWood: document.getElementById('cost-granary-wood'),
+    costGranaryStone: document.getElementById('cost-granary-stone'),
+    countGranaries: document.getElementById('count-granaries'),
 
     statsFreeColonists: document.getElementById('stats-free-colonists'),
     statsTotalColonists: document.getElementById('stats-total-colonists'),
@@ -70,7 +65,8 @@ function initDOMReferences() {
     jobStatLumberMill: document.getElementById('job-stat-lumbermill'),
     jobStatQuarry: document.getElementById('job-stat-quarry'),
     jobStatBonfire: document.getElementById('job-stat-bonfire'),
-    jobStatMarket: document.getElementById('job-stat-market')
+    jobStatMarket: document.getElementById('job-stat-market'),
+    jobStatGranary: document.getElementById('job-stat-granary')
   };
 }
 
@@ -96,7 +92,8 @@ async function createBackupZip(versionName) {
     'src/data/buildings.csv',
     'src/data/prices.csv',
     'src/data/production.csv',
-    'src/data/timings.csv'
+    'src/data/timings.csv',
+    'src/data/equivalences.csv'
   ];
   for (const path of srcFiles) {
     try {
@@ -189,4 +186,33 @@ function getFarmCycleElapsed(farm, crop) {
   }
 
   return startVal + localPct * (endVal - startVal);
+}
+
+// GESTIÓN GENÉRICA DE INVENTARIO (SOPORTA SEMILLAS Y RECURSOS ESTÁNDAR)
+function getResourceStock(key) {
+  if (key.endsWith('_seeds')) {
+    const crop = key.replace('_seeds', '');
+    return state.seeds ? (state.seeds[crop] || 0) : 0;
+  }
+  return state[key] || 0;
+}
+
+function deductResourceStock(key, amount) {
+  if (key.endsWith('_seeds')) {
+    const crop = key.replace('_seeds', '');
+    if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+    state.seeds[crop] = Math.max(0, (state.seeds[crop] || 0) - amount);
+  } else {
+    state[key] = Math.max(0, (state[key] || 0) - amount);
+  }
+}
+
+function addResourceStock(key, amount) {
+  if (key.endsWith('_seeds')) {
+    const crop = key.replace('_seeds', '');
+    if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+    state.seeds[crop] = (state.seeds[crop] || 0) + amount;
+  } else {
+    state[key] = (state[key] || 0) + amount;
+  }
 }

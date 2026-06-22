@@ -32,7 +32,7 @@ function assignBuildingWorker(type, index, val) {
     return;
   }
   
-  const isIndustrial = type === 'lumberMills' || type === 'quarries' || type === 'bonfires';
+  const isIndustrial = type === 'lumberMills' || type === 'quarries' || type === 'bonfires' || type === 'granaries';
   const maxWorkers = (building.isUnderConstruction || building.isUpgrading) ? 2 : (isIndustrial ? (building.tier || 1) : 1);
   
   if (val > 0) {
@@ -137,19 +137,23 @@ function startFarmCycle(idx) {
   if (farm.isUnderConstruction) return;
   if (farm.stage !== 'idle') return;
 
-  const crop = CROPS[farm.crop];
-  if (state.gold >= crop.cost) {
-    state.gold -= crop.cost;
+  const cropKey = farm.crop || 'wheat';
+  const crop = CROPS[cropKey];
+  if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+  
+  if ((state.seeds[cropKey] || 0) >= 1) {
+    state.seeds[cropKey] -= 1;
     farm.stageElapsed = 0;
     farm.stage = 'plow';
-    farm.activeCrop = farm.crop;
+    farm.activeCrop = cropKey;
     farm.needsWatering = false;
     farm.waterElapsed = 0;
     farm.wateringsCompleted = 0;
     recalculateRates();
     updateUI();
   } else {
-    showToast("Oro insuficiente para iniciar el ciclo", "warning");
+    const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+    showToast(`No tienes semillas de ${rawNames[cropKey] || cropKey} para iniciar el ciclo`, "warning");
   }
 }
 
@@ -540,16 +544,33 @@ function cookManually(idx) {
 
   if (!manualRec) return;
 
+  const recipe = bonfire.selectedRecipe || 'wheat';
   const minFood = manualRec.consume_amount;
-  if (state.food >= minFood) {
-    state.food -= minFood;
+  if ((state[recipe] || 0) >= minFood) {
+    state[recipe] -= minFood;
+    updateGlobalFood();
     bonfire.elapsed = 0;
     bonfire.isRunning = true;
     bonfire.mode = 'manual';
     recalculateRates();
     updateUI();
   } else {
-    showToast(`Comida cruda insuficiente para cocinar manualmente (Mín. ${minFood})`, "warning");
+    const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+    showToast(`${rawNames[recipe] || recipe} insuficiente para cocinar manualmente (Mín. ${minFood})`, "warning");
+  }
+}
+
+function changeBonfireRecipe(idx, recipe) {
+  if (state.bonfires && state.bonfires[idx]) {
+    const bonfire = state.bonfires[idx];
+    if (bonfire.isUnderConstruction) return;
+    if (bonfire.isRunning) {
+      showToast("No puedes cambiar la receta mientras cocinas", "warning");
+      return;
+    }
+    bonfire.selectedRecipe = recipe;
+    recalculateRates();
+    updateUI();
   }
 }
 
@@ -614,13 +635,14 @@ function upgradeTownHall() {
 
 // ASIGNAR ALDEANOS A TRABAJOS DE EDIFICIOS INDUSTRIALES DE FORMA GLOBAL
 function assignBuildingJob(type, val) {
-  const arrayKey = type === 'market' ? 'markets' : (type === 'bonfire' ? 'bonfires' : null);
+  const arrayKey = type === 'market' ? 'markets' : (type === 'bonfire' ? 'bonfires' : (type === 'granary' ? 'granaries' : null));
   if (!arrayKey || !state[arrayKey]) return;
   const list = state[arrayKey];
   
   const getJobNames = (t) => {
     if (t === 'market') return { singular: 'Puesto de Mercado', plural: 'Puestos de Mercado' };
     if (t === 'bonfire') return { singular: 'Fuego/Cocina', plural: 'Fuegos/Cocinas' };
+    if (t === 'granary') return { singular: 'Granero', plural: 'Graneros' };
     return { singular: 'Edificio', plural: 'Edificios' };
   };
   const names = getJobNames(type);
@@ -628,7 +650,7 @@ function assignBuildingJob(type, val) {
   if (val > 0) {
     if (state.freeColonists > 0) {
       const building = list.find(b => {
-        const maxWorkers = b.isUnderConstruction ? 2 : (type === 'bonfire' ? (b.tier || 1) : 1);
+        const maxWorkers = b.isUnderConstruction ? 2 : ((type === 'bonfire' || type === 'granary') ? (b.tier || 1) : 1);
         return (b.workerAssigned || 0) < maxWorkers;
       });
       if (building) {
@@ -665,6 +687,7 @@ function resetAllAssignments() {
     if (Array.isArray(state.farms)) state.farms.forEach(b => b.workerAssigned = 0);
     if (Array.isArray(state.markets)) state.markets.forEach(b => b.workerAssigned = 0);
     if (Array.isArray(state.bonfires)) state.bonfires.forEach(b => b.workerAssigned = 0);
+    if (Array.isArray(state.granaries)) state.granaries.forEach(b => b.workerAssigned = 0);
     if (Array.isArray(state.houses)) state.houses.forEach(b => b.workerAssigned = 0);
     if (state.townHall) state.townHall.workerAssigned = 0;
     
@@ -672,5 +695,154 @@ function resetAllAssignments() {
     showToast("Todos los aldeanos han sido liberados de sus tareas", "info");
     recalculateRates();
     updateUI();
+  }
+}
+
+// COMPRAR SEMILLAS
+function buySeed(type) {
+  const seedKey = `buy_${type}_seeds`;
+  if (!CONFIG || !CONFIG.Sales || !CONFIG.Sales[seedKey]) {
+    showToast("Configuración de semillas no encontrada", "warning");
+    return;
+  }
+  const recipe = CONFIG.Sales[seedKey];
+  const price = recipe.cost_gold || 0;
+  if (state.gold >= price) {
+    state.gold -= price;
+    if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+    state.seeds[type] = (state.seeds[type] || 0) + 1;
+    showToast(`¡Comprado: ${recipe.name} por ${price}🪙!`, "success");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast("Oro insuficiente para comprar la semilla", "warning");
+  }
+}
+
+function buildGranary() {
+  if (!state.townHall.built || state.townHall.isUnderConstruction) {
+    showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
+    return;
+  }
+  const cfg = CONFIG.Building.granary;
+  if (!cfg) return;
+  if (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+    state.wood -= cfg.cost_wood;
+    state.stone -= cfg.cost_stone;
+    state.granaries.push({
+      id: state.granaries.length,
+      tier: 1,
+      workerAssigned: 0,
+      isUnderConstruction: true,
+      constructionElapsed: 0,
+      constructionDuration: (cfg && cfg.duration) || 5,
+      isUpgrading: false,
+      selectedCrop: 'wheat',
+      elapsed: 0,
+      isRunning: false
+    });
+    showToast("🏗️ Comenzando construcción de Granero. ¡Asigna constructores para comenzar!", "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast("Recursos insuficientes para construir el Granero", "warning");
+  }
+}
+
+function upgradeGranary(idx) {
+  if (!state.granaries || !state.granaries[idx]) return;
+  const granary = state.granaries[idx];
+  if (granary.isUnderConstruction || granary.isUpgrading) {
+    showToast("Este granero ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = granary.tier || 1;
+  if (tier >= 3) {
+    showToast("Este granero ya está en el nivel máximo.", "info");
+    return;
+  }
+  
+  let cfg;
+  if (tier === 1) {
+    if (state.maxBuildingTier < 2) {
+      showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Granero a Tier 2.", "warning");
+      return;
+    }
+    cfg = CONFIG.Building.granary_t2;
+  } else if (tier === 2) {
+    if (state.maxBuildingTier < 3) {
+      showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Granero a Tier 3.", "warning");
+      return;
+    }
+    cfg = CONFIG.Building.granary_t3;
+  }
+  
+  if (!cfg) return;
+  
+  if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+    state.gold -= cfg.cost_gold;
+    state.wood -= cfg.cost_wood;
+    state.stone -= cfg.cost_stone;
+    
+    granary.isUpgrading = true;
+    granary.upgradingToTier = tier + 1;
+    granary.constructionElapsed = 0;
+    granary.constructionDuration = (cfg && cfg.duration) || 5;
+    
+    showToast(`🏗️ Comenzando mejora de Granero #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Granero (Oro: ${cfg.cost_gold}, Madera: ${cfg.cost_wood}, Piedra: ${cfg.cost_stone})`, "warning");
+  }
+}
+
+function changeGranaryRecipe(idx, cropKey) {
+  if (state.granaries && state.granaries[idx]) {
+    const granary = state.granaries[idx];
+    if (granary.isUnderConstruction) return;
+    if (granary.isRunning) {
+      showToast("No puedes cambiar el cultivo mientras se procesa", "warning");
+      return;
+    }
+    granary.selectedCrop = cropKey;
+    recalculateRates();
+    updateUI();
+  }
+}
+
+function processGranaryManually(idx) {
+  if (!state.granaries || !state.granaries[idx]) return;
+  const granary = state.granaries[idx];
+  if (granary.isUnderConstruction) return;
+  if (granary.isRunning) {
+    showToast("Este granero ya está procesando", "warning");
+    return;
+  }
+  
+  const cropKey = granary.selectedCrop || 'wheat';
+  const tier = granary.tier || 1;
+  const recipeKey = `granary_${cropKey}_t${tier}`;
+  const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+  
+  if (!recipe) {
+    showToast("Receta no encontrada para este nivel de granero", "warning");
+    return;
+  }
+  
+  const minFood = recipe.consume_amount || 5;
+  const consumeResource = recipe.consume_type || cropKey;
+  
+  if ((state[consumeResource] || 0) >= minFood) {
+    state[consumeResource] -= minFood;
+    updateGlobalFood();
+    granary.elapsed = 0;
+    granary.isRunning = true;
+    granary.mode = 'manual';
+    recalculateRates();
+    updateUI();
+  } else {
+    const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+    showToast(`${rawNames[consumeResource] || consumeResource} insuficiente para procesar manualmente (Mín. ${minFood})`, "warning");
   }
 }

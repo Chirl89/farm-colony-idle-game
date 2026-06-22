@@ -12,3 +12,7 @@ Building;kitchen_upgrade;Mejorar a Cocina de Taberna;100;50;0;0;;
 Building;townhall;Ayuntamiento T1;0;10;5;0;;
 Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;;
 Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;;
+Building;granary;Granero;0;50;30;0;0;;
+Building;granary_t2;Mejorar Granero T2;80;80;50;0;0;;
+Building;granary_t3;Mejorar Granero T3;150;120;80;0;0;;
+

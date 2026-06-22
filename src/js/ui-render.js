@@ -408,11 +408,12 @@ function renderFarms() {
         `;
       } else {
         let cropsOptionsHtml = '';
-        Object.keys(CROPS).forEach(key => {
+        for (let key in CROPS) {
           const crop = CROPS[key];
+          const isSelected = farm.crop === key ? 'selected' : '';
           const emoji = key === 'wheat' ? '🌾' : (key === 'potato' ? '🥔' : '🥕');
-          cropsOptionsHtml += `<option value="${key}">${emoji} ${crop.name} (Costo: ${crop.cost}🪙, Duración: ${crop.duration} días, Rend: ${crop.yield} Comida)</option>`;
-        });
+          cropsOptionsHtml += `<option value="${key}" ${isSelected}>${emoji} ${crop.name} (Costo: 1 Semilla, Duración: ${crop.duration} segundos, Rend: ${crop.yield} Comida)</option>`;
+        }
         html += `
           <div class="building-box" id="farm-box-${idx}">
             <div class="building-box-header">
@@ -420,10 +421,12 @@ function renderFarms() {
               <span class="building-box-prod" id="farm-prod-${idx}">0 Comida/día</span>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-              <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)" ${farm.stage !== 'idle' ? 'disabled' : ''}>
-                ${cropsOptionsHtml}
-              </select>
+              <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.2rem;">
+                <span style="font-weight: 500;">Siguiente cultivo:</span>
+                <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; cursor: pointer; outline: none;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
+                  ${cropsOptionsHtml}
+                </select>
+              </div>
               
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.1rem;">
                 <span id="farm-status-${idx}" style="font-size: 0.75rem; color: var(--color-text-muted);">Inactiva</span>
@@ -440,7 +443,6 @@ function renderFarms() {
               <div class="progress-bar-container" style="height: 4px; margin: 0.1rem 0; background-color: rgba(255,255,255,0.05);">
                 <div class="progress-bar-fill" id="farm-global-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%;"></div>
               </div>
-            </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
               <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
@@ -491,10 +493,7 @@ function renderFarms() {
       } else {
         const select = document.getElementById(`farm-select-${idx}`);
         if (select) {
-          if (select.value !== farm.crop) {
-            select.value = farm.crop;
-          }
-          select.disabled = farm.stage !== 'idle';
+          select.disabled = false;
         }
         
         const pBar = document.getElementById(`farm-progress-${idx}`);
@@ -507,8 +506,10 @@ function renderFarms() {
         const crop = CROPS[farm.crop];
         const farmTier = farm.tier || 1;
         const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
-        const cycleDuration = 1.5 + 2 * (crop ? crop.duration : 1);
-        const rate = crop ? ((crop.yield * tierMultiplier) / cycleDuration) : 0;
+        
+        const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
+        const cycleDurationInDays = crop ? (getFarmCycleTotal(crop) / dayDuration) : 1;
+        const rate = crop ? ((crop.yield * tierMultiplier) / cycleDurationInDays) : 0;
         const isWorking = farm.stage !== 'idle';
         const eff = getWorkEfficiency();
         const yieldVal = rate * eff;
@@ -583,32 +584,32 @@ function renderFarms() {
           
           if (farm.needsWatering) {
             pct = Math.min(100, ((farm.waterElapsed || 0) / waterDailyDur) * 100);
-            const rem = Math.max(waterDailyDur - (farm.waterElapsed || 0), 0).toFixed(2);
+            const rem = Math.max(waterDailyDur - (farm.waterElapsed || 0), 0).toFixed(1);
             if (state.timePhase === 'night') {
-              text = `💧 Regar (Pausado: Es de noche) (Faltan ${rem}d)`;
+              text = `💧 Regar (Pausado: Es de noche) (Faltan ${rem}s)`;
             } else if (farm.workerAssigned === 0) {
-              text = `💧 Regar (Pausado: Asigna aldeano) (Faltan ${rem}d)`;
+              text = `💧 Regar (Pausado: Asigna aldeano) (Faltan ${rem}s)`;
             } else {
-              text = `💧 Regando (Faltan ${rem}d)`;
+              text = `💧 Regando (Faltan ${rem}s)`;
             }
           } else {
             pct = Math.min(100, ((farm.stageElapsed || 0) / stageDuration) * 100);
-            const rem = Math.max(stageDuration - (farm.stageElapsed || 0), 0).toFixed(2);
+            const rem = Math.max(stageDuration - (farm.stageElapsed || 0), 0).toFixed(1);
             
-            text = `${stageEmoji} ${stageName} (Faltan ${rem}d)`;
+            text = `${stageEmoji} ${stageName} (Faltan ${rem}s)`;
             if (isNightGrow && state.timePhase === 'night') {
-              text = `🌙 Sigue creciendo de noche (${rem}d)`;
+              text = `🌙 Sigue creciendo de noche (${rem}s)`;
             } else if (requiresWorker && (state.timePhase === 'night' || farm.workerAssigned === 0)) {
               if (state.timePhase === 'night') {
-                text = `${stageEmoji} ${stageName} (Pausado: Es de noche) (${rem}d)`;
+                text = `${stageEmoji} ${stageName} (Pausado: Es de noche) (${rem}s)`;
               } else {
-                text = `${stageEmoji} ${stageName} (Pausado: Asigna aldeano) (${rem}d)`;
+                text = `${stageEmoji} ${stageName} (Pausado: Asigna aldeano) (${rem}s)`;
               }
             }
           }
           
           if (pBar) pBar.style.width = `${pct}%`;
-          if (statusText) statusText.innerText = text;
+          if (statusText) statusText.innerText = `[${activeCropObj.name}] ${text}`;
           if (btn) {
             btn.innerText = 'Cultivando...';
             btn.disabled = true;
@@ -828,6 +829,7 @@ function renderBonfires() {
           </div>
         `;
       } else {
+        const recipe = bonfire.selectedRecipe || 'wheat';
         html += `
           <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
             <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${bonfire.tier || 1}</div>
@@ -838,6 +840,16 @@ function renderBonfires() {
             
             <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
               <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Receta seleccionada:</span>
+              <select id="bonfire-recipe-${idx}" onchange="changeBonfireRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
+                <option value="wheat" ${recipe === 'wheat' ? 'selected' : ''}>🍞 Trigo -> Pan</option>
+                <option value="potato" ${recipe === 'potato' ? 'selected' : ''}>🥔 Patata -> Patata Asada</option>
+                <option value="carrot" ${recipe === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Zanahoria Asada</option>
+                <option value="berries" ${recipe === 'berries' ? 'selected' : ''}>🍯 Frutos -> Mermelada</option>
+              </select>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
@@ -902,6 +914,7 @@ function renderBonfires() {
         const tierText = document.getElementById(`bonfire-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
         const tierBadge = document.getElementById(`bonfire-tier-badge-${idx}`);
+        const recipeSelect = document.getElementById(`bonfire-recipe-${idx}`);
         
         let autoRec, manualRec;
         if (bonfire.tier === 1) {
@@ -936,87 +949,121 @@ function renderBonfires() {
           }
         }
 
+        const recipe = bonfire.selectedRecipe || 'wheat';
+        if (recipeSelect) {
+          if (document.activeElement !== recipeSelect && recipeSelect.value !== recipe) {
+            recipeSelect.value = recipe;
+          }
+          recipeSelect.disabled = bonfire.isRunning;
+        }
+
         const minFood = autoRec ? autoRec.consume_amount : 1;
         if (allocText) allocText.innerText = `${bonfire.workerAssigned} / ${bonfire.tier || 1}`;
-        if (btn) btn.disabled = bonfire.isRunning || state.food < minFood;
+        if (btn) btn.disabled = bonfire.isRunning || (state[recipe] || 0) < minFood;
 
         if (bonfire.isRunning) {
           const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
           const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
           if (pBar) pBar.style.width = `${pct}%`;
           const rem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
-          if (statusText) statusText.innerText = `Cocinando (Faltan ${rem}d)`;
+          if (statusText) statusText.innerText = `Cocinando (Faltan ${rem}s)`;
         } else {
           if (pBar) pBar.style.width = `0%`;
-          if (statusText) statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando comida (Mín. ${minFood})...` : 'Inactiva';
+          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+          const ingredientName = rawNames[recipe] || recipe;
+          if (statusText) statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactiva';
         }
       }
     });
   }
 }
 
-let lastMarketsConstructionStatus = '';
-function renderMarkets() {
-  const container = document.getElementById('active-markets-list');
+let lastGranariesConstructionStatus = '';
+function renderGranaries() {
+  const container = document.getElementById('active-granaries-list');
   if (!container) return;
-  const count = state.markets ? state.markets.length : 0;
+  const count = state.granaries ? state.granaries.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.markets ? state.markets.map(m => m.isUnderConstruction ? '1' : '0').join(',') : '';
-  if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastMarketsConstructionStatus) {
-    lastMarketsConstructionStatus = currentStatus;
+  const currentStatus = state.granaries ? state.granaries.map(g => g.isUnderConstruction ? '1' : '0').join(',') : '';
+  if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastGranariesConstructionStatus) {
+    lastGranariesConstructionStatus = currentStatus;
     if (count === 0) {
       if (!container.querySelector('.placeholder-text')) {
-        container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Puesto de Mercado construido</div>`;
+        container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Granero construido</div>`;
       }
       return;
     }
     let html = '';
-    state.markets.forEach((market, idx) => {
-      if (market.isUnderConstruction) {
+    state.granaries.forEach((granary, idx) => {
+      if (granary.isUnderConstruction) {
         html += `
-          <div class="building-box" id="market-box-${idx}" style="position: relative;">
+          <div class="building-box" id="granary-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="granary-tier-badge-${idx}">Construyendo</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="market-title-${idx}">🏗️ Puesto de Mercado #${idx + 1} (En construcción)</span>
-              <span class="building-box-prod" id="market-status-${idx}">En construcción</span>
+              <span class="building-box-title" id="granary-title-${idx}">🏗️ Granero #${idx + 1} (En construcción)</span>
+              <span class="building-box-prod" id="granary-status-${idx}">En construcción</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-              <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
+              <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="market-construct-btn-${idx}" onclick="togglePlayerConstruct('markets', ${idx})">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
+              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="granary-construct-btn-${idx}" onclick="togglePlayerConstruct('granaries', ${idx})">
                 🔨 Iniciar Construcción
               </button>
               <div style="display: flex; align-items: center; gap: 0.4rem;">
                 <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
                 <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="market-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="granary-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, 1)">+</button>
                 </div>
               </div>
             </div>
           </div>
         `;
       } else {
+        const crop = granary.selectedCrop || 'wheat';
         html += `
-          <div class="building-box" id="market-box-${idx}" style="position: relative;">
+          <div class="building-box" id="granary-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="granary-tier-badge-${idx}">Tier ${granary.tier || 1}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="market-title-${idx}">📈 Puesto de Mercado #${idx + 1}</span>
-              <span class="building-box-prod" id="market-status-${idx}">Inactivo</span>
+              <span class="building-box-title" id="granary-title-${idx}">🌾 Granero #${idx + 1}</span>
+              <span class="building-box-prod" id="granary-status-${idx}">Inactivo</span>
             </div>
             
             <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-              <div class="progress-bar-fill" id="market-progress-${idx}" style="background: linear-gradient(90deg, hsl(var(--color-gold)) 0%, #fbbf24 100%);"></div>
+              <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Cultivo seleccionado:</span>
+              <select id="granary-crop-${idx}" onchange="changeGranaryRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
+                <option value="wheat" ${crop === 'wheat' ? 'selected' : ''}>🌾 Trigo -> Semillas Trigo</option>
+                <option value="potato" ${crop === 'potato' ? 'selected' : ''}>🥔 Patata -> Semillas Patata</option>
+                <option value="carrot" ${crop === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Semillas Zanahoria</option>
+              </select>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted);">Asignar mercader:</span>
+              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
+                Procesar Manual
+              </button>
               
-              <div class="colonist-allocator">
-                <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, -1)">-</button>
-                <span class="allocator-val" id="market-alloc-${idx}">0</span>
-                <button class="allocator-btn" onclick="assignBuildingWorker('markets', ${idx}, 1)">+</button>
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
+                <div class="colonist-allocator">
+                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, -1)">-</button>
+                  <span class="allocator-val" id="granary-alloc-${idx}">0</span>
+                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, 1)">+</button>
+                </div>
               </div>
+            </div>
+
+            <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+              <span id="granary-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Granero)</span>
+              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
+                Mejorar
+              </button>
             </div>
           </div>
         `;
@@ -1026,17 +1073,28 @@ function renderMarkets() {
   }
   
   if (count > 0) {
-    state.markets.forEach((market, idx) => {
-      if (market.isUnderConstruction) {
-        const pBar = document.getElementById(`market-progress-${idx}`);
-        const pct = Math.min(100, (market.constructionElapsed / market.constructionDuration) * 100);
+    state.granaries.forEach((granary, idx) => {
+      if (granary.isUnderConstruction || granary.isUpgrading) {
+        const isUpgrading = granary.isUpgrading;
+        const duration = granary.constructionDuration || 5;
+        const pct = Math.min(100, (granary.constructionElapsed / duration) * 100);
+        
+        const pBar = document.getElementById(`granary-progress-${idx}`);
         if (pBar) pBar.style.width = `${pct}%`;
         
-        const allocText = document.getElementById(`market-alloc-${idx}`);
-        if (allocText) allocText.innerText = `${market.workerAssigned} / 2`;
+        const allocText = document.getElementById(`granary-alloc-${idx}`);
+        if (allocText) allocText.innerText = `${granary.workerAssigned} / 2`;
         
-        const btn = document.getElementById(`market-construct-btn-${idx}`);
-        const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'markets' && state.playerConstructing.index === idx;
+        const statusText = document.getElementById(`granary-status-${idx}`);
+        if (statusText) statusText.innerText = isUpgrading ? `Mejorando a Tier ${granary.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
+        
+        const titleText = document.getElementById(`granary-title-${idx}`);
+        if (titleText) {
+          titleText.innerHTML = isUpgrading ? `🏗️ Granero #${idx + 1} (Mejorando...)` : `🏗️ Granero #${idx + 1} (En construcción)`;
+        }
+        
+        const btn = document.getElementById(`granary-construct-btn-${idx}`);
+        const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'granaries' && state.playerConstructing.index === idx;
         if (btn) {
           if (isPlayerOnIt) {
             btn.innerText = '🔨 Construyendo...';
@@ -1051,25 +1109,182 @@ function renderMarkets() {
           }
         }
       } else {
-        const pBar = document.getElementById(`market-progress-${idx}`);
-        const statusText = document.getElementById(`market-status-${idx}`);
-        const allocText = document.getElementById(`market-alloc-${idx}`);
-        const titleText = document.getElementById(`market-title-${idx}`);
+        const pBar = document.getElementById(`granary-progress-${idx}`);
+        const btn = document.getElementById(`granary-btn-${idx}`);
+        const statusText = document.getElementById(`granary-status-${idx}`);
+        const allocText = document.getElementById(`granary-alloc-${idx}`);
+        const titleText = document.getElementById(`granary-title-${idx}`);
+        const tierText = document.getElementById(`granary-tier-text-${idx}`);
+        const upgradeBtn = document.getElementById(`granary-upgrade-btn-${idx}`);
+        const tierBadge = document.getElementById(`granary-tier-badge-${idx}`);
+        const cropSelect = document.getElementById(`granary-crop-${idx}`);
         
-        if (titleText) titleText.innerHTML = `📈 Puesto de Mercado #${idx + 1}`;
-        if (allocText) allocText.innerText = `${market.workerAssigned} / 1`;
-
-        if (market.isRunning) {
-          const duration = market.targetDuration || 0.1;
-          const pct = Math.min(100, (market.elapsed / duration) * 100);
+        const cropKey = granary.selectedCrop || 'wheat';
+        const tier = granary.tier || 1;
+        const recipeKey = `granary_${cropKey}_t${tier}`;
+        const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+        
+        let bName = tier === 1 ? 'Granero' : (tier === 2 ? 'Mejorar Granero T2' : 'Mejorar Granero T3');
+        bName = tier === 1 ? 'Granero T1' : (tier === 2 ? 'Granero T2' : 'Granero T3');
+        if (titleText) titleText.innerHTML = `🌾 ${bName} #${idx + 1}`;
+        if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
+        if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
+        
+        if (upgradeBtn) {
+          if (tier === 1) {
+            upgradeBtn.innerText = `Mejorar (🪙80, 🪵80, 🪨50)`;
+            const canAfford = state.gold >= 80 && state.wood >= 80 && state.stone >= 50;
+            upgradeBtn.disabled = !canAfford;
+            upgradeBtn.style.display = 'block';
+          } else if (tier === 2) {
+            upgradeBtn.innerText = `Mejorar (🪙150, 🪵120, 🪨80)`;
+            const canAfford = state.gold >= 150 && state.wood >= 120 && state.stone >= 80;
+            upgradeBtn.disabled = !canAfford;
+            upgradeBtn.style.display = 'block';
+          } else {
+            upgradeBtn.style.display = 'none';
+          }
+        }
+        
+        if (cropSelect) {
+          if (document.activeElement !== cropSelect && cropSelect.value !== cropKey) {
+            cropSelect.value = cropKey;
+          }
+          cropSelect.disabled = granary.isRunning;
+        }
+        
+        const minFood = recipe ? recipe.consume_amount : 5;
+        if (allocText) allocText.innerText = `${granary.workerAssigned} / ${tier}`;
+        if (btn) btn.disabled = granary.isRunning || (state[cropKey] || 0) < minFood;
+        
+        if (granary.isRunning) {
+          const targetDuration = recipe ? recipe.duration : 3.0;
+          const pct = Math.min(100, (granary.elapsed / targetDuration) * 100);
           if (pBar) pBar.style.width = `${pct}%`;
-          if (statusText) statusText.innerText = `Vendiendo...`;
+          const rem = Math.max(targetDuration - granary.elapsed, 0).toFixed(0);
+          if (statusText) statusText.innerText = `Procesando (Faltan ${rem}s)`;
         } else {
           if (pBar) pBar.style.width = `0%`;
-          if (statusText) statusText.innerText = market.workerAssigned > 0 ? 'Comerciando' : 'Inactivo';
+          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+          const ingredientName = rawNames[cropKey] || cropKey;
+          if (statusText) statusText.innerText = granary.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactivo';
         }
       }
     });
+  }
+}
+
+let lastMarketUIBuilt = null;
+let lastMarketUIUnderConst = null;
+
+function renderMarketBuildingUI() {
+  const container = document.getElementById('market-building-ui-container');
+  if (!container) return;
+
+  const count = state.markets ? state.markets.length : 0;
+  const built = count > 0 && !state.markets[0].isUnderConstruction;
+  const underConst = count > 0 && state.markets[0].isUnderConstruction;
+
+  // Render container if state changed
+  if (lastMarketUIBuilt !== built || lastMarketUIUnderConst !== underConst || container.children.length === 0) {
+    lastMarketUIBuilt = built;
+    lastMarketUIUnderConst = underConst;
+
+    let html = '';
+    if (count === 0) {
+      const cfg = CONFIG.Building.market || { cost_wood: 60, cost_stone: 50 };
+      html = `
+        <div class="building-item" style="border: none; background: none; padding: 0;">
+          <div class="building-info">
+            <span class="building-desc">Habilita el Comercio Automatizado para comprar y vender recursos de forma inteligente con mercaderes.</span>
+            <div class="costs-list" style="margin-top: 0.5rem;">
+              <span class="cost-badge" id="cost-market-wood">🪵 ${cfg.cost_wood} Madera</span>
+              <span class="cost-badge" id="cost-market-stone">🪨 ${cfg.cost_stone} Piedra</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary" style="width: 100%; margin-top: 1rem; background: hsl(var(--color-primary)); color: #fff; border-color: hsl(var(--color-primary));" id="btn-build-market" onclick="buildMarket()">
+            🔨 Construir Puesto de Mercado
+          </button>
+        </div>
+      `;
+    } else if (underConst) {
+      html = `
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <span style="font-size: 0.85rem; color: var(--color-text-muted);">Construyendo el Puesto de Mercado para habilitar el comercio.</span>
+          <div class="progress-bar-container" style="height: 10px; margin: 0.5rem 0; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; width: 100%;">
+            <div class="progress-bar-fill" id="market-build-progress-bar" style="height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); transition: width 0.1s ease-out; width: 0%;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; flex-wrap: wrap; gap: 0.75rem;">
+            <span id="market-build-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: 0%</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.8rem; color: var(--color-text-muted);">Constructores:</span>
+              <div class="colonist-allocator">
+                <button class="allocator-btn" onclick="assignBuildingWorker('markets', 0, -1)">-</button>
+                <span class="allocator-val" id="market-build-alloc">0</span>
+                <button class="allocator-btn" onclick="assignBuildingWorker('markets', 0, 1)">+</button>
+              </div>
+            </div>
+            <button class="btn" id="btn-construct-market" onclick="togglePlayerConstruct('markets', 0)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+              Iniciar Construcción
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      html = `
+        <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.75rem 1rem; border-radius: 8px;">
+          <span style="font-size: 1.5rem;">✅</span>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-size: 0.9rem; font-weight: 700; color: #34d399;">Edificio Construido y Operativo</span>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">El Puesto de Mercado está activo. Puedes gestionar mercaderes y automatización desde la pestaña de <strong>Comercio</strong>.</span>
+          </div>
+        </div>
+      `;
+    }
+    container.innerHTML = html;
+  }
+
+  // Update dynamic values
+  if (count === 0) {
+    const costMarketWood = document.getElementById('cost-market-wood');
+    const costMarketStone = document.getElementById('cost-market-stone');
+    const cfg = CONFIG.Building.market || { cost_wood: 60, cost_stone: 50 };
+    toggleCostAffordability(costMarketWood, state.wood, cfg.cost_wood);
+    toggleCostAffordability(costMarketStone, state.stone, cfg.cost_stone);
+    
+    const btnBuild = document.getElementById('btn-build-market');
+    if (btnBuild) {
+      btnBuild.disabled = !(state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone);
+    }
+  } else if (underConst) {
+    const market = state.markets[0];
+    const duration = market.constructionDuration || 5;
+    const pct = Math.min(100, (market.constructionElapsed / duration) * 100);
+
+    const pBar = document.getElementById('market-build-progress-bar');
+    if (pBar) pBar.style.width = `${pct}%`;
+
+    const pText = document.getElementById('market-build-progress-text');
+    if (pText) pText.innerText = `Progreso: ${pct.toFixed(0)}%`;
+
+    const allocVal = document.getElementById('market-build-alloc');
+    if (allocVal) allocVal.innerText = `${market.workerAssigned || 0} / 2`;
+
+    const isPlayerOnMarket = state.playerConstructing && state.playerConstructing.type === 'markets' && state.playerConstructing.index === 0;
+    const btn = document.getElementById('btn-construct-market');
+    if (btn) {
+      if (isPlayerOnMarket) {
+        btn.innerText = '🔨 Construyendo...';
+        btn.className = 'btn btn-primary';
+        btn.style.background = 'hsl(var(--color-primary))';
+        btn.style.borderColor = 'hsl(var(--color-primary))';
+      } else {
+        btn.innerText = '🔨 Iniciar Construcción';
+        btn.className = 'btn btn-secondary';
+        btn.style.background = '';
+        btn.style.borderColor = '';
+      }
+    }
   }
 }
 
@@ -1091,11 +1306,15 @@ function updateRatesUI() {
     DOM.rateGold.className = (calculatedRates.gold > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
   }
 
-  DOM.rateWood.textContent = formatRate(calculatedRates.wood);
-  DOM.rateWood.className = (calculatedRates.wood > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+  if (DOM.rateWood) {
+    DOM.rateWood.textContent = formatRate(calculatedRates.wood);
+    DOM.rateWood.className = (calculatedRates.wood > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+  }
 
-  DOM.rateStone.textContent = formatRate(calculatedRates.stone);
-  DOM.rateStone.className = (calculatedRates.stone > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+  if (DOM.rateStone) {
+    DOM.rateStone.textContent = formatRate(calculatedRates.stone);
+    DOM.rateStone.className = (calculatedRates.stone > 0.001) ? 'resource-rate rate-positive' : 'resource-rate rate-neutral';
+  }
 
   DOM.rateFood.textContent = formatRate(calculatedRates.food);
   if (calculatedRates.food > 0.001) {
@@ -1120,11 +1339,17 @@ function updateRatesUI() {
 
 // Actualiza variables numéricas de recursos
 function updateUI() {
+  renderDetailedFoodInventory();
+  renderDetailedResourcesInventory();
   DOM.resGold.textContent = Math.floor(state.gold);
-  DOM.resWood.textContent = Math.floor(state.wood);
-  DOM.resStone.textContent = Math.floor(state.stone);
+  if (DOM.resWood) DOM.resWood.textContent = Math.floor(state.wood);
+  if (DOM.resStone) DOM.resStone.textContent = Math.floor(state.stone);
   DOM.resFood.textContent = Math.floor(state.food);
   if (DOM.resCooked) DOM.resCooked.textContent = Math.floor(state.cookedFood || 0);
+  if (DOM.resWheat) DOM.resWheat.textContent = Math.floor(state.wheat || 0);
+  if (DOM.resPotato) DOM.resPotato.textContent = Math.floor(state.potato || 0);
+  if (DOM.resCarrot) DOM.resCarrot.textContent = Math.floor(state.carrot || 0);
+  if (DOM.resBerries) DOM.resBerries.textContent = Math.floor(state.berries || 0);
   if (state.starvingColonists > 0) {
     DOM.resColonists.innerHTML = `${state.currentColonists} / ${state.maxPopulation} <span style="font-size: 0.8rem; color: #f87171; font-weight: bold; margin-left: 0.25rem;">(⚠️${state.starvingColonists})</span>`;
   } else {
@@ -1148,19 +1373,19 @@ function updateUI() {
   DOM.allocStone.textContent = state.jobs.stone;
   DOM.allocBerries.textContent = state.jobs.berries;
   
-  const dayDuration = CONFIG.System && CONFIG.System.day_duration ? CONFIG.System.day_duration.duration : 30.0;
+  const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
 
   const woodDuration = CONFIG.BasicGathering.wood_auto.duration;
   const woodYield = CONFIG.BasicGathering.wood_auto.yield;
-  DOM.woodAutoInfo.textContent = `+${(state.jobs.wood * (woodYield / woodDuration)).toFixed(0)}/d`;
+  DOM.woodAutoInfo.textContent = `+${(state.jobs.wood * (woodYield / (woodDuration / dayDuration))).toFixed(0)}/d`;
   
   const stoneDuration = CONFIG.BasicGathering.stone_auto.duration;
   const stoneYield = CONFIG.BasicGathering.stone_auto.yield;
-  DOM.stoneAutoInfo.textContent = `+${(state.jobs.stone * (stoneYield / stoneDuration)).toFixed(0)}/d`;
+  DOM.stoneAutoInfo.textContent = `+${(state.jobs.stone * (stoneYield / (stoneDuration / dayDuration))).toFixed(0)}/d`;
 
   const berriesDuration = CONFIG.BasicGathering.berries_auto.duration;
   const berriesYield = CONFIG.BasicGathering.berries_auto.yield;
-  DOM.berriesAutoInfo.textContent = `+${(state.jobs.berries * (berriesYield / berriesDuration)).toFixed(0)}/d`;
+  DOM.berriesAutoInfo.textContent = `+${(state.jobs.berries * (berriesYield / (berriesDuration / dayDuration))).toFixed(0)}/d`;
 
   // Renderizar y actualizar los edificios individuales en tab-production
   renderHouses();
@@ -1168,7 +1393,8 @@ function updateUI() {
   renderQuarries();
   renderFarms();
   renderBonfires();
-  renderMarkets();
+  renderGranaries();
+  renderMarketBuildingUI();
 
   // Viviendas construidas
   if (DOM.countBasicHouses) DOM.countBasicHouses.textContent = `Construidas: ${state.basicHouses}`;
@@ -1179,22 +1405,23 @@ function updateUI() {
   document.getElementById('count-farms').innerText = `Construidas: ${state.farms ? state.farms.length : 0}`;
   if (DOM.countBonfires) DOM.countBonfires.innerText = `Construidas: ${state.bonfires ? state.bonfires.length : 0}`;
   document.getElementById('count-markets').innerText = `Construidos: ${state.markets ? state.markets.length : 0}`;
+  if (DOM.countGranaries) DOM.countGranaries.innerText = `Construidos: ${state.granaries ? state.granaries.length : 0}`;
 
   // Sincronizar inputs de auto-venta en Comercio y controlar visibilidad
-  const marketControls = document.getElementById('market-active-controls');
-  const countMarkets = state.markets ? state.markets.length : 0;
+  const marketLockedMsg = document.getElementById('market-locked-msg');
+  const marketActiveHeader = document.getElementById('market-active-header-card');
+  const marketActiveTables = document.getElementById('market-active-tables');
   
-  if (countMarkets > 0) {
-    if (marketControls) marketControls.style.display = 'flex';
-    if (document.activeElement !== DOM.autoSellFoodMin) DOM.autoSellFoodMin.value = state.autoSellFoodMin;
-    if (document.activeElement !== DOM.autoSellCookedMin) DOM.autoSellCookedMin.value = state.autoSellCookedMin;
-    if (document.activeElement !== DOM.autoSellWoodMin) DOM.autoSellWoodMin.value = state.autoSellWoodMin;
-    if (document.activeElement !== DOM.autoSellStoneMin) DOM.autoSellStoneMin.value = state.autoSellStoneMin;
+  const countMarkets = state.markets ? state.markets.length : 0;
+  const isMarketBuilt = countMarkets > 0 && !state.markets[0].isUnderConstruction;
+  
+  if (isMarketBuilt) {
+    if (marketLockedMsg) marketLockedMsg.style.display = 'none';
+    if (marketActiveHeader) marketActiveHeader.style.display = 'flex';
+    if (marketActiveTables) marketActiveTables.style.display = 'grid';
     
-    DOM.autoSellFoodChk.checked = state.autoSellFood;
-    if (DOM.autoSellCookedChk) DOM.autoSellCookedChk.checked = state.autoSellCooked;
-    DOM.autoSellWoodChk.checked = state.autoSellWood;
-    DOM.autoSellStoneChk.checked = state.autoSellStone;
+    renderAutoSellSettings();
+    renderAutoBuySettings();
     
     // Sincronizar indicadores globales del Mercado en Comercio
     const anyActive = state.markets.some(m => m.workerAssigned > 0);
@@ -1219,19 +1446,15 @@ function updateUI() {
       }
     }
   } else {
-    if (marketControls) marketControls.style.display = 'none';
-    const indicator = document.getElementById('market-indicator');
-    const statusText = document.getElementById('market-status-text');
-    const globalProgressBar = document.getElementById('market-progress');
-    if (indicator) indicator.classList.remove('active');
-    if (statusText) statusText.innerText = 'Inactivo';
-    if (globalProgressBar) globalProgressBar.style.width = '0%';
+    if (marketLockedMsg) marketLockedMsg.style.display = 'block';
+    if (marketActiveHeader) marketActiveHeader.style.display = 'none';
+    if (marketActiveTables) marketActiveTables.style.display = 'none';
   }
 
   // Sincronizar el asignador de mercaderes del Commerce tab
   const allocMarket = document.getElementById('alloc-market');
   if (allocMarket) {
-    allocMarket.textContent = state.markets ? state.markets.filter(m => m.workerAssigned > 0).length : 0;
+    allocMarket.textContent = state.markets && state.markets[0] ? (state.markets[0].workerAssigned || 0) : 0;
   }
 
   // Actualizar estadísticas de colonos y desglose de trabajos
@@ -1246,6 +1469,7 @@ function updateUI() {
   if (DOM.jobStatQuarry) DOM.jobStatQuarry.textContent = state.quarries.reduce((sum, q) => sum + (q.workerAssigned || 0), 0);
   if (DOM.jobStatBonfire) DOM.jobStatBonfire.textContent = state.bonfires ? state.bonfires.reduce((sum, b) => sum + (b.workerAssigned || 0), 0) : 0;
   if (DOM.jobStatMarket) DOM.jobStatMarket.textContent = state.markets ? state.markets.reduce((sum, m) => sum + (m.workerAssigned || 0), 0) : 0;
+  if (DOM.jobStatGranary) DOM.jobStatGranary.textContent = state.granaries ? state.granaries.reduce((sum, g) => sum + (g.workerAssigned || 0), 0) : 0;
 
   renderTownHallUI();
   updateButtonStates();
@@ -1420,6 +1644,7 @@ function updateButtonStates() {
   const bMarket = CONFIG.Building.market;
   const bBonfire = CONFIG.Building.bonfire;
   const bHire = CONFIG.Building.hire_colonist;
+  const bGranary = CONFIG.Building.granary;
 
   // Costos básicos colores visuales
   toggleCostAffordability(DOM.costBasicWood, state.wood, hBasic.cost_wood);
@@ -1437,6 +1662,8 @@ function updateButtonStates() {
   toggleCostAffordability(DOM.costBonfireStone, state.stone, bBonfire.cost_stone);
   toggleCostAffordability(document.getElementById('cost-market-wood'), state.wood, bMarket.cost_wood);
   toggleCostAffordability(document.getElementById('cost-market-stone'), state.stone, bMarket.cost_stone);
+  toggleCostAffordability(DOM.costGranaryWood, state.wood, bGranary.cost_wood);
+  toggleCostAffordability(DOM.costGranaryStone, state.stone, bGranary.cost_stone);
 
   // Costos de Ayuntamiento visuales
   if (!state.townHall.built) {
@@ -1478,22 +1705,60 @@ function updateButtonStates() {
   if (btnBuildFarm) btnBuildFarm.disabled = !thBuilt || !(state.wood >= bFarm.cost_wood && state.stone >= bFarm.cost_stone);
 
   DOM.btnBuildBonfire.disabled = !thBuilt || !(state.wood >= bBonfire.cost_wood && state.stone >= bBonfire.cost_stone);
-  DOM.btnBuildMarket.disabled = !thBuilt || !(state.wood >= bMarket.cost_wood && state.stone >= bMarket.cost_stone);
+  const btnBuildMarket = document.getElementById('btn-build-market');
+  if (btnBuildMarket) {
+    btnBuildMarket.disabled = !thBuilt || !(state.wood >= bMarket.cost_wood && state.stone >= bMarket.cost_stone);
+  }
+  if (DOM.btnBuildGranary) {
+    DOM.btnBuildGranary.disabled = !thBuilt || !(state.wood >= bGranary.cost_wood && state.stone >= bGranary.cost_stone);
+  }
 
   // Botón contratar colono (Condición: colonos actuales < maxPopulation)
   const spaceAvailable = state.currentColonists < state.maxPopulation;
   DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
 
-  // Marketplace - Ventas manuales habilitadas según stock, SIEMPRE disponibles
-  const sellWoodConsume = CONFIG.Sales.sell_wood_manual.consume_amount;
-  const sellStoneConsume = CONFIG.Sales.sell_stone_manual.consume_amount;
-  const sellFoodConsume = CONFIG.Sales.sell_food_manual.consume_amount;
-  const sellCookedConsume = CONFIG.Sales.sell_cooked_manual.consume_amount;
+  // Marketplace - Ventas manuales unificadas habilitadas según stock
+  if (CONFIG && CONFIG.Sales) {
+    const selectEl = document.getElementById('sell-resource-select');
+    if (selectEl) {
+      const type = selectEl.value;
+      const saleRule = CONFIG.Sales[`sell_${type}_manual`];
+      if (saleRule) {
+        const consumeUnit = saleRule.consume_amount;
+        const currentStock = getResourceStock(type);
+        
+        const btnSell1 = document.getElementById('btn-sell-1');
+        if (btnSell1) btnSell1.disabled = currentStock < (1 * consumeUnit);
+        
+        const btnSell10 = document.getElementById('btn-sell-10');
+        if (btnSell10) btnSell10.disabled = currentStock < (10 * consumeUnit);
+        
+        const btnSell100 = document.getElementById('btn-sell-100');
+        if (btnSell100) btnSell100.disabled = currentStock < (100 * consumeUnit);
+      }
+    }
+  }
 
-  DOM.btnSellWood.disabled = state.wood < sellWoodConsume;
-  DOM.btnSellStone.disabled = state.stone < sellStoneConsume;
-  DOM.btnSellFood.disabled = state.food < sellFoodConsume;
-  if (DOM.btnSellCooked) DOM.btnSellCooked.disabled = (state.cookedFood || 0) < sellCookedConsume;
+  // Marketplace - Compras manuales unificadas habilitadas según oro
+  if (CONFIG && CONFIG.Sales) {
+    const buySelectEl = document.getElementById('buy-resource-select');
+    if (buySelectEl) {
+      const type = buySelectEl.value;
+      const buyRule = CONFIG.Sales[`buy_${type}`];
+      if (buyRule) {
+        const costPerUnit = buyRule.cost_gold || 0;
+        
+        const btnBuy1 = document.getElementById('btn-buy-1');
+        if (btnBuy1) btnBuy1.disabled = state.gold < (1 * costPerUnit);
+        
+        const btnBuy10 = document.getElementById('btn-buy-10');
+        if (btnBuy10) btnBuy10.disabled = state.gold < (10 * costPerUnit);
+        
+        const btnBuy100 = document.getElementById('btn-buy-100');
+        if (btnBuy100) btnBuy100.disabled = state.gold < (100 * costPerUnit);
+      }
+    }
+  }
 
   // Ocultar mercado si ya se ha construido uno
   const marketCard = document.getElementById('build-market-card');
@@ -1526,8 +1791,9 @@ function updateButtonStates() {
   const keys = ['wood', 'stone', 'berries'];
   const emojis = { wood: '🪵', stone: '🪨', berries: '🍓' };
   const labels = { wood: 'Madera', stone: 'Piedra', berries: 'Frutos' };
-  const dDuration = CONFIG.System && CONFIG.System.day_duration ? CONFIG.System.day_duration.duration : 30.0;
-  const nDuration = CONFIG.System && CONFIG.System.night_duration ? CONFIG.System.night_duration.duration : 20.0;
+  const dDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
+  const nDuration = CONFIG.Timing && CONFIG.Timing.night_duration ? CONFIG.Timing.night_duration.duration : 20.0;
+  const maxCooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
   
   keys.forEach(k => {
     const btn = document.getElementById(`btn-gather-${k}`);
@@ -1537,13 +1803,12 @@ function updateButtonStates() {
     if (cooldown > 0) {
       if (btn) {
         btn.disabled = true;
-        const hourDuration = state.timePhase === 'day' ? (dDuration / 14) : (nDuration / 10);
-        const secs = Math.ceil(cooldown * hourDuration);
+        const secs = Math.ceil(cooldown);
         btn.innerHTML = `⏳ ${secs}s`;
       }
       if (container) container.style.display = 'block';
       if (bar) {
-        const pct = (1.0 - cooldown) * 100;
+        const pct = ((maxCooldown - cooldown) / maxCooldown) * 100;
         bar.style.width = `${pct}%`;
       }
     } else {
@@ -1589,8 +1854,13 @@ function updateStaticTextsFromConfig() {
   if (DOM.costBonfireWood) DOM.costBonfireWood.innerHTML = `🪵 ${CONFIG.Building.bonfire.cost_wood} Madera`;
   if (DOM.costBonfireStone) DOM.costBonfireStone.innerHTML = `🪨 ${CONFIG.Building.bonfire.cost_stone} Piedra`;
   
-  document.getElementById('cost-market-wood').innerHTML = `🪵 ${CONFIG.Building.market.cost_wood} Madera`;
-  document.getElementById('cost-market-stone').innerHTML = `🪨 ${CONFIG.Building.market.cost_stone} Piedra`;
+  const costMarketWood = document.getElementById('cost-market-wood');
+  const costMarketStone = document.getElementById('cost-market-stone');
+  if (costMarketWood) costMarketWood.innerHTML = `🪵 ${CONFIG.Building.market.cost_wood} Madera`;
+  if (costMarketStone) costMarketStone.innerHTML = `🪨 ${CONFIG.Building.market.cost_stone} Piedra`;
+
+  if (DOM.costGranaryWood) DOM.costGranaryWood.innerHTML = `🪵 ${CONFIG.Building.granary.cost_wood} Madera`;
+  if (DOM.costGranaryStone) DOM.costGranaryStone.innerHTML = `🪨 ${CONFIG.Building.granary.cost_stone} Piedra`;
 
   // Recolección Manual
   const gatherWoodBtn = document.getElementById('btn-gather-wood');
@@ -1606,22 +1876,73 @@ function updateStaticTextsFromConfig() {
   const quarryDesc = document.querySelector('#cost-quarry-gold').parentElement.parentElement.querySelector('.building-desc');
   if (quarryDesc) quarryDesc.innerHTML = `Habilita canteros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador).`;
 
-  // Comercio - Ventas manuales
-  const foodSaleVal = document.getElementById('btn-sell-food').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
-  if (foodSaleVal) foodSaleVal.innerHTML = `+${CONFIG.Sales.sell_food_manual.yield} 🪙`;
-  document.getElementById('btn-sell-food').innerHTML = `Vender x${CONFIG.Sales.sell_food_manual.consume_amount} Comida`;
+  // Comercio - Compras y Ventas manuales dinámicas
+  const rawNames = {
+    wood: 'Madera', stone: 'Piedra', wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
+    wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+  };
+  const icons = {
+    wood: '🪵', stone: '🪨', wheat: '🌾', potato: '🥔', carrot: '🥕', berries: '🍓',
+    cooked_wheat: '🍞', cooked_potato: '🥔', cooked_carrot: '🥕', cooked_berries: '🍯',
+    wheat_seeds: '🌾🌱', potato_seeds: '🥔🌱', carrot_seeds: '🥕🌱'
+  };
 
-  const cookedSaleVal = document.getElementById('btn-sell-cooked').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
-  if (cookedSaleVal) cookedSaleVal.innerHTML = `+${CONFIG.Sales.sell_cooked_manual.yield} 🪙`;
-  document.getElementById('btn-sell-cooked').innerHTML = `Vender x${CONFIG.Sales.sell_cooked_manual.consume_amount} Cocinada`;
-  
-  const woodSaleVal = document.getElementById('btn-sell-wood').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
-  if (woodSaleVal) woodSaleVal.innerHTML = `+${CONFIG.Sales.sell_wood_manual.yield} 🪙`;
-  document.getElementById('btn-sell-wood').innerHTML = `Vender x${CONFIG.Sales.sell_wood_manual.consume_amount} Madera`;
-  
-  const stoneSaleVal = document.getElementById('btn-sell-stone').parentElement.querySelector('span[style*="hsl(var(--color-gold))"]');
-  if (stoneSaleVal) stoneSaleVal.innerHTML = `+${CONFIG.Sales.sell_stone_manual.yield} 🪙`;
-  document.getElementById('btn-sell-stone').innerHTML = `Vender x${CONFIG.Sales.sell_stone_manual.consume_amount} Piedra`;
+  const sellSelect = document.getElementById('sell-resource-select');
+  if (sellSelect) {
+    const prevVal = sellSelect.value;
+    sellSelect.innerHTML = '';
+    for (let key in CONFIG.Sales) {
+      if (key.startsWith('sell_') && key.endsWith('_manual')) {
+        const type = key.replace('sell_', '').replace('_manual', '');
+        const sale = CONFIG.Sales[key];
+        const price = sale.yield / sale.consume_amount;
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
+        sellSelect.appendChild(opt);
+      }
+    }
+    if (prevVal) sellSelect.value = prevVal;
+    if (!sellSelect.value && sellSelect.options.length > 0) {
+      sellSelect.selectedIndex = 0;
+    }
+  }
+
+  const buySelect = document.getElementById('buy-resource-select');
+  if (buySelect) {
+    const prevVal = buySelect.value;
+    buySelect.innerHTML = '';
+    for (let key in CONFIG.Sales) {
+      if (key.startsWith('buy_') && !key.endsWith('_seeds')) {
+        const type = key.replace('buy_', '');
+        const buyRule = CONFIG.Sales[key];
+        const price = buyRule.cost_gold;
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
+        buySelect.appendChild(opt);
+      }
+    }
+    // Añadir también las semillas
+    const seedTypes = ['wheat', 'potato', 'carrot'];
+    seedTypes.forEach(st => {
+      const type = st + '_seeds';
+      const buyRule = CONFIG.Sales[`buy_${type}`];
+      if (buyRule) {
+        const price = buyRule.cost_gold;
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
+        buySelect.appendChild(opt);
+      }
+    });
+
+    if (prevVal) buySelect.value = prevVal;
+    if (!buySelect.value && buySelect.options.length > 0) {
+      buySelect.selectedIndex = 0;
+    }
+  }
 }
 
 
@@ -1629,30 +1950,30 @@ function renderFoodPriorityList() {
   const container = document.getElementById('food-priority-list');
   if (!container) return;
   
-  const priority = state.foodPriority || ['cooked', 'raw'];
+  const priority = state.foodPriority || ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'];
   
-  const foodLabels = {
-    cooked: '🍲 Cocinada (2/aldeano al día)',
-    raw: '🌾 Comida Cruda (4/aldeano al día)'
+  const rawNames = {
+    wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada'
   };
-  
-  const allowConsume = {
-    cooked: state.allowConsumeCooked !== false,
-    raw: state.allowConsumeRaw !== false
+  const icons = {
+    wheat: '🌾', potato: '🥔', carrot: '🥕', berries: '🍓',
+    cooked_wheat: '🍞', cooked_potato: '🥔', cooked_carrot: '🥕', cooked_berries: '🍯'
   };
   
   let html = '';
   priority.forEach((type, idx) => {
-    const label = foodLabels[type];
     const isFirst = idx === 0;
     const isLast = idx === priority.length - 1;
-    const checked = allowConsume[type];
+    const checked = state.allowConsume && state.allowConsume[type] !== false;
+    const eqObj = CONFIG.FoodEquivalence && CONFIG.FoodEquivalence[type];
+    const mult = eqObj ? eqObj.yield : 1;
     
     html += `
       <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 0.5rem 0.75rem; border-radius: 6px; gap: 0.5rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <input type="checkbox" style="cursor: pointer; width: 14px; height: 14px;" onchange="toggleConsumeType('${type}', this.checked)" ${checked ? 'checked' : ''}>
-          <span style="font-size: 0.85rem; font-weight: 500; color: ${checked ? '#fff' : 'var(--color-text-muted)'}; text-decoration: ${checked ? 'none' : 'line-through'};">${idx + 1}. ${label}</span>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #fff;">${idx + 1}. ${icons[type] || ''} ${rawNames[type] || type} <span style="font-size: 0.7rem; color: #a5b4fc;">(Nutr. x${mult})</span></span>
         </div>
         <div style="display: flex; gap: 0.25rem;">
           <button class="allocator-btn" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem;" onclick="moveFoodPriority(${idx}, -1)" ${isFirst ? 'disabled' : ''}>▲</button>
@@ -1663,3 +1984,251 @@ function renderFoodPriorityList() {
   });
   container.innerHTML = html;
 }
+
+function renderDetailedFoodInventory() {
+  const container = document.getElementById('food-details-grid');
+  if (!container) return;
+  if (container.children.length === 0) {
+    const foods = [
+      { key: 'wheat', name: 'Trigo', icon: '🌾', color: '#f59e0b' },
+      { key: 'potato', name: 'Patata', icon: '🥔', color: '#a8a29e' },
+      { key: 'carrot', name: 'Zanahoria', icon: '🥕', color: '#f97316' },
+      { key: 'berries', name: 'Frutos', icon: '🍓', color: '#ef4444' },
+      { key: 'cooked_wheat', name: 'Pan', icon: '🍞', color: '#fbbf24' },
+      { key: 'cooked_potato', name: 'Patata Asada', icon: '🥔', color: '#d6d3d1' },
+      { key: 'cooked_carrot', name: 'Zan. Asada', icon: '🥕', color: '#fdba74' },
+      { key: 'cooked_berries', name: 'Mermelada', icon: '🍯', color: '#f43f5e' }
+    ];
+    let html = '';
+    foods.forEach(f => {
+      const eqObj = CONFIG.FoodEquivalence && CONFIG.FoodEquivalence[f.key];
+      const mult = eqObj ? eqObj.yield : 1;
+      html += `
+        <div class="subresource-item" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); min-width: 130px; flex: 1;">
+          <span style="font-size: 1.2rem;">${f.icon}</span>
+          <div style="display: flex; flex-direction: column; flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">${f.name}</span>
+              <span style="font-size: 0.65rem; color: #a5b4fc; font-weight: 600;">x${mult}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <div style="display: flex; gap: 0.25rem; align-items: baseline;">
+                <span id="res-detail-${f.key}" style="font-size: 0.95rem; font-weight: 700; color: ${f.color};">0</span>
+                <span id="res-val-${f.key}" style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">(0)</span>
+              </div>
+              <span id="res-rate-${f.key}" style="font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted);">+0/d</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+  
+  // Update quantities and values
+  const list = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  list.forEach(key => {
+    const qty = state[key] || 0;
+    const eqObj = CONFIG.FoodEquivalence && CONFIG.FoodEquivalence[key];
+    const mult = eqObj ? eqObj.yield : 1;
+    const value = qty * mult;
+    
+    const qtyEl = document.getElementById(`res-detail-${key}`);
+    if (qtyEl) qtyEl.innerText = qty.toFixed(0);
+    const valEl = document.getElementById(`res-val-${key}`);
+    if (valEl) valEl.innerText = `(${value.toFixed(0)})`;
+    
+    const rateEl = document.getElementById(`res-rate-${key}`);
+    if (rateEl && typeof calculatedRates !== 'undefined' && calculatedRates[key] !== undefined) {
+      const rateVal = calculatedRates[key];
+      if (rateVal > 0.001) {
+        rateEl.innerText = `+${rateVal.toFixed(0)}/d`;
+        rateEl.style.color = '#4ade80';
+      } else if (rateVal < -0.001) {
+        rateEl.innerText = `${rateVal.toFixed(0)}/d`;
+        rateEl.style.color = '#f87171';
+      } else {
+        rateEl.innerText = '+0/d';
+        rateEl.style.color = 'var(--color-text-muted)';
+      }
+    }
+  });
+}
+
+function renderAutoSellSettings() {
+  const container = document.getElementById('auto-sell-list-container');
+  if (!container) return;
+  
+  const sellableTypes = [
+    { key: 'wood', name: 'Madera', icon: '🪵' },
+    { key: 'stone', name: 'Piedra', icon: '🪨' },
+    { key: 'wheat', name: 'Trigo', icon: '🌾' },
+    { key: 'potato', name: 'Patata', icon: '🥔' },
+    { key: 'carrot', name: 'Zanahoria', icon: '🥕' },
+    { key: 'berries', name: 'Frutos', icon: '🍓' },
+    { key: 'cooked_wheat', name: 'Pan', icon: '🍞' },
+    { key: 'cooked_potato', name: 'Patata Asada', icon: '🥔' },
+    { key: 'cooked_carrot', name: 'Zanahoria Asada', icon: '🥕' },
+    { key: 'cooked_berries', name: 'Mermelada', icon: '🍯' },
+    { key: 'wheat_seeds', name: 'Semillas Trigo', icon: '🌾🌱' },
+    { key: 'potato_seeds', name: 'Semillas Patata', icon: '🥔🌱' },
+    { key: 'carrot_seeds', name: 'Semillas Zanahoria', icon: '🥕🌱' }
+  ];
+  
+  if (container.children.length === 0) {
+    let html = '';
+    sellableTypes.forEach(item => {
+      const mRule = CONFIG.Sales && CONFIG.Sales[`market_${item.key}`];
+      const priceText = mRule ? `(+${mRule.yield}🪙)` : '';
+      
+      html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; background: rgba(255, 255, 255, 0.02); padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="auto-sell-chk-${item.key}" onchange="toggleAutoSell('${item.key}', this.checked)">
+            <span style="font-weight: 500;">${item.icon} ${item.name} <span style="font-size: 0.7rem; color: #fbbf24;">${priceText}</span></span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.25rem;">
+            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Mantener:</span>
+            <input type="number" id="auto-sell-min-${item.key}" value="0" min="0" step="10" onchange="changeAutoSellMin('${item.key}', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+  
+  // Sincronizar valores
+  sellableTypes.forEach(item => {
+    const chk = document.getElementById(`auto-sell-chk-${item.key}`);
+    if (chk) chk.checked = state.autoSell && state.autoSell[item.key] ? true : false;
+    const valInput = document.getElementById(`auto-sell-min-${item.key}`);
+    if (valInput && document.activeElement !== valInput) {
+      valInput.value = state.autoSellMin && state.autoSellMin[item.key] !== undefined ? state.autoSellMin[item.key] : 0;
+    }
+  });
+}
+
+function renderAutoBuySettings() {
+  const container = document.getElementById('auto-buy-list-container');
+  if (!container) return;
+  
+  const buyableTypes = [
+    { key: 'wood', name: 'Madera', icon: '🪵' },
+    { key: 'stone', name: 'Piedra', icon: '🪨' },
+    { key: 'wheat', name: 'Trigo', icon: '🌾' },
+    { key: 'potato', name: 'Patata', icon: '🥔' },
+    { key: 'carrot', name: 'Zanahoria', icon: '🥕' },
+    { key: 'berries', name: 'Frutos', icon: '🍓' },
+    { key: 'cooked_wheat', name: 'Pan', icon: '🍞' },
+    { key: 'cooked_potato', name: 'Patata Asada', icon: '🥔' },
+    { key: 'cooked_carrot', name: 'Zanahoria Asada', icon: '🥕' },
+    { key: 'cooked_berries', name: 'Mermelada', icon: '🍯' },
+    { key: 'wheat_seeds', name: 'Semillas Trigo', icon: '🌾🌱' },
+    { key: 'potato_seeds', name: 'Semillas Patata', icon: '🥔🌱' },
+    { key: 'carrot_seeds', name: 'Semillas Zanahoria', icon: '🥕🌱' }
+  ];
+  
+  if (container.children.length === 0) {
+    let html = '';
+    buyableTypes.forEach(item => {
+      const bRule = CONFIG.Sales && CONFIG.Sales[`buy_${item.key}`];
+      const priceText = bRule ? `(-${bRule.cost_gold}🪙)` : '';
+      
+      html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem; background: rgba(255, 255, 255, 0.02); padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="auto-buy-chk-${item.key}" onchange="toggleAutoBuy('${item.key}', this.checked)">
+            <span style="font-weight: 500;">${item.icon} ${item.name} <span style="font-size: 0.7rem; color: #fbbf24;">${priceText}</span></span>
+          </label>
+          <div style="display: flex; align-items: center; gap: 0.25rem;">
+            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Comprar hasta:</span>
+            <input type="number" id="auto-buy-max-${item.key}" value="0" min="0" step="10" onchange="changeAutoBuyMax('${item.key}', this.value)" style="width: 50px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.1rem 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; text-align: center; outline: none;">
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+  
+  // Sincronizar valores
+  buyableTypes.forEach(item => {
+    const chk = document.getElementById(`auto-buy-chk-${item.key}`);
+    if (chk) chk.checked = state.autoBuy && state.autoBuy[item.key] ? true : false;
+    const valInput = document.getElementById(`auto-buy-max-${item.key}`);
+    if (valInput && document.activeElement !== valInput) {
+      valInput.value = state.autoBuyMax && state.autoBuyMax[item.key] !== undefined ? state.autoBuyMax[item.key] : 0;
+    }
+  });
+}
+
+function renderDetailedResourcesInventory() {
+  const container = document.getElementById('resources-details-grid');
+  if (!container) return;
+  if (container.children.length === 0) {
+    const resources = [
+      { key: 'wood', name: 'Madera', icon: '🪵', color: '#f59e0b', isSeed: false },
+      { key: 'stone', name: 'Piedra', icon: '🪨', color: '#94a3b8', isSeed: false },
+      { key: 'wheat_seeds', name: 'Sem. Trigo', icon: '🌾', color: '#fbbf24', isSeed: true },
+      { key: 'potato_seeds', name: 'Sem. Patata', icon: '🥔', color: '#a8a29e', isSeed: true },
+      { key: 'carrot_seeds', name: 'Sem. Zanahoria', icon: '🥕', color: '#f97316', isSeed: true }
+    ];
+    let html = '';
+    resources.forEach(r => {
+      html += `
+        <div class="subresource-item" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.03); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); min-width: 130px; flex: 1;">
+          <span style="font-size: 1.2rem;">${r.icon}</span>
+          <div style="display: flex; flex-direction: column; flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">${r.name}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span id="res-detail-${r.key}" style="font-size: 0.95rem; font-weight: 700; color: ${r.color};">0</span>
+              <span id="res-rate-${r.key}" style="font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted);"></span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  const resourcesList = [
+    { key: 'wood', stateKey: 'wood', isSeed: false },
+    { key: 'stone', stateKey: 'stone', isSeed: false },
+    { key: 'wheat_seeds', stateKey: 'wheat', isSeed: true },
+    { key: 'potato_seeds', stateKey: 'potato', isSeed: true },
+    { key: 'carrot_seeds', stateKey: 'carrot', isSeed: true }
+  ];
+
+  resourcesList.forEach(item => {
+    let qty = 0;
+    if (item.isSeed) {
+      qty = state.seeds ? (state.seeds[item.stateKey] || 0) : 0;
+    } else {
+      qty = state[item.stateKey] || 0;
+    }
+
+    const qtyEl = document.getElementById(`res-detail-${item.key}`);
+    if (qtyEl) qtyEl.innerText = qty.toFixed(0);
+
+    const rateEl = document.getElementById(`res-rate-${item.key}`);
+    if (rateEl) {
+      if (!item.isSeed && typeof calculatedRates !== 'undefined' && calculatedRates[item.stateKey] !== undefined) {
+        const rateVal = calculatedRates[item.stateKey];
+        if (rateVal > 0.001) {
+          rateEl.innerText = `+${rateVal.toFixed(0)}/d`;
+          rateEl.style.color = '#4ade80';
+        } else if (rateVal < -0.001) {
+          rateEl.innerText = `${rateVal.toFixed(0)}/d`;
+          rateEl.style.color = '#f87171';
+        } else {
+          rateEl.innerText = '+0/d';
+          rateEl.style.color = 'var(--color-text-muted)';
+        }
+      } else {
+        rateEl.innerText = '';
+      }
+    }
+  });
+}
+

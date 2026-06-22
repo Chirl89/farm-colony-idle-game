@@ -13,7 +13,10 @@ Building;pot_upgrade;Mejorar a Caldero;50;0;30;0;;;
 Building;kitchen_upgrade;Mejorar a Cocina de Taberna;100;50;0;0;;;
 Building;townhall;Ayuntamiento T1;0;10;5;0;;;
 Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;;;
-Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;;`,
+Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;;;
+Building;granary;Granero;0;50;30;0;0;;;
+Building;granary_t2;Mejorar Granero T2;80;80;50;0;0;;;
+Building;granary_t3;Mejorar Granero T3;150;120;80;0;0;;;`,
   prices: `Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info;
 Sales;sell_food_manual;Venta Manual Comida;0;0;0;3;gold;Consumes:1:food;
 Sales;sell_wood_manual;Venta Manual Madera;0;0;0;1;gold;Consumes:1:wood;
@@ -22,7 +25,26 @@ Sales;market_food;Venta Automática Comida;0;0;0;3;gold;Consumes:1:food;
 Sales;market_wood;Venta Automática Madera;0;0;0;1;gold;Consumes:1:wood;
 Sales;market_stone;Venta Automática Piedra;0;0;0;1;gold;Consumes:1:stone;
 Sales;sell_cooked_manual;Venta Manual Cocinada;0;0;0;5;gold;Consumes:1:cookedFood;
-Sales;market_cooked;Venta Automática Cocinada;0;0;0;4;gold;Consumes:1:cookedFood`,
+Sales;market_cooked;Venta Automática Cocinada;0;0;0;4;gold;Consumes:1:cookedFood;
+Sales;buy_wheat_seeds;Comprar Granos de Trigo;5;0;0;0;1;wheatSeeds;;
+Sales;buy_potato_seeds;Comprar Semillas de Patata;8;0;0;0;1;potatoSeeds;;
+Sales;buy_carrot_seeds;Comprar Semillas de Zanahoria;12;0;0;0;1;carrotSeeds;;
+Sales;sell_wheat_seeds_manual;Venta Manual Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds;;
+Sales;sell_potato_seeds_manual;Venta Manual Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds;;
+Sales;sell_carrot_seeds_manual;Venta Manual Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds;;
+Sales;market_wheat_seeds;Venta Automática Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds;;
+Sales;market_potato_seeds;Venta Automática Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds;;
+Sales;market_carrot_seeds;Venta Automática Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds;;
+Sales;buy_wood;Comprar Madera;2;0;0;1;wood;;
+Sales;buy_stone;Comprar Piedra;2;0;0;1;stone;;
+Sales;buy_wheat;Comprar Trigo;5;0;0;1;wheat;;
+Sales;buy_potato;Comprar Patata;6;0;0;1;potato;;
+Sales;buy_carrot;Comprar Zanahoria;8;0;0;1;carrot;;
+Sales;buy_berries;Comprar Frutos;3;0;0;1;berries;;
+Sales;buy_cooked_wheat;Comprar Pan;20;0;0;1;cooked_wheat;;
+Sales;buy_cooked_potato;Comprar Patata Asada;24;0;0;1;cooked_potato;;
+Sales;buy_cooked_carrot;Comprar Zanahoria Asada;30;0;0;1;cooked_carrot;;
+Sales;buy_cooked_berries;Comprar Mermelada;15;0;0;1;cooked_berries;;`,
   production: `Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info;
 BasicGathering;wood_manual;Recolección de Madera;0;0;0;1;wood;;
 BasicGathering;stone_manual;Recolección de Piedra;0;0;0;1;stone;;
@@ -41,41 +63,71 @@ Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;1;cookedFood
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;1;cookedFood;Consumes:1:food;
 ProductionRate;lumbermill_prod;Producción Cabaña de Leñador;0;0;0;5;wood;;
 ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;5;stone;;
-System;day_duration;Duración del Día;0;0;0;0;;;
-System;night_duration;Duración de la Noche;0;0;0;0;;`,
+Processing;granary_wheat_t1;Producir Semillas de Trigo T1;0;0;0;1;wheat_seeds;Consumes:5:wheat
+Processing;granary_wheat_t2;Producir Semillas de Trigo T2;0;0;0;1;wheat_seeds;Consumes:5:wheat
+Processing;granary_wheat_t3;Producir Semillas de Trigo T3;0;0;0;2;wheat_seeds;Consumes:10:wheat
+Processing;granary_potato_t1;Producir Semillas de Patata T1;0;0;0;1;potato_seeds;Consumes:5:potato
+Processing;granary_potato_t2;Producir Semillas de Patata T2;0;0;0;1;potato_seeds;Consumes:5:potato
+Processing;granary_potato_t3;Producir Semillas de Patata T3;0;0;0;2;potato_seeds;Consumes:10:potato
+Processing;granary_carrot_t1;Producir Semillas de Zanahoria T1;0;0;0;1;carrot_seeds;Consumes:5:carrot
+Processing;granary_carrot_t2;Producir Semillas de Zanahoria T2;0;0;0;1;carrot_seeds;Consumes:5:carrot
+Processing;granary_carrot_t3;Producir Semillas de Zanahoria T3;0;0;0;2;carrot_seeds;Consumes:10:carrot;`,
   timings: `Category;Type;Name;Duration;
 Timing;day_duration;Duración del Día;30;
 Timing;night_duration;Duración de la Noche;20;
-Timing;basic_house;Construcción Choza;1;
-Timing;upgraded_house;Mejora Choza a Cabaña;2;
-Timing;lumbermill;Construcción Cabaña de Leñador;5;
-Timing;quarry;Construcción Foso de Piedra;5;
-Timing;farm;Construcción Granja;5;
-Timing;market;Construcción Puesto de Mercado;5;
-Timing;bonfire;Construcción Fogata;5;
-Timing;townhall;Construcción Ayuntamiento T1;1;
-Timing;townhall_t2;Mejora Ayuntamiento T2;2;
-Timing;townhall_t3;Mejora Ayuntamiento T3;3;
+Timing;basic_house;Construcción Choza;10;
+Timing;upgraded_house;Mejora Choza a Cabaña;20;
+Timing;lumbermill;Construcción Cabaña de Leñador;15;
+Timing;quarry;Construcción Foso de Piedra;15;
+Timing;farm;Construcción Granja;15;
+Timing;market;Construcción Puesto de Mercado;20;
+Timing;bonfire;Construcción Fogata;15;
+Timing;townhall;Construcción Ayuntamiento T1;10;
+Timing;townhall_t2;Mejora Ayuntamiento T2;25;
+Timing;townhall_t3;Mejora Ayuntamiento T3;40;
 Timing;wood_auto;Tiempo Leñador;1;
 Timing;stone_auto;Tiempo Cantero;1;
 Timing;berries_auto;Tiempo Recolector de Frutos;1;
-Timing;wheat;Tiempo Crecimiento Trigo;3;
-Timing;potato;Tiempo Crecimiento Patata;5;
-Timing;carrot;Tiempo Crecimiento Zanahoria;10;
-Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;0.2;
-Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;0.2;
-Timing;pot_auto;Tiempo Cocinar Automático Caldero;0.1;
-Timing;pot_manual;Tiempo Cocinar Manual Caldero;0.1;
-Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;0.05;
-Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;0.05;
-Timing;market_food;Tiempo Venta Automática Comida;0.1;
-Timing;market_wood;Tiempo Venta Automática Madera;0.1;
-Timing;market_stone;Tiempo Venta Automática Piedra;0.1;
-Timing;market_cooked;Tiempo Venta Automática Cocinada;0.1;
-Timing;farm_plow;Tiempo de Arar Granja;0.5;
-Timing;farm_sow;Tiempo de Sembrar Granja;0.5;
-Timing;farm_water;Tiempo de Riego Inicial;0.25;
-Timing;farm_water_daily;Tiempo de Riego Diario;0.0417;`
+Timing;lumbermill_prod;Producción Cabaña de Leñador;1;
+Timing;quarry_prod;Producción Foso de Piedra;1;
+Timing;wheat;Tiempo Crecimiento Trigo;30;
+Timing;potato;Tiempo Crecimiento Patata;50;
+Timing;carrot;Tiempo Crecimiento Zanahoria;100;
+Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;5;
+Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;3;
+Timing;pot_auto;Tiempo Cocinar Automático Caldero;4;
+Timing;pot_manual;Tiempo Cocinar Manual Caldero;2;
+Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;3;
+Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;1.5;
+Timing;farm_plow;Tiempo de Arar Granja;3;
+Timing;farm_sow;Tiempo de Sembrar Granja;3;
+Timing;farm_water;Tiempo de Riego Inicial;2;
+Timing;farm_water_daily;Tiempo de Riego Diario;1.5;
+Timing;global_buy;Tiempo Compra Mercado;3;
+Timing;global_sell;Tiempo Venta Mercado;3;
+Timing;gather_cooldown;Cooldown de Recolección Manual;2;
+Timing;granary;Construcción Granero;15;
+Timing;granary_t2;Mejora Granero T2;25;
+Timing;granary_t3;Mejora Granero T3;40;
+Timing;granary_wheat_t1;Tiempo Semillas Trigo T1;3;
+Timing;granary_wheat_t2;Tiempo Semillas Trigo T2;2;
+Timing;granary_wheat_t3;Tiempo Semillas Trigo T3;3;
+Timing;granary_potato_t1;Tiempo Semillas Patata T1;5;
+Timing;granary_potato_t2;Tiempo Semillas Patata T2;3;
+Timing;granary_potato_t3;Tiempo Semillas Patata T3;5;
+Timing;granary_carrot_t1;Tiempo Semillas Zanahoria T1;10;
+Timing;granary_carrot_t2;Tiempo Semillas Zanahoria T2;7;
+Timing;granary_carrot_t3;Tiempo Semillas Zanahoria T3;10;`,
+  equivalences: `Category;Type;Name;Yield_Amount
+FoodEquivalence;wheat;Trigo;1
+FoodEquivalence;potato;Patata;1
+FoodEquivalence;carrot;Zanahoria;1
+FoodEquivalence;berries;Frutos;1
+FoodEquivalence;cooked_wheat;Pan;5
+FoodEquivalence;cooked_potato;Patata Asada;5
+FoodEquivalence;cooked_carrot;Zanahoria Asada;5
+FoodEquivalence;cooked_berries;Mermelada;5
+FoodNeed;colonist_need;Necesidad de Comida de Aldeano;5`
 };
 
 // Variable CONFIG global (se inicializará con fallbacks inmediatamente)
@@ -177,7 +229,10 @@ function parseCSV(csvText) {
         yield: yield_amount,
         yield_type: yield_type,
         consume_amount: consume_amount,
-        consume_type: consume_type
+        consume_type: consume_type,
+        cost_gold: cost_gold,
+        cost_wood: cost_wood,
+        cost_stone: cost_stone
       };
     }
   }
@@ -186,11 +241,26 @@ function parseCSV(csvText) {
 
 function applyTimingsFromConfig() {
   if (typeof CONFIG !== 'undefined' && CONFIG.Timing) {
+    // 1. Aplicar todos los tiempos específicos que coincidan exactamente en tipo
     for (let type in CONFIG.Timing) {
       const duration = CONFIG.Timing[type].duration;
       for (let category in CONFIG) {
         if (category !== 'Timing' && CONFIG[category] && CONFIG[category][type]) {
           CONFIG[category][type].duration = duration;
+        }
+      }
+    }
+    
+    // 2. Aplicar los tiempos globales de compra/venta a las transacciones de mercado
+    const globalBuy = CONFIG.Timing.global_buy ? CONFIG.Timing.global_buy.duration : 3.0;
+    const globalSell = CONFIG.Timing.global_sell ? CONFIG.Timing.global_sell.duration : 3.0;
+    
+    if (CONFIG.Sales) {
+      for (let type in CONFIG.Sales) {
+        if (type.startsWith('buy_')) {
+          CONFIG.Sales[type].duration = globalBuy;
+        } else if (type.startsWith('market_') || type.startsWith('sell_')) {
+          CONFIG.Sales[type].duration = globalSell;
         }
       }
     }
@@ -200,7 +270,7 @@ function applyTimingsFromConfig() {
 // Inicialización síncrona inmediata con los datos por defecto
 function initDefaultConfig() {
   const testConfig = {};
-  const files = ['buildings', 'prices', 'production', 'timings'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences'];
   for (const name of files) {
     const parsed = parseCSV(DEFAULT_CSV_DATA[name] || '');
     for (const category in parsed) {
@@ -219,7 +289,7 @@ initDefaultConfig();
 
 // Carga asíncrona de todos los archivos CSV desde el servidor local
 async function loadAllCSVs() {
-  const files = ['buildings', 'prices', 'production', 'timings'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences'];
   const results = {};
   for (const name of files) {
     try {
@@ -281,7 +351,7 @@ function importCSVFolder(event) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
   
-  const expectedNames = ['buildings', 'prices', 'production', 'timings'];
+  const expectedNames = ['buildings', 'prices', 'production', 'timings', 'equivalences'];
   const pendingReads = [];
   const results = {};
   

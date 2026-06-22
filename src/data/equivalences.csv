@@ -1,0 +1,10 @@
+Category;Type;Name;Yield_Amount
+FoodEquivalence;wheat;Trigo;1
+FoodEquivalence;potato;Patata;1
+FoodEquivalence;carrot;Zanahoria;1
+FoodEquivalence;berries;Frutos;1
+FoodEquivalence;cooked_wheat;Pan;5
+FoodEquivalence;cooked_potato;Patata Asada;5
+FoodEquivalence;cooked_carrot;Zanahoria Asada;5
+FoodEquivalence;cooked_berries;Mermelada;5
+FoodNeed;colonist_need;Necesidad de Comida de Aldeano;5

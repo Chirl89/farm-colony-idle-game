@@ -1,7 +1,8 @@
 // ACCIONES DE RECOLECCIÓN MANUAL
 function gatherWood() {
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-  state.gatherCooldown = 1.0;
+  const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
+  state.gatherCooldown = cooldown;
   state.gatherType = 'wood';
   state.playerConstructing = null;
   showToast("Comenzando a recolectar madera...", "info");
@@ -10,7 +11,8 @@ function gatherWood() {
 
 function gatherStone() {
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-  state.gatherCooldown = 1.0;
+  const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
+  state.gatherCooldown = cooldown;
   state.gatherType = 'stone';
   state.playerConstructing = null;
   showToast("Comenzando a recolectar piedra...", "info");
@@ -19,7 +21,8 @@ function gatherStone() {
 
 function gatherBerries() {
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
-  state.gatherCooldown = 1.0;
+  const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
+  state.gatherCooldown = cooldown;
   state.gatherType = 'berries';
   state.playerConstructing = null;
   showToast("Comenzando a recolectar frutos...", "info");
@@ -42,8 +45,8 @@ function deliverGatheredResources() {
     showToast(`+${yieldVal} Piedra recolectada`, "success");
   } else if (type === 'berries') {
     const yieldVal = CONFIG.BasicGathering.berries_manual.yield;
-    state.food += yieldVal;
-    resourcesGeneratedThisSecond.food += yieldVal;
+    state.berries = (state.berries || 0) + yieldVal;
+    updateGlobalFood();
     showToast(`+${yieldVal} Frutos recolectados`, "success");
   }
   
@@ -71,89 +74,180 @@ function hireColonist() {
 }
 
 // MERCADO
-function sellCookedFood() {
-  const sale = CONFIG.Sales.sell_cooked_manual;
-  if (!sale) return;
-  if (state.cookedFood >= sale.consume_amount) {
-    state.cookedFood -= sale.consume_amount;
-    state.gold += sale.yield;
-    resourcesGeneratedThisSecond.gold += sale.yield;
-    showToast(`¡Vendidas ${sale.consume_amount} unidades de Comida Cocinada por ${sale.yield}🪙!`, "success");
+function sellFoodSelected(type, amount = 10) {
+  const saleRule = CONFIG.Sales[`sell_${type}_manual`];
+  if (!saleRule) {
+    showToast("Receta de venta no válida", "warning");
+    return;
+  }
+  const stock = getResourceStock(type);
+  if (stock >= amount) {
+    deductResourceStock(type, amount);
+    updateGlobalFood();
+    
+    const yieldPerUnit = saleRule.yield / saleRule.consume_amount;
+    const totalYield = amount * yieldPerUnit;
+    
+    state.gold += totalYield;
+    resourcesGeneratedThisSecond.gold += totalYield;
+    
+    const rawNames = {
+      wood: 'Madera', stone: 'Piedra',
+      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
+      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+    };
+    showToast(`¡Vendidas ${amount} unidades de ${rawNames[type] || type} por ${totalYield}🪙!`, "success");
     updateUI();
   } else {
-    showToast(`No tienes suficiente Comida Cocinada (Mín. ${sale.consume_amount})`, "warning");
+    const rawNames = {
+      wood: 'Madera', stone: 'Piedra',
+      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
+      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+    };
+    showToast(`No tienes suficiente cantidad de ${rawNames[type] || type} (Mín. ${amount})`, "warning");
+  }
+}
+
+function updateSellResourcePriceDisplay() {
+  const select = document.getElementById('sell-resource-select');
+  const priceText = document.getElementById('sell-resource-price-text');
+  if (!select || !priceText) return;
+  const type = select.value;
+  const saleRule = CONFIG.Sales && CONFIG.Sales[`sell_${type}_manual`];
+  if (saleRule) {
+    const price = saleRule.yield / saleRule.consume_amount;
+    priceText.innerText = `${price} 🪙`;
+  } else {
+    priceText.innerText = '0 🪙';
+  }
+}
+
+function sellResourceManual(amount) {
+  const select = document.getElementById('sell-resource-select');
+  if (!select) return;
+  const type = select.value;
+  sellFoodSelected(type, amount);
+}
+
+// COMPRA MANUAL
+function buyResourceSelected(type, amount = 1) {
+  const buyRule = CONFIG.Sales[`buy_${type}`];
+  if (!buyRule) {
+    showToast("Fórmula de compra no encontrada", "warning");
+    return;
+  }
+  const cost = (buyRule.cost_gold || 0) * amount;
+  if (state.gold >= cost) {
+    state.gold -= cost;
+    addResourceStock(type, amount);
+    updateGlobalFood();
+    
+    const rawNames = {
+      wood: 'Madera', stone: 'Piedra',
+      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
+      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+    };
+    
+    showToast(`¡Compradas ${amount} unidades de ${rawNames[type] || type} por ${cost}🪙!`, "success");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Oro insuficiente (necesitas ${cost}🪙)`, "warning");
+  }
+}
+
+function updateBuyResourcePriceDisplay() {
+  const select = document.getElementById('buy-resource-select');
+  const priceText = document.getElementById('buy-resource-price-text');
+  if (!select || !priceText) return;
+  const type = select.value;
+  const buyRule = CONFIG.Sales && CONFIG.Sales[`buy_${type}`];
+  if (buyRule) {
+    priceText.innerText = `${buyRule.cost_gold} 🪙`;
+  } else {
+    priceText.innerText = '0 🪙';
+  }
+}
+
+function buyResourceManual(amount) {
+  const select = document.getElementById('buy-resource-select');
+  if (!select) return;
+  const type = select.value;
+  buyResourceSelected(type, amount);
+}
+
+
+function toggleFoodDetails() {
+  const content = document.getElementById('food-details-content');
+  if (!content) return;
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'flex';
+  } else {
+    content.style.display = 'none';
+  }
+}
+
+function toggleResourcesDetails() {
+  const content = document.getElementById('resources-details-content');
+  if (!content) return;
+  
+  if (content.style.display === 'none') {
+    content.style.display = 'flex';
+  } else {
+    content.style.display = 'none';
   }
 }
 
 // CONFIGURACIÓN DE AUTO-VENTAS
 function toggleAutoSell(type, checked) {
-  if (type === 'food') state.autoSellFood = checked;
-  if (type === 'cooked') state.autoSellCooked = checked;
-  if (type === 'wood') state.autoSellWood = checked;
-  if (type === 'stone') state.autoSellStone = checked;
+  if (!state.autoSell) state.autoSell = {};
+  state.autoSell[type] = checked;
   recalculateRates();
   updateUI();
-}
-
-// COMERCIO (VENTAS MANUALES)
-function sellFood() {
-  const sale = CONFIG.Sales.sell_food_manual;
-  if (state.food >= sale.consume_amount) {
-    state.food -= sale.consume_amount;
-    state.gold += sale.yield;
-    resourcesGeneratedThisSecond.gold += sale.yield;
-    showToast(`¡Vendidas ${sale.consume_amount} unidades de Comida por ${sale.yield}🪙!`, "success");
-    updateUI();
-  } else {
-    showToast(`No tienes suficiente Comida (Mín. ${sale.consume_amount})`, "warning");
-  }
-}
-
-function sellWood() {
-  const sale = CONFIG.Sales.sell_wood_manual;
-  if (state.wood >= sale.consume_amount) {
-    state.wood -= sale.consume_amount;
-    state.gold += sale.yield;
-    resourcesGeneratedThisSecond.gold += sale.yield;
-    showToast(`¡Vendidas ${sale.consume_amount} unidades de Madera por ${sale.yield}🪙!`, "success");
-    updateUI();
-  } else {
-    showToast(`No tienes suficiente Madera (Mín. ${sale.consume_amount})`, "warning");
-  }
-}
-
-function sellStone() {
-  const sale = CONFIG.Sales.sell_stone_manual;
-  if (state.stone >= sale.consume_amount) {
-    state.stone -= sale.consume_amount;
-    state.gold += sale.yield;
-    resourcesGeneratedThisSecond.gold += sale.yield;
-    showToast(`¡Vendidas ${sale.consume_amount} unidades de Piedra por ${sale.yield}🪙!`, "success");
-    updateUI();
-  } else {
-    showToast(`No tienes suficiente Piedra (Mín. ${sale.consume_amount})`, "warning");
-  }
 }
 
 function changeAutoSellMin(type, val) {
   const value = Math.max(0, parseInt(val) || 0);
-  if (type === 'food') state.autoSellFoodMin = value;
-  if (type === 'cooked') state.autoSellCookedMin = value;
-  if (type === 'wood') state.autoSellWoodMin = value;
-  if (type === 'stone') state.autoSellStoneMin = value;
+  if (!state.autoSellMin) state.autoSellMin = {};
+  state.autoSellMin[type] = value;
   recalculateRates();
   updateUI();
 }
 
+// CONFIGURACIÓN DE AUTO-COMPRAS
+function toggleAutoBuy(type, checked) {
+  if (!state.autoBuy) state.autoBuy = {};
+  state.autoBuy[type] = checked;
+  recalculateRates();
+  updateUI();
+}
+
+function changeAutoBuyMax(type, val) {
+  const value = Math.max(0, parseInt(val) || 0);
+  if (!state.autoBuyMax) state.autoBuyMax = {};
+  state.autoBuyMax[type] = value;
+  recalculateRates();
+  updateUI();
+}
+
+
 function toggleConsumeType(type, checked) {
-  if (type === 'cooked') state.allowConsumeCooked = checked;
-  else if (type === 'raw') state.allowConsumeRaw = checked;
+  if (!state.allowConsume) state.allowConsume = {};
+  state.allowConsume[type] = checked;
   
+  updateGlobalFood();
   recalculateRates();
   updateUI();
   
-  const label = type === 'cooked' ? 'Cocinada' : 'Cruda';
-  showToast(`Consumo de Comida ${label} ${checked ? 'permitido' : 'prohibido'} para aldeanos`, "info");
+  const rawNames = {
+    wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada'
+  };
+  showToast(`Consumo de ${rawNames[type] || type} ${checked ? 'permitido' : 'prohibido'} para aldeanos`, "info");
 }
 
 function moveFoodPriority(idx, dir) {
@@ -296,15 +390,42 @@ function initEventHandlers() {
   const btnAssignBerriesInc = document.getElementById('btn-assign-berries-inc');
   if (btnAssignBerriesInc) btnAssignBerriesInc.addEventListener('click', () => assignJob('berries', 1));
 
-  // Botones de ventas manuales
-  const btnSellFood = document.getElementById('btn-sell-food');
-  if (btnSellFood) btnSellFood.addEventListener('click', sellFood);
-  const btnSellCooked = document.getElementById('btn-sell-cooked');
-  if (btnSellCooked) btnSellCooked.addEventListener('click', sellCookedFood);
-  const btnSellWood = document.getElementById('btn-sell-wood');
-  if (btnSellWood) btnSellWood.addEventListener('click', sellWood);
-  const btnSellStone = document.getElementById('btn-sell-stone');
-  if (btnSellStone) btnSellStone.addEventListener('click', sellStone);
+  // Botones de ventas manuales unificadas
+  const sellResourceSelect = document.getElementById('sell-resource-select');
+  if (sellResourceSelect) {
+    sellResourceSelect.addEventListener('change', updateSellResourcePriceDisplay);
+  }
+  const btnSell1 = document.getElementById('btn-sell-1');
+  if (btnSell1) btnSell1.addEventListener('click', () => sellResourceManual(1));
+  const btnSell10 = document.getElementById('btn-sell-10');
+  if (btnSell10) btnSell10.addEventListener('click', () => sellResourceManual(10));
+  const btnSell100 = document.getElementById('btn-sell-100');
+  if (btnSell100) btnSell100.addEventListener('click', () => sellResourceManual(100));
+
+  // Botones de compras manuales unificadas
+  const buyResourceSelect = document.getElementById('buy-resource-select');
+  if (buyResourceSelect) {
+    buyResourceSelect.addEventListener('change', updateBuyResourcePriceDisplay);
+  }
+  const btnBuy1 = document.getElementById('btn-buy-1');
+  if (btnBuy1) btnBuy1.addEventListener('click', () => buyResourceManual(1));
+  const btnBuy10 = document.getElementById('btn-buy-10');
+  if (btnBuy10) btnBuy10.addEventListener('click', () => buyResourceManual(10));
+  const btnBuy100 = document.getElementById('btn-buy-100');
+  if (btnBuy100) btnBuy100.addEventListener('click', () => buyResourceManual(100));
+
+
+  // Botón desplegable del inventario de comida al pulsar en la tarjeta global
+  const cardFood = document.getElementById('card-food');
+  if (cardFood) {
+    cardFood.addEventListener('click', toggleFoodDetails);
+  }
+
+  // Botón desplegable del inventario de recursos y semillas al pulsar en la tarjeta global
+  const cardResources = document.getElementById('card-resources');
+  if (cardResources) {
+    cardResources.addEventListener('click', toggleResourcesDetails);
+  }
 
   // Botones de subpestañas
   const subtabViviendas = document.getElementById('subtab-btn-viviendas');
@@ -329,27 +450,8 @@ function initEventHandlers() {
   if (btnBuildBonfire) btnBuildBonfire.addEventListener('click', buildBonfire);
   const btnBuildMarket = document.getElementById('btn-build-market');
   if (btnBuildMarket) btnBuildMarket.addEventListener('click', buildMarket);
-
-  // Mercado auto-venta checkboxes e inputs
-  const sellFoodChk = document.getElementById('auto-sell-food-chk');
-  if (sellFoodChk) sellFoodChk.addEventListener('change', (e) => toggleAutoSell('food', e.target.checked));
-  const sellFoodMin = document.getElementById('auto-sell-food-min');
-  if (sellFoodMin) sellFoodMin.addEventListener('change', (e) => changeAutoSellMin('food', e.target.value));
-
-  const sellCookedChk = document.getElementById('auto-sell-cooked-chk');
-  if (sellCookedChk) sellCookedChk.addEventListener('change', (e) => toggleAutoSell('cooked', e.target.checked));
-  const sellCookedMin = document.getElementById('auto-sell-cooked-min');
-  if (sellCookedMin) sellCookedMin.addEventListener('change', (e) => changeAutoSellMin('cooked', e.target.value));
-
-  const sellWoodChk = document.getElementById('auto-sell-wood-chk');
-  if (sellWoodChk) sellWoodChk.addEventListener('change', (e) => toggleAutoSell('wood', e.target.checked));
-  const sellWoodMin = document.getElementById('auto-sell-wood-min');
-  if (sellWoodMin) sellWoodMin.addEventListener('change', (e) => changeAutoSellMin('wood', e.target.value));
-
-  const sellStoneChk = document.getElementById('auto-sell-stone-chk');
-  if (sellStoneChk) sellStoneChk.addEventListener('change', (e) => toggleAutoSell('stone', e.target.checked));
-  const sellStoneMin = document.getElementById('auto-sell-stone-min');
-  if (sellStoneMin) sellStoneMin.addEventListener('change', (e) => changeAutoSellMin('stone', e.target.value));
+  const btnBuildGranary = document.getElementById('btn-build-granary');
+  if (btnBuildGranary) btnBuildGranary.addEventListener('click', buildGranary);
 
   // Contratar y liberar colonos
   const btnHireColonist = document.getElementById('btn-hire-colonist');
@@ -393,6 +495,18 @@ function fixColonistAllocation() {
   } else {
     state.markets = [];
   }
+  
+  if (Array.isArray(state.bonfires)) {
+    state.bonfires.forEach(b => allocated += (b.workerAssigned || 0));
+  } else {
+    state.bonfires = [];
+  }
+
+  if (Array.isArray(state.granaries)) {
+    state.granaries.forEach(b => allocated += (b.workerAssigned || 0));
+  } else {
+    state.granaries = [];
+  }
 
   state.freeColonists = state.currentColonists - allocated;
   
@@ -404,6 +518,8 @@ function fixColonistAllocation() {
     state.quarries.forEach(b => b.workerAssigned = 0);
     state.farms.forEach(b => b.workerAssigned = 0);
     state.markets.forEach(b => b.workerAssigned = 0);
+    state.bonfires.forEach(b => b.workerAssigned = 0);
+    state.granaries.forEach(b => b.workerAssigned = 0);
     state.freeColonists = state.currentColonists;
   }
 }

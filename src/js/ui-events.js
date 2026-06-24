@@ -55,21 +55,36 @@ function deliverGatheredResources() {
   updateUI();
 }
 
-function hireColonist() {
-  const cfg = CONFIG.Building.hire_colonist;
-  if (state.currentColonists >= state.maxPopulation) {
-    showToast("No hay suficiente espacio de vivienda. Construye chozas o mejora viviendas.", "warning");
+function hireColonist(candidateIdx) {
+  if (!state.candidates || !state.candidates[candidateIdx]) {
+    showToast("Candidato no disponible", "warning");
     return;
   }
-  if (state.gold >= cfg.cost_gold) {
-    state.gold -= cfg.cost_gold;
-    state.currentColonists += 1;
-    state.freeColonists += 1;
-    showToast("¡Aldeano contratado! Ya disponible para tareas.", "success");
+  
+  const cost = (CONFIG.Building && CONFIG.Building.hire_colonist) ? CONFIG.Building.hire_colonist.cost_gold : 50;
+  if (state.gold >= cost) {
+    state.gold -= cost;
+    
+    // Asignar ID secuencial único a este colono al ser contratado
+    const nextId = state.colonists.length ? Math.max(...state.colonists.map(c => c.id)) + 1 : 0;
+    const candidate = state.candidates[candidateIdx];
+    candidate.id = nextId;
+    
+    // Mover de candidates a colonists
+    state.colonists.push(candidate);
+    state.candidates.splice(candidateIdx, 1);
+    
+    // Asignar vivienda al nuevo colono de forma automática
+    if (typeof initializeHousingAssignments === 'function') {
+      initializeHousingAssignments();
+    }
+    
+    showToast(`¡${candidate.name} ha sido contratado!`, "success");
+    fixColonistAllocation();
     recalculateRates();
     updateUI();
   } else {
-    showToast("Oro insuficiente para contratar un aldeano", "warning");
+    showToast("Oro insuficiente para contratar a este candidato", "warning");
   }
 }
 
@@ -287,10 +302,10 @@ function switchTab(tabId) {
 }
 
 function switchSubTab(subTabId) {
-  const buttons = document.querySelectorAll('.subtab-btn');
+  const buttons = document.querySelectorAll('#tab-production .subtab-btn');
   buttons.forEach(btn => btn.classList.remove('active'));
   
-  const contents = document.querySelectorAll('.subtab-content');
+  const contents = document.querySelectorAll('#tab-production .subtab-content');
   contents.forEach(content => content.classList.remove('active-subcontent'));
   
   const targetBtn = document.getElementById(`subtab-btn-${subTabId}`);
@@ -300,6 +315,86 @@ function switchSubTab(subTabId) {
   if (targetContent) targetContent.classList.add('active-subcontent');
   
   state.currentSubTab = subTabId;
+}
+
+function switchColonistsSubTab(subTabId) {
+  const buttons = document.querySelectorAll('#tab-colonists .subtab-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  const contents = document.querySelectorAll('#tab-colonists .subtab-content');
+  contents.forEach(content => content.classList.remove('active-subcontent'));
+  
+  const targetBtn = document.getElementById(`subtab-btn-colonists-${subTabId}`);
+  if (targetBtn) targetBtn.classList.add('active');
+  
+  const targetContent = document.getElementById(`subtab-colonists-${subTabId}`);
+  if (targetContent) targetContent.classList.add('active-subcontent');
+  
+  state.currentColonistsSubTab = subTabId;
+}
+
+function changeColonistJobDirectly(colonistId, newJobValue) {
+  if (!state.colonists) return;
+  const col = state.colonists.find(c => c.id === colonistId);
+  if (!col) return;
+  
+  const oldJob = col.job;
+  const finalJob = newJobValue === "" ? null : newJobValue;
+  
+  if (finalJob === oldJob) return;
+  
+  if (finalJob !== null) {
+    let maxWorkers = 1;
+    let currentAssigned = state.colonists.filter(c => c.job === finalJob).length;
+    
+    if (finalJob === 'construction') {
+      maxWorkers = Infinity;
+    } else if (finalJob === 'townHall') {
+      maxWorkers = (state.townHall.isUnderConstruction || state.townHall.isUpgrading) ? 0 : 2;
+    } else if (finalJob.startsWith('lumbermills_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.lumberMills[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : (b.tier || 1);
+    } else if (finalJob.startsWith('quarries_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.quarries[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : (b.tier || 1);
+    } else if (finalJob.startsWith('bonfires_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.bonfires[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : (b.tier || 1);
+    } else if (finalJob.startsWith('granaries_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.granaries[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : (b.tier || 1);
+    } else if (finalJob.startsWith('farms_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.farms[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : 1;
+    } else if (finalJob.startsWith('markets_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.markets[idx];
+      maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : 1;
+    } else {
+      maxWorkers = Infinity;
+    }
+    
+    if (currentAssigned >= maxWorkers) {
+      if (maxWorkers === 0) {
+        showToast("Este edificio está en construcción/mejora. Asigna constructores generales para avanzar.", "warning");
+      } else {
+        showToast("Este puesto de trabajo ya está al límite de su capacidad", "warning");
+      }
+      updateUI();
+      return;
+    }
+  }
+  
+  col.job = finalJob;
+  fixColonistAllocation();
+  recalculateRates();
+  updateUI();
+  showToast(`Trabajo de ${col.name} cambiado con éxito`, "success");
 }
 
 // REGISTRO DE MANEJADORES DE EVENTOS
@@ -374,21 +469,7 @@ function initEventHandlers() {
   const btnGatherBerries = document.getElementById('btn-gather-berries');
   if (btnGatherBerries) btnGatherBerries.addEventListener('click', gatherBerries);
 
-  // Asignación de trabajos básicos
-  const btnAssignWoodDec = document.getElementById('btn-assign-wood-dec');
-  if (btnAssignWoodDec) btnAssignWoodDec.addEventListener('click', () => assignJob('wood', -1));
-  const btnAssignWoodInc = document.getElementById('btn-assign-wood-inc');
-  if (btnAssignWoodInc) btnAssignWoodInc.addEventListener('click', () => assignJob('wood', 1));
 
-  const btnAssignStoneDec = document.getElementById('btn-assign-stone-dec');
-  if (btnAssignStoneDec) btnAssignStoneDec.addEventListener('click', () => assignJob('stone', -1));
-  const btnAssignStoneInc = document.getElementById('btn-assign-stone-inc');
-  if (btnAssignStoneInc) btnAssignStoneInc.addEventListener('click', () => assignJob('stone', 1));
-
-  const btnAssignBerriesDec = document.getElementById('btn-assign-berries-dec');
-  if (btnAssignBerriesDec) btnAssignBerriesDec.addEventListener('click', () => assignJob('berries', -1));
-  const btnAssignBerriesInc = document.getElementById('btn-assign-berries-inc');
-  if (btnAssignBerriesInc) btnAssignBerriesInc.addEventListener('click', () => assignJob('berries', 1));
 
   // Botones de ventas manuales unificadas
   const sellResourceSelect = document.getElementById('sell-resource-select');
@@ -436,6 +517,15 @@ function initEventHandlers() {
   if (subtabProcesado) subtabProcesado.addEventListener('click', () => switchSubTab('procesado'));
   const subtabRecursos = document.getElementById('subtab-btn-recursos');
   if (subtabRecursos) subtabRecursos.addEventListener('click', () => switchSubTab('recursos'));
+  
+  const subtabColonistsHire = document.getElementById('subtab-btn-colonists-hire');
+  if (subtabColonistsHire) subtabColonistsHire.addEventListener('click', () => switchColonistsSubTab('hire'));
+  const subtabColonistsDetail = document.getElementById('subtab-btn-colonists-detail');
+  if (subtabColonistsDetail) subtabColonistsDetail.addEventListener('click', () => switchColonistsSubTab('detail'));
+  const subtabColonistsPriority = document.getElementById('subtab-btn-colonists-priority');
+  if (subtabColonistsPriority) subtabColonistsPriority.addEventListener('click', () => switchColonistsSubTab('priority'));
+  const subtabColonistsSummary = document.getElementById('subtab-btn-colonists-summary');
+  if (subtabColonistsSummary) subtabColonistsSummary.addEventListener('click', () => switchColonistsSubTab('summary'));
 
   // Botones de construcción de edificios
   const btnBuildBasic = document.getElementById('btn-build-basic');
@@ -453,9 +543,7 @@ function initEventHandlers() {
   const btnBuildGranary = document.getElementById('btn-build-granary');
   if (btnBuildGranary) btnBuildGranary.addEventListener('click', buildGranary);
 
-  // Contratar y liberar colonos
-  const btnHireColonist = document.getElementById('btn-hire-colonist');
-  if (btnHireColonist) btnHireColonist.addEventListener('click', hireColonist);
+  // Liberar colonos
 
   const btnResetAssignments = document.getElementById('btn-reset-assignments');
   if (btnResetAssignments) btnResetAssignments.addEventListener('click', resetAllAssignments);
@@ -464,63 +552,257 @@ function initEventHandlers() {
 // Registro DOMContentLoaded para inicializar manejadores
 document.addEventListener('DOMContentLoaded', initEventHandlers);
 
-// ARREGLO DE ASIGNACIÓN (POR SEGURIDAD)
+// ARREGLO DE ASIGNACIÓN (POR SEGURIDAD Y SINCRONIZACIÓN DESDE COLONISTAS)
 function fixColonistAllocation() {
-  state.jobs.wood = Math.max(0, parseInt(state.jobs.wood) || 0);
-  state.jobs.stone = Math.max(0, parseInt(state.jobs.stone) || 0);
-  state.jobs.berries = Math.max(0, parseInt(state.jobs.berries) || 0);
+  if (!state.colonists) state.colonists = [];
+  
+  // Reconstruir contadores de trabajos básicos
+  state.jobs.wood = state.colonists.filter(c => c.job === 'wood').length;
+  state.jobs.stone = state.colonists.filter(c => c.job === 'stone').length;
+  state.jobs.berries = state.colonists.filter(c => c.job === 'berries').length;
+  
+  // Reconstruir asignación del Ayuntamiento
+  if (state.townHall) {
+    state.townHall.workerAssigned = state.colonists.filter(c => c.job === 'townHall').length;
+  }
+  
+  // Reconstruir asignación de cada tipo de edificio
+  const buildingTypes = [
+    { array: 'lumberMills', prefix: 'lumbermills' },
+    { array: 'quarries', prefix: 'quarries' },
+    { array: 'farms', prefix: 'farms' },
+    { array: 'markets', prefix: 'markets' },
+    { array: 'bonfires', prefix: 'bonfires' },
+    { array: 'granaries', prefix: 'granaries' },
+    { array: 'houses', prefix: 'houses' }
+  ];
+  
+  buildingTypes.forEach(bt => {
+    if (Array.isArray(state[bt.array])) {
+      state[bt.array].forEach((b, idx) => {
+        b.workerAssigned = state.colonists.filter(c => c.job === `${bt.prefix}_${idx}`).length;
+      });
+    }
+  });
 
-  let allocated = state.jobs.wood + state.jobs.stone + state.jobs.berries;
+  if (typeof autoAssignBuilders === 'function') {
+    autoAssignBuilders();
+  }
+}
+
+function assignColonistToBuildingSlot(type, index, slotIdx, newColonistId) {
+  const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
+  const cid = newColonistId === "" ? null : parseInt(newColonistId);
   
-  if (Array.isArray(state.lumberMills)) {
-    state.lumberMills.forEach(b => allocated += (b.workerAssigned || 0));
+  // Find currently assigned colonists to this jobString
+  const assigned = state.colonists.filter(c => c.job === jobString);
+  const currentOccupant = assigned[slotIdx] || null;
+  
+  if (cid === null) {
+    if (currentOccupant) {
+      currentOccupant.job = null;
+      showToast("Aldeano retirado del puesto", "info");
+    }
   } else {
-    state.lumberMills = [];
+    const targetCol = state.colonists.find(c => c.id === cid);
+    if (!targetCol) return;
+    
+    targetCol.job = jobString;
+    
+    if (currentOccupant && currentOccupant.id !== cid) {
+      currentOccupant.job = null;
+    }
+    
+    showToast(`Aldeano ${targetCol.name} asignado al puesto`, "success");
   }
   
-  if (Array.isArray(state.quarries)) {
-    state.quarries.forEach(b => allocated += (b.workerAssigned || 0));
+  fixColonistAllocation();
+  recalculateRates();
+  updateUI();
+}
+
+function assignBasicJobSlot(jobType, slotIdx, newColonistId) {
+  const cid = newColonistId === "" ? null : parseInt(newColonistId);
+  const assigned = state.colonists ? state.colonists.filter(c => c.job === jobType) : [];
+  const currentOccupant = assigned[slotIdx] || null;
+
+  if (cid === null) {
+    if (currentOccupant) {
+      currentOccupant.job = null;
+      const jobName = jobType === 'wood' ? 'Leñador' : jobType === 'stone' ? 'Cantero' : 'Recolector de Frutos';
+      showToast(`Aldeano retirado de ${jobName}`, "info");
+    }
   } else {
-    state.quarries = [];
-  }
-  
-  if (Array.isArray(state.farms)) {
-    state.farms.forEach(b => allocated += (b.workerAssigned || 0));
-  } else {
-    state.farms = [];
-  }
-  
-  if (Array.isArray(state.markets)) {
-    state.markets.forEach(b => allocated += (b.workerAssigned || 0));
-  } else {
-    state.markets = [];
-  }
-  
-  if (Array.isArray(state.bonfires)) {
-    state.bonfires.forEach(b => allocated += (b.workerAssigned || 0));
-  } else {
-    state.bonfires = [];
+    const targetCol = state.colonists.find(c => c.id === cid);
+    if (!targetCol) return;
+    
+    targetCol.job = jobType;
+    if (currentOccupant && currentOccupant.id !== cid) {
+      currentOccupant.job = null;
+    }
+    const jobName = jobType === 'wood' ? 'Leñador' : jobType === 'stone' ? 'Cantero' : 'Recolector de Frutos';
+    showToast(`Aldeano ${targetCol.name} asignado a ${jobName}`, "success");
   }
 
-  if (Array.isArray(state.granaries)) {
-    state.granaries.forEach(b => allocated += (b.workerAssigned || 0));
+  fixColonistAllocation();
+  recalculateRates();
+  updateUI();
+}
+
+function changeColonistHouseDirectly(colonistId, newHouseIdxValue) {
+  if (!state.colonists) return;
+  const col = state.colonists.find(c => c.id === colonistId);
+  if (!col) return;
+  
+  const finalHouseIdx = newHouseIdxValue === "" ? null : parseInt(newHouseIdxValue);
+  const oldHouseIdx = col.houseIdx;
+  
+  if (finalHouseIdx === oldHouseIdx) return;
+  
+  if (finalHouseIdx !== null) {
+    const house = state.houses[finalHouseIdx];
+    if (!house) return;
+    if (house.isUnderConstruction) {
+      showToast("No puedes asignar aldeanos a una vivienda en construcción", "warning");
+      updateUI();
+      return;
+    }
+    
+    const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+    const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+    const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+    const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+    const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+    const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
+    const capacity = house.tier === 1 ? cap1 : (house.tier === 2 ? cap2 : cap3);
+    const currentAssigned = state.colonists.filter(c => c.houseIdx === finalHouseIdx).length;
+    
+    if (currentAssigned >= capacity) {
+      showToast("Esta vivienda ya está al límite de su capacidad", "warning");
+      updateUI();
+      return;
+    }
+  }
+  
+  col.houseIdx = finalHouseIdx;
+  recalculateRates();
+  updateUI();
+  showToast(`Residencia de ${col.name} cambiada con éxito`, "success");
+}
+
+function assignColonistToHouseSlot(houseIdx, slotIdx, newColonistId) {
+  const cid = newColonistId === "" ? null : parseInt(newColonistId);
+  
+  // Find currently assigned residents in this house
+  const residents = state.colonists.filter(c => c.houseIdx === houseIdx);
+  const currentOccupant = residents[slotIdx] || null;
+  
+  if (cid === null) {
+    if (currentOccupant) {
+      currentOccupant.houseIdx = null;
+      showToast("Aldeano desalojado de la vivienda", "info");
+    }
   } else {
-    state.granaries = [];
+    const targetCol = state.colonists.find(c => c.id === cid);
+    if (!targetCol) return;
+    
+    targetCol.houseIdx = houseIdx;
+    
+    if (currentOccupant && currentOccupant.id !== cid) {
+      currentOccupant.houseIdx = null;
+    }
+    
+    showToast(`Aldeano ${targetCol.name} asignado a la vivienda`, "success");
+  }
+  
+  recalculateRates();
+  updateUI();
+}
+
+function togglePauseConstruction(type, index) {
+  let building;
+  if (type === 'townHall') {
+    building = state.townHall;
+  } else {
+    const list = state[type];
+    if (list && list[index]) {
+      building = list[index];
+    }
   }
 
-  state.freeColonists = state.currentColonists - allocated;
+  if (building && (building.isUnderConstruction || building.isUpgrading)) {
+    building.isPaused = !building.isPaused;
+    
+    let bName = 'Edificio';
+    if (type === 'townHall') {
+      bName = 'Ayuntamiento';
+    } else {
+      const names = {
+        houses: 'Choza/Vivienda',
+        lumberMills: 'Aserradero',
+        quarries: 'Cantera',
+        farms: 'Granja',
+        bonfires: 'Fogata',
+        markets: 'Puesto de Mercado',
+        granaries: 'Granero'
+      };
+      bName = `${names[type] || 'Edificio'} #${index + 1}`;
+    }
+    
+    if (building.isPaused) {
+      showToast(`Construcción de ${bName} pausada`, "info");
+    } else {
+      showToast(`Construcción de ${bName} reanudada`, "success");
+    }
+
+    if (typeof autoAssignBuilders === 'function') {
+      autoAssignBuilders();
+    }
+    
+    recalculateRates();
+    updateUI();
+  }
+}
+
+function rotateCandidatesPool() {
+  const rotateCost = CONFIG.Sales && CONFIG.Sales.rotate_candidates ? CONFIG.Sales.rotate_candidates.cost_gold : 15;
+  if (state.gold >= rotateCost) {
+    state.gold -= rotateCost;
+    state.candidates = [];
+    replenishCandidates();
+    state.hasHiredThisWeek = false;
+    state.candidateRotationElapsed = 0;
+    showToast("🔄 Pool de candidatos rotado con éxito", "success");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast("Oro insuficiente para rotar los candidatos", "warning");
+  }
+}
+
+function dismissColonist(colonistId) {
+  if (!state.colonists) return;
+  const colIndex = state.colonists.findIndex(c => c.id === colonistId);
+  if (colIndex === -1) return;
   
-  if (state.freeColonists < 0 || isNaN(state.freeColonists)) {
-    state.jobs.wood = 0;
-    state.jobs.stone = 0;
-    state.jobs.berries = 0;
-    state.lumberMills.forEach(b => b.workerAssigned = 0);
-    state.quarries.forEach(b => b.workerAssigned = 0);
-    state.farms.forEach(b => b.workerAssigned = 0);
-    state.markets.forEach(b => b.workerAssigned = 0);
-    state.bonfires.forEach(b => b.workerAssigned = 0);
-    state.granaries.forEach(b => b.workerAssigned = 0);
-    state.freeColonists = state.currentColonists;
+  const col = state.colonists[colIndex];
+  const confirmMsg = `¿Estás seguro de que quieres despedir a ${col.name}? No recuperarás los recursos invertidos en su contratación, pero se liberará su espacio de vivienda y dejará de consumir comida.`;
+  
+  if (confirm(confirmMsg)) {
+    // Eliminar de la lista de colonos
+    state.colonists.splice(colIndex, 1);
+    
+    // Ejecutar sincronización de asignaciones de empleo y viviendas
+    fixColonistAllocation();
+    if (typeof initializeHousingAssignments === 'function') {
+      initializeHousingAssignments();
+    }
+    
+    // Recalcular tasas globales y actualizar la UI
+    recalculateRates();
+    updateUI();
+    
+    showToast(`El aldeano ${col.name} ha sido despedido con éxito`, "info");
   }
 }
 
@@ -540,10 +822,14 @@ window.onload = async function() {
 
   // Limpieza de colonos fantasmas por corrupción de datos
   fixColonistAllocation();
+  if (typeof initializeHousingAssignments === 'function') {
+    initializeHousingAssignments();
+  }
   
   // Activar la pestaña guardada o por defecto
   switchTab(state.currentTab || 'basic');
   switchSubTab(state.currentSubTab || 'viviendas');
+  switchColonistsSubTab(state.currentColonistsSubTab || 'hire');
   renderFoodPriorityList();
   recalculateRates();
 };

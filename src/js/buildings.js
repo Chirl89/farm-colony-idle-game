@@ -1,22 +1,96 @@
+// AUTOASIGNACIÓN DE CONSTRUCTORES
+function autoAssignBuilders() {
+  if (!state.colonists) return;
+
+  const activeProjects = [];
+
+  // Ayuntamiento
+  if (state.townHall && (state.townHall.isUnderConstruction || state.townHall.isUpgrading) && !state.townHall.isPaused) {
+    activeProjects.push({
+      type: 'townHall',
+      building: state.townHall,
+      index: null,
+      activatedAt: state.townHall.activatedAt || 0
+    });
+  }
+
+  // Otros edificios
+  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries'];
+  for (const type of typesToCheck) {
+    if (Array.isArray(state[type])) {
+      state[type].forEach((building, index) => {
+        if ((building.isUnderConstruction || building.isUpgrading) && !building.isPaused) {
+          activeProjects.push({
+            type: type,
+            building: building,
+            index: index,
+            activatedAt: building.activatedAt || 0
+          });
+        }
+      });
+    }
+  }
+
+  // Ordenar por activatedAt ascendente (más antiguos primero)
+  activeProjects.sort((a, b) => (a.activatedAt || 0) - (b.activatedAt || 0));
+
+  // Resetear workerAssigned a 0 y builders a [] solo para los proyectos activos (bajo construcción o mejora)
+  if (state.townHall) {
+    state.townHall.builders = [];
+    if (state.townHall.isUnderConstruction || state.townHall.isUpgrading) {
+      state.townHall.workerAssigned = 0;
+    }
+  }
+  for (const type of typesToCheck) {
+    if (Array.isArray(state[type])) {
+      state[type].forEach(b => {
+        b.builders = [];
+        if (b.isUnderConstruction || b.isUpgrading) {
+          b.workerAssigned = 0;
+        }
+      });
+    }
+  }
+
+  // Obtener constructores genéricos
+  const buildersList = state.colonists.filter(c => c.job === 'construction');
+  let builderIdx = 0;
+
+  // Repartir equitativamente (round-robin) hasta max de 2 por obra
+  if (activeProjects.length > 0 && buildersList.length > 0) {
+    for (let round = 1; round <= 2; round++) {
+      for (const project of activeProjects) {
+        if (builderIdx < buildersList.length && project.building.workerAssigned < 2) {
+          const builder = buildersList[builderIdx++];
+          project.building.builders = project.building.builders || [];
+          project.building.builders.push(builder.id);
+          project.building.workerAssigned++;
+        }
+      }
+    }
+  }
+}
+
 // ASIGNACIÓN DE TRABAJOS BÁSICOS
 function assignJob(job, val) {
   if (val > 0) {
-    if (state.freeColonists > 0) {
-      state.jobs[job] += 1;
-      state.freeColonists -= 1;
+    const freeColonist = state.colonists.find(c => c.job === null);
+    if (freeColonist) {
+      freeColonist.job = job;
       const jobName = job === 'wood' ? 'Leñador' : job === 'stone' ? 'Cantero' : 'Recolector de Frutos';
       showToast(`Aldeano asignado a ${jobName}`);
     } else {
       showToast("No tienes aldeanos libres disponibles", "warning");
     }
   } else {
-    if (state.jobs[job] > 0) {
-      state.jobs[job] -= 1;
-      state.freeColonists += 1;
+    const assignedColonist = state.colonists.find(c => c.job === job);
+    if (assignedColonist) {
+      assignedColonist.job = null;
       const jobName = job === 'wood' ? 'Leñador' : job === 'stone' ? 'Cantero' : 'Recolector de Frutos';
       showToast(`Aldeano retirado de ${jobName}`);
     }
   }
+  fixColonistAllocation();
   recalculateRates();
   updateUI();
 }
@@ -27,64 +101,44 @@ function assignBuildingWorker(type, index, val) {
   if (!list || !list[index]) return;
   const building = list[index];
   
-  // Las viviendas no usan aldeanos una vez terminadas de construir y si no se están mejorando
-  if (type === 'houses' && !building.isUnderConstruction && !building.isUpgrading) {
+  if (building.isUnderConstruction || building.isUpgrading) {
+    return; // Ahora se maneja por autoasignación de constructores
+  }
+  
+  if (type === 'houses') {
     return;
   }
   
   const isIndustrial = type === 'lumberMills' || type === 'quarries' || type === 'bonfires' || type === 'granaries';
-  const maxWorkers = (building.isUnderConstruction || building.isUpgrading) ? 2 : (isIndustrial ? (building.tier || 1) : 1);
+  const maxWorkers = isIndustrial ? (building.tier || 1) : 1;
+  const currentAssigned = state.colonists.filter(c => c.job === `${type.toLowerCase()}_${index}`).length;
   
   if (val > 0) {
-    if (state.freeColonists > 0) {
-      if (building.workerAssigned >= maxWorkers) {
+    const freeColonist = state.colonists.find(c => c.job === null);
+    if (freeColonist) {
+      if (currentAssigned >= maxWorkers) {
         showToast(`Este edificio ya tiene el máximo de aldeanos asignados (${maxWorkers})`, "warning");
         return;
       }
-      building.workerAssigned = (building.workerAssigned || 0) + 1;
-      state.freeColonists -= 1;
+      freeColonist.job = `${type.toLowerCase()}_${index}`;
       showToast("Aldeano asignado al edificio");
     } else {
       showToast("No tienes aldeanos libres disponibles", "warning");
     }
   } else {
-    if (building.workerAssigned > 0) {
-      building.workerAssigned -= 1;
-      state.freeColonists += 1;
+    const assignedColonist = state.colonists.find(c => c.job === `${type.toLowerCase()}_${index}`);
+    if (assignedColonist) {
+      assignedColonist.job = null;
       showToast("Aldeano retirado del edificio");
     }
   }
+  fixColonistAllocation();
   recalculateRates();
   updateUI();
 }
 
 function assignTownHallWorker(val) {
-  if (!state.townHall.built) return;
-  if (!state.townHall.isUnderConstruction && !state.townHall.isUpgrading) return;
-  
-  const maxWorkers = 2;
-  
-  if (val > 0) {
-    if (state.freeColonists > 0) {
-      if ((state.townHall.workerAssigned || 0) >= maxWorkers) {
-        showToast(`El Ayuntamiento ya tiene el máximo de aldeanos asignados (${maxWorkers})`, "warning");
-        return;
-      }
-      state.townHall.workerAssigned = (state.townHall.workerAssigned || 0) + 1;
-      state.freeColonists -= 1;
-      showToast("Aldeano asignado a la construcción del Ayuntamiento");
-    } else {
-      showToast("No tienes aldeanos libres disponibles", "warning");
-    }
-  } else {
-    if ((state.townHall.workerAssigned || 0) > 0) {
-      state.townHall.workerAssigned -= 1;
-      state.freeColonists += 1;
-      showToast("Aldeano retirado de la construcción del Ayuntamiento");
-    }
-  }
-  recalculateRates();
-  updateUI();
+  // Obsoleto: ahora se maneja por autoasignación de constructores
 }
 
 function togglePlayerConstruct(type, index) {
@@ -159,9 +213,15 @@ function startFarmCycle(idx) {
 
 function recalculateMaxPopulation() {
   if (!state.houses) state.houses = [];
-  const cap1 = 1;
-  const cap2 = 2;
-  const cap3 = 4;
+  
+  const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+  const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+  
+  const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+  const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+  
+  const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+  const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
   
   state.basicHouses = state.houses.filter(h => h.tier === 1 && !h.isUnderConstruction).length;
   state.upgradedHouses = state.houses.filter(h => h.tier === 2 && !h.isUnderConstruction).length;
@@ -188,10 +248,13 @@ function buildBasicHouse() {
       isUnderConstruction: true,
       constructionElapsed: 0,
       constructionDuration: (cfg && cfg.duration) || 1,
-      workerAssigned: 0
+      workerAssigned: 0,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
     
     recalculateMaxPopulation();
+    autoAssignBuilders();
     
     showToast("🏗️ Comenzando construcción de la Choza. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
@@ -225,6 +288,9 @@ function upgradeHouseItem(idx) {
       house.constructionElapsed = 0;
       house.constructionDuration = (cfg && cfg.duration) || 20;
       house.workerAssigned = 0;
+      house.activatedAt = state.nextActivationId++;
+      house.isPaused = false;
+      autoAssignBuilders();
       
       showToast(`🏗️ Comenzando mejora de Choza #${idx + 1} a Cabaña. ¡Asigna constructores para comenzar!`, "info");
       recalculateRates();
@@ -238,10 +304,11 @@ function upgradeHouseItem(idx) {
       return;
     }
     // Upgrade to Tier 3 (Casa Grande): 50 Gold, 80 Wood, 60 Stone
-    if (state.gold >= 50 && state.wood >= 80 && state.stone >= 60) {
-      state.gold -= 50;
-      state.wood -= 80;
-      state.stone -= 60;
+    const cfg = CONFIG.Building && CONFIG.Building.luxury_house ? CONFIG.Building.luxury_house : { cost_gold: 50, cost_wood: 80, cost_stone: 60 };
+    if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+      state.gold -= cfg.cost_gold;
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
       
       house.isUpgrading = true;
       house.upgradingToTier = 3;
@@ -249,12 +316,15 @@ function upgradeHouseItem(idx) {
       const houseT3Cfg = CONFIG.Timing && CONFIG.Timing.upgraded_house_t3;
       house.constructionDuration = (houseT3Cfg && houseT3Cfg.duration) || 30;
       house.workerAssigned = 0;
+      house.activatedAt = state.nextActivationId++;
+      house.isPaused = false;
+      autoAssignBuilders();
       
       showToast(`🏗️ Comenzando mejora de Cabaña #${idx + 1} a Casa Grande. ¡Asigna constructores para comenzar!`, "info");
       recalculateRates();
       updateUI();
     } else {
-      showToast("Recursos insuficientes para mejorar a Casa Grande (Requiere 50 Oro, 80 Madera y 60 Piedra)", "warning");
+      showToast(`Recursos insuficientes para mejorar a Casa Grande (Requiere ${cfg.cost_gold} Oro, ${cfg.cost_wood} Madera y ${cfg.cost_stone} Piedra)`, "warning");
     }
   }
 }
@@ -274,8 +344,11 @@ function buildLumberMill() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5
+      constructionDuration: (cfg && cfg.duration) || 5,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Cabaña de Leñador. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -287,43 +360,48 @@ function buildLumberMill() {
 function upgradeLumberMill(idx) {
   if (!state.lumberMills || !state.lumberMills[idx]) return;
   const mill = state.lumberMills[idx];
-  if (mill.isUnderConstruction) return;
+  if (mill.isUnderConstruction || mill.isUpgrading) return;
   const tier = mill.tier || 1;
+  if (tier >= 3) {
+    showToast("Este aserradero ya está en el nivel máximo.", "info");
+    return;
+  }
   
+  let cfg;
   if (tier === 1) {
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Aserradero a Tier 2.", "warning");
       return;
     }
-    // Upgrade to Tier 2: 100 Gold, 80 Wood, 50 Stone
-    if (state.gold >= 100 && state.wood >= 80 && state.stone >= 50) {
-      state.gold -= 100;
-      state.wood -= 80;
-      state.stone -= 50;
-      mill.tier = 2;
-      showToast(`¡Cabaña de Leñador #${idx + 1} mejorada a Aserradero! (Tasa de producción duplicada e incrementada la capacidad de trabajadores a 2)`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes (Requiere 100 Oro, 80 Madera y 50 Piedra)", "warning");
-    }
+    cfg = CONFIG.Building.lumbermill_t2;
   } else if (tier === 2) {
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Aserradero a Tier 3.", "warning");
       return;
     }
-    // Upgrade to Tier 3: 200 Gold, 150 Wood, 100 Stone
-    if (state.gold >= 200 && state.wood >= 150 && state.stone >= 100) {
-      state.gold -= 200;
-      state.wood -= 150;
-      state.stone -= 100;
-      mill.tier = 3;
-      showToast(`¡Aserradero #${idx + 1} mejorado a Gremio de Leñadores! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes (Requiere 200 Oro, 150 Madera y 100 Piedra)", "warning");
-    }
+    cfg = CONFIG.Building.lumbermill_t3;
+  }
+  
+  if (!cfg) return;
+  
+  if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+    state.gold -= cfg.cost_gold;
+    state.wood -= cfg.cost_wood;
+    state.stone -= cfg.cost_stone;
+    
+    mill.isUpgrading = true;
+    mill.upgradingToTier = tier + 1;
+    mill.constructionElapsed = 0;
+    mill.constructionDuration = (cfg && cfg.duration) || 20;
+    mill.activatedAt = state.nextActivationId++;
+    mill.isPaused = false;
+    
+    autoAssignBuilders();
+    showToast(`🏗️ Comenzando mejora de Aserradero #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Aserradero (Oro: ${cfg.cost_gold}, Madera: ${cfg.cost_wood}, Piedra: ${cfg.cost_stone})`, "warning");
   }
 }
 
@@ -342,8 +420,11 @@ function buildQuarry() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5
+      constructionDuration: (cfg && cfg.duration) || 5,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Foso de Piedra. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -355,43 +436,48 @@ function buildQuarry() {
 function upgradeQuarry(idx) {
   if (!state.quarries || !state.quarries[idx]) return;
   const quarry = state.quarries[idx];
-  if (quarry.isUnderConstruction) return;
+  if (quarry.isUnderConstruction || quarry.isUpgrading) return;
   const tier = quarry.tier || 1;
+  if (tier >= 3) {
+    showToast("Esta cantera ya está en el nivel máximo.", "info");
+    return;
+  }
   
+  let cfg;
   if (tier === 1) {
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar la Cantera a Tier 2.", "warning");
       return;
     }
-    // Upgrade to Tier 2: 120 Gold, 60 Wood, 80 Stone
-    if (state.gold >= 120 && state.wood >= 60 && state.stone >= 80) {
-      state.gold -= 120;
-      state.wood -= 60;
-      state.stone -= 80;
-      quarry.tier = 2;
-      showToast(`¡Foso de Piedra #${idx + 1} mejorado a Cantera! (Tasa de producción duplicada e incrementada la capacidad de trabajadores a 2)`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes (Requiere 120 Oro, 60 Madera y 80 Piedra)", "warning");
-    }
+    cfg = CONFIG.Building.quarry_t2;
   } else if (tier === 2) {
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cantera a Tier 3.", "warning");
       return;
     }
-    // Upgrade to Tier 3: 240 Gold, 120 Wood, 150 Stone
-    if (state.gold >= 240 && state.wood >= 120 && state.stone >= 150) {
-      state.gold -= 240;
-      state.wood -= 120;
-      state.stone -= 150;
-      quarry.tier = 3;
-      showToast(`¡Cantera #${idx + 1} mejorado a Gran Mina de Piedra! (Tasa de producción cuadruplicada e incrementada la capacidad de trabajadores a 3)`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes (Requiere 240 Oro, 120 Madera y 150 Piedra)", "warning");
-    }
+    cfg = CONFIG.Building.quarry_t3;
+  }
+  
+  if (!cfg) return;
+  
+  if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone) {
+    state.gold -= cfg.cost_gold;
+    state.wood -= cfg.cost_wood;
+    state.stone -= cfg.cost_stone;
+    
+    quarry.isUpgrading = true;
+    quarry.upgradingToTier = tier + 1;
+    quarry.constructionElapsed = 0;
+    quarry.constructionDuration = (cfg && cfg.duration) || 20;
+    quarry.activatedAt = state.nextActivationId++;
+    quarry.isPaused = false;
+    
+    autoAssignBuilders();
+    showToast(`🏗️ Comenzando mejora de Cantera #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar la Cantera (Oro: ${cfg.cost_gold}, Madera: ${cfg.cost_wood}, Piedra: ${cfg.cost_stone})`, "warning");
   }
 }
 
@@ -416,8 +502,11 @@ function buildFarm() {
       wateringsCompleted: 0,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5
+      constructionDuration: (cfg && cfg.duration) || 5,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Granja. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -445,8 +534,11 @@ function buildMarket() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5
+      constructionDuration: (cfg && cfg.duration) || 5,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Puesto de Mercado. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -474,8 +566,11 @@ function buildBonfire() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5
+      constructionDuration: (cfg && cfg.duration) || 5,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Fogata. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -553,6 +648,7 @@ function cookManually(idx) {
     bonfire.elapsed = 0;
     bonfire.isRunning = true;
     bonfire.mode = 'manual';
+    bonfire.activeRecipe = recipe;
     recalculateRates();
     updateUI();
   } else {
@@ -565,10 +661,6 @@ function changeBonfireRecipe(idx, recipe) {
   if (state.bonfires && state.bonfires[idx]) {
     const bonfire = state.bonfires[idx];
     if (bonfire.isUnderConstruction) return;
-    if (bonfire.isRunning) {
-      showToast("No puedes cambiar la receta mientras cocinas", "warning");
-      return;
-    }
     bonfire.selectedRecipe = recipe;
     recalculateRates();
     updateUI();
@@ -585,7 +677,10 @@ function buildTownHall() {
     state.townHall.isUnderConstruction = true;
     state.townHall.constructionElapsed = 0;
     state.townHall.constructionDuration = (cfg && cfg.duration) || 1;
+    state.townHall.activatedAt = state.nextActivationId++;
+    state.townHall.isPaused = false;
     state.playerConstructing = { type: 'townHall' };
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción del Ayuntamiento. ¡El jugador ha iniciado la construcción!", "info");
     recalculateRates();
     updateUI();
@@ -625,6 +720,9 @@ function upgradeTownHall() {
     state.townHall.constructionElapsed = 0;
     state.townHall.constructionDuration = (cfg && cfg.duration) || (currentTier === 1 ? 25 : 40);
     state.townHall.workerAssigned = 0;
+    state.townHall.activatedAt = state.nextActivationId++;
+    state.townHall.isPaused = false;
+    autoAssignBuilders();
     
     showToast(`🏗️ Comenzando mejora de Ayuntamiento a Nivel ${currentTier + 1}. ¡Asigna constructores para comenzar!`, "info");
     recalculateRates();
@@ -649,14 +747,16 @@ function assignBuildingJob(type, val) {
   const names = getJobNames(type);
 
   if (val > 0) {
-    if (state.freeColonists > 0) {
+    const freeColonist = state.colonists.find(c => c.job === null);
+    if (freeColonist) {
       const building = list.find(b => {
-        const maxWorkers = b.isUnderConstruction ? 2 : ((type === 'bonfire' || type === 'granary') ? (b.tier || 1) : 1);
-        return (b.workerAssigned || 0) < maxWorkers;
+        if (b.isUnderConstruction || b.isUpgrading) return false;
+        const maxWorkers = (type === 'bonfire' || type === 'granary') ? (b.tier || 1) : 1;
+        const currentAssigned = state.colonists.filter(c => c.job === `${arrayKey.toLowerCase()}_${b.id}`).length;
+        return currentAssigned < maxWorkers;
       });
       if (building) {
-        building.workerAssigned = (building.workerAssigned || 0) + 1;
-        state.freeColonists -= 1;
+        freeColonist.job = `${arrayKey.toLowerCase()}_${building.id}`;
         showToast(`Aldeano asignado al ${names.singular}`);
       } else {
         showToast(`Todos los ${names.plural} ya tienen el máximo de trabajadores`, "warning");
@@ -665,13 +765,14 @@ function assignBuildingJob(type, val) {
       showToast("No tienes aldeanos libres disponibles", "warning");
     }
   } else {
-    const building = [...list].reverse().find(b => (b.workerAssigned || 0) > 0);
-    if (building) {
-      building.workerAssigned -= 1;
-      state.freeColonists += 1;
+    const reversedColonists = [...state.colonists].reverse();
+    const assignedColonist = reversedColonists.find(c => c.job && c.job.startsWith(`${arrayKey.toLowerCase()}_`));
+    if (assignedColonist) {
+      assignedColonist.job = null;
       showToast(`Aldeano retirado del ${names.singular}`);
     }
   }
+  fixColonistAllocation();
   recalculateRates();
   updateUI();
 }
@@ -679,19 +780,9 @@ function assignBuildingJob(type, val) {
 // LIBERAR TODOS LOS TRABAJADORES (QoL)
 function resetAllAssignments() {
   if (confirm("¿Estás seguro de que quieres liberar a todos tus aldeanos asignados?")) {
-    state.jobs.wood = 0;
-    state.jobs.stone = 0;
-    state.jobs.berries = 0;
-    
-    if (Array.isArray(state.lumberMills)) state.lumberMills.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.quarries)) state.quarries.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.farms)) state.farms.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.markets)) state.markets.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.bonfires)) state.bonfires.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.granaries)) state.granaries.forEach(b => b.workerAssigned = 0);
-    if (Array.isArray(state.houses)) state.houses.forEach(b => b.workerAssigned = 0);
-    if (state.townHall) state.townHall.workerAssigned = 0;
-    
+    if (Array.isArray(state.colonists)) {
+      state.colonists.forEach(c => c.job = null);
+    }
     fixColonistAllocation();
     showToast("Todos los aldeanos han sido liberados de sus tareas", "info");
     recalculateRates();
@@ -740,8 +831,11 @@ function buildGranary() {
       isUpgrading: false,
       selectedCrop: 'wheat',
       elapsed: 0,
-      isRunning: false
+      isRunning: false,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
     });
+    autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Granero. ¡Asigna constructores para comenzar!", "info");
     recalculateRates();
     updateUI();
@@ -789,6 +883,9 @@ function upgradeGranary(idx) {
     granary.upgradingToTier = tier + 1;
     granary.constructionElapsed = 0;
     granary.constructionDuration = (cfg && cfg.duration) || 5;
+    granary.activatedAt = state.nextActivationId++;
+    granary.isPaused = false;
+    autoAssignBuilders();
     
     showToast(`🏗️ Comenzando mejora de Granero #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
     recalculateRates();
@@ -802,10 +899,6 @@ function changeGranaryRecipe(idx, cropKey) {
   if (state.granaries && state.granaries[idx]) {
     const granary = state.granaries[idx];
     if (granary.isUnderConstruction) return;
-    if (granary.isRunning) {
-      showToast("No puedes cambiar el cultivo mientras se procesa", "warning");
-      return;
-    }
     granary.selectedCrop = cropKey;
     recalculateRates();
     updateUI();
@@ -840,6 +933,7 @@ function processGranaryManually(idx) {
     granary.elapsed = 0;
     granary.isRunning = true;
     granary.mode = 'manual';
+    granary.activeCrop = cropKey;
     recalculateRates();
     updateUI();
   } else {

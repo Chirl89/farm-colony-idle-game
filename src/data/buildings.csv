@@ -1,18 +1,22 @@
 Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info
-Building;basic_house;Choza;0;5;3;1;maxPopulation;
-Building;upgraded_house;Mejorar Choza;0;40;30;1;maxPopulationUpgrade;
+Building;basic_house;Choza;0;5;3;2;maxPopulation;
+Building;upgraded_house;Mejorar Choza;0;40;30;2;maxPopulationUpgrade;
+Building;luxury_house;Mejorar a Casa Grande;50;80;60;4;maxPopulationUpgrade;
 Building;lumbermill;Cabaña de Leñador;80;0;40;0;;
 Building;quarry;Foso de Piedra;100;40;0;0;;
 Building;farm;Granja;0;30;20;0;;
 Building;market;Puesto de Mercado;0;60;50;0;;
-Building;hire_colonist;Contratar Aldeano;5;0;0;1;colonist;
+Building;hire_colonist;Contratar Aldeano;3;0;0;1;colonist;
 Building;bonfire;Fogata;0;40;20;0;;
 Building;pot_upgrade;Mejorar a Caldero;50;0;30;0;;
 Building;kitchen_upgrade;Mejorar a Cocina de Taberna;100;50;0;0;;
 Building;townhall;Ayuntamiento T1;0;10;5;0;;
 Building;townhall_t2;Mejorar Ayuntamiento T2;0;60;80;0;;
 Building;townhall_t3;Mejorar Ayuntamiento T3;200;120;150;0;;
-Building;granary;Granero;0;50;30;0;0;;
-Building;granary_t2;Mejorar Granero T2;80;80;50;0;0;;
-Building;granary_t3;Mejorar Granero T3;150;120;80;0;0;;
-
+Building;granary;Granero;0;50;30;0;0;
+Building;granary_t2;Mejorar Granero T2;80;80;50;0;0;
+Building;granary_t3;Mejorar Granero T3;150;120;80;0;0;
+Building;lumbermill_t2;Mejorar Aserradero T2;100;80;50;0;0;
+Building;lumbermill_t3;Mejorar Aserradero T3;200;150;100;0;0;
+Building;quarry_t2;Mejorar Cantera T2;120;60;80;0;0;
+Building;quarry_t3;Mejorar Cantera T3;240;120;150;0;0;

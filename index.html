@@ -170,13 +170,9 @@
               <div id="gather-cooldown-container-wood" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
                 <div id="gather-cooldown-bar-wood" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.5rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar leñadores:</span>
-                <div class="colonist-allocator">
-                  <button id="btn-assign-wood-dec" class="allocator-btn">-</button>
-                  <span class="allocator-val" id="alloc-wood">0</span>
-                  <button id="btn-assign-wood-inc" class="allocator-btn">+</button>
-                </div>
+                <div id="alloc-container-wood" style="width: 100%;"></div>
               </div>
             </div>
 
@@ -192,13 +188,9 @@
               <div id="gather-cooldown-container-stone" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
                 <div id="gather-cooldown-bar-stone" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.5rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar canteros:</span>
-                <div class="colonist-allocator">
-                  <button id="btn-assign-stone-dec" class="allocator-btn">-</button>
-                  <span class="allocator-val" id="alloc-stone">0</span>
-                  <button id="btn-assign-stone-inc" class="allocator-btn">+</button>
-                </div>
+                <div id="alloc-container-stone" style="width: 100%;"></div>
               </div>
             </div>
 
@@ -214,13 +206,9 @@
               <div id="gather-cooldown-container-berries" style="height: 3px; background: rgba(0,0,0,0.3); border-radius: 99px; margin-top: 0.25rem; width: 100%; display: none;">
                 <div id="gather-cooldown-bar-berries" style="height: 100%; background: rgba(255,255,255,0.15); border-radius: 99px; width: 0%;"></div>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.5rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar recolectores:</span>
-                <div class="colonist-allocator">
-                  <button id="btn-assign-berries-dec" class="allocator-btn">-</button>
-                  <span class="allocator-val" id="alloc-berries">0</span>
-                  <button id="btn-assign-berries-inc" class="allocator-btn">+</button>
-                </div>
+                <div id="alloc-container-berries" style="width: 100%;"></div>
               </div>
             </div>
           </div>
@@ -540,12 +528,8 @@
               <div style="display: flex; align-items: center; gap: 1rem;">
                 <span class="timer-text" id="market-status-text" style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted);">Inactivo</span>
                 <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.3); padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                  <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;">Asignar mercader:</span>
-                  <div class="colonist-allocator">
-                    <button class="allocator-btn" onclick="assignBuildingJob('market', -1)">-</button>
-                    <span class="allocator-val" id="alloc-market">0</span>
-                    <button class="allocator-btn" onclick="assignBuildingJob('market', 1)">+</button>
-                  </div>
+                  <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;">Asignar mercader (<span id="alloc-market">0</span> / 1):</span>
+                  <div id="market-worker-dropdown-container" style="display: inline-block; min-width: 150px;"></div>
                 </div>
               </div>
             </div>
@@ -596,121 +580,104 @@
 
       <!-- PESTAÑA: COLONOS -->
       <div id="tab-colonists" class="tab-content">
-        <div class="tab-grid-2col">
-          <!-- Columna izquierda: Contratación y Alimentación -->
-          <div class="column-gap" style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <section class="module-card">
-              <div class="module-title">
-                <span>🤝 Contratación de Personal</span>
-              </div>
-              
-              <div class="building-item" style="border: none; background: none; padding: 0;">
-                <div class="building-info">
-                  <span class="building-name">Contratar Aldeano</span>
-                  <span class="building-desc">Trae mano de obra para automatizar y operar la aldea.</span>
-                  <div class="costs-list" style="margin-top: 0.5rem;">
-                    <span class="cost-badge" id="cost-hire-gold">🪙 50 Oro</span>
-                  </div>
-                </div>
-                <button class="btn btn-accent-gold" style="width: 100%; margin-top: 1rem;" id="btn-hire-colonist" >
-                  🧑‍🌾 Contratar Aldeano
-                </button>
-              </div>
-            </section>
+        <!-- Subtab Navigation for Colonists -->
+        <div class="subtab-container" style="margin-bottom: 1.5rem;">
+          <button id="subtab-btn-colonists-hire" class="subtab-btn active">
+            🤝 Contratación
+          </button>
+          <button id="subtab-btn-colonists-detail" class="subtab-btn">
+            👥 Detalle de Aldeanos
+          </button>
+          <button id="subtab-btn-colonists-priority" class="subtab-btn">
+            🍲 Prioridad de Comida
+          </button>
+          <button id="subtab-btn-colonists-summary" class="subtab-btn">
+            📊 Resumen por Tareas
+          </button>
+        </div>
 
-            <section class="module-card">
-              <div class="module-title">
-                <span>🍲 Alimentación de Aldeanos</span>
-              </div>
-              
-              <div class="nutrition-status-info" style="margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem;">
-                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.35;">
-                  Cada aldeano necesita comer diariamente. Su prioridad de consumo determinará qué comida consumen primero.
-                </p>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.45rem 0.6rem; background: rgba(0,0,0,0.2); border-radius: 6px; margin-top: 0.25rem;">
-                  <span style="color: var(--color-text-muted); font-weight: 500;">Hambrientos hoy:</span>
-                  <span id="starving-count-val" style="color: #f87171; font-weight: 700;">0</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.45rem 0.6rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
-                  <span style="color: var(--color-text-muted); font-weight: 500;">Eficiencia de la Aldea:</span>
-                  <span id="colony-efficiency-val" style="color: #4ade80; font-weight: 700;">100%</span>
-                </div>
-              </div>
-              
-              <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed rgba(255,255,255,0.08);">
-                <span style="font-size: 0.8rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.5rem;">Orden de Prioridad de Comida:</span>
-                <div id="food-priority-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
-                  <!-- Se genera dinámicamente -->
-                </div>
-              </div>
-            </section>
-          </div>
+        <!-- Subtab Content: Contratación -->
+        <div id="subtab-colonists-hire" class="subtab-content active-subcontent">
+          <section class="module-card">
+            <div class="module-title">
+              <span>🤝 Contratación de Personal</span>
+            </div>
+            <div id="hiring-candidates-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+              <!-- Tarjetas de candidatos generadas dinámicamente -->
+            </div>
+          </section>
+        </div>
 
-          <!-- Columna derecha: Gestión de Trabajo QoL -->
-          <div class="column-gap">
-            <section class="module-card">
-              <div class="module-title">
-                <span>📊 Resumen de Tareas y Gestión</span>
+        <!-- Subtab Content: Detalle de Aldeanos -->
+        <div id="subtab-colonists-detail" class="subtab-content">
+          <section class="module-card">
+            <div class="module-title">
+              <span>👥 Detalle de Aldeanos de la Colonia</span>
+            </div>
+            <div id="colonists-detail-list-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+              <!-- Lista de colonos detallada generada dinámicamente -->
+            </div>
+          </section>
+        </div>
+
+        <!-- Subtab Content: Prioridad de Comida -->
+        <div id="subtab-colonists-priority" class="subtab-content">
+          <section class="module-card">
+            <div class="module-title">
+              <span>🍲 Prioridad y Consumo de Alimentos</span>
+            </div>
+            <div class="nutrition-status-info" style="margin-bottom: 0.75rem; display: flex; flex-direction: column; gap: 0.4rem;">
+              <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0; line-height: 1.35;">
+                Cada aldeano necesita comer diariamente. Su prioridad de consumo determinará qué comida consumen primero.
+              </p>
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.45rem 0.6rem; background: rgba(0,0,0,0.2); border-radius: 6px; margin-top: 0.25rem;">
+                <span style="color: var(--color-text-muted); font-weight: 500;">Hambrientos hoy:</span>
+                <span id="starving-count-val" style="color: #f87171; font-weight: 700;">0</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.8rem; padding: 0.45rem 0.6rem; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                <span style="color: var(--color-text-muted); font-weight: 500;">Eficiencia de la Aldea:</span>
+                <span id="colony-efficiency-val" style="color: #4ade80; font-weight: 700;">100%</span>
+              </div>
+            </div>
+            
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed rgba(255,255,255,0.08);">
+              <span style="font-size: 0.8rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.5rem;">Orden de Prioridad de Comida:</span>
+              <div id="food-priority-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <!-- Se genera dinámicamente -->
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Subtab Content: Resumen por Tareas -->
+        <div id="subtab-colonists-summary" class="subtab-content">
+          <section class="module-card">
+            <div class="module-title">
+              <span>📊 Resumen de Tareas y Gestión</span>
+            </div>
+            
+            <div class="colonist-stats-grid">
+              <div class="colonist-stat-box">
+                <div class="colonist-stat-label">Libres</div>
+                <div class="colonist-stat-value" id="stats-free-colonists">0</div>
+              </div>
+              <div class="colonist-stat-box">
+                <div class="colonist-stat-label">Capacidad</div>
+                <div class="colonist-stat-value" id="stats-total-colonists">0 / 0</div>
+              </div>
+            </div>
+            
+            <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+              <span style="font-size: 0.85rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Desglose de Trabajos:</span>
+              <div id="colonists-summary-jobs-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Lista de trabajos con opción de desplegar colonos asignados, generada dinámicamente -->
               </div>
               
-              <div class="colonist-stats-grid">
-                <div class="colonist-stat-box">
-                  <div class="colonist-stat-label">Libres</div>
-                  <div class="colonist-stat-value" id="stats-free-colonists">0</div>
-                </div>
-                <div class="colonist-stat-box">
-                  <div class="colonist-stat-label">Capacidad</div>
-                  <div class="colonist-stat-value" id="stats-total-colonists">0 / 0</div>
-                </div>
-              </div>
-              
-              <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                <span style="font-size: 0.85rem; font-weight: 600; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.5px;">Desglose de Trabajos:</span>
-                <div class="job-allocation-list">
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🪵 Leñadores</span>
-                    <span class="job-allocation-count" id="job-stat-wood">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🪨 Canteros</span>
-                    <span class="job-allocation-count" id="job-stat-stone">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🍓 Recolectores (Foraging)</span>
-                    <span class="job-allocation-count" id="job-stat-berries">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🌾 Agricultores</span>
-                    <span class="job-allocation-count" id="job-stat-plots">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🪵 Aserraderos</span>
-                    <span class="job-allocation-count" id="job-stat-lumbermill">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🪨 Canteras</span>
-                    <span class="job-allocation-count" id="job-stat-quarry">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🔥 Cocineros</span>
-                    <span class="job-allocation-count" id="job-stat-bonfire">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">📈 Mercaderes</span>
-                    <span class="job-allocation-count" id="job-stat-market">0</span>
-                  </div>
-                  <div class="job-allocation-row">
-                    <span class="job-allocation-name">🌾 Molineros/Graneros</span>
-                    <span class="job-allocation-count" id="job-stat-granary">0</span>
-                  </div>
-                </div>
-                
-                <button class="btn btn-danger" style="margin-top: 0.5rem; width: 100%;" id="btn-reset-assignments">
-                  🚫 Liberar a todos los Aldeanos
-                </button>
-              </div>
-            </section>
-          </div>
+              <button class="btn btn-danger" style="margin-top: 0.5rem; width: 100%;" id="btn-reset-assignments">
+                🚫 Liberar a todos los Aldeanos
+              </button>
+            </div>
+          </section>
         </div>
       </div>
 

@@ -14,12 +14,15 @@ const DEFAULT_STATE = {
   cooked_carrot: 0,
   cooked_berries: 0,
   maxPopulation: 0,
-  currentColonists: 0,
-  freeColonists: 0,
+  colonists: [],
+  candidates: [],
   basicHouses: 0,
   upgradedHouses: 0,
   houses: [],
   currentSubTab: 'viviendas',
+  currentColonistsSubTab: 'hire',
+  candidateRotationElapsed: 0,
+  hasHiredThisWeek: false,
   foodPriority: ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'],
   starvingColonists: 0,
   fedCookedToday: 0,
@@ -120,8 +123,104 @@ const DEFAULT_STATE = {
   townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1, workerAssigned: 0 },
   maxBuildingTier: 0,
   playerConstructing: null,
-  seeds: { wheat: 0, potato: 0, carrot: 0 }
+  seeds: { wheat: 0, potato: 0, carrot: 0 },
+  nextActivationId: 1
 };
+
+const COLONIST_NAMES = [
+  "Aldric", "Brea", "Corvus", "Dagur", "Elara", "Faelan", "Garon", "Hadria", "Idris", "Jarek",
+  "Kaelen", "Lyra", "Mael", "Nerys", "Orin", "Pyke", "Quilla", "Rowan", "Sela", "Tristan",
+  "Ulric", "Valen", "Wynn", "Xander", "Yvaine", "Zephyr", "Alistair", "Beatrice", "Cedric", "Diana",
+  "Eamon", "Fiona", "Gideon", "Helen", "Isaac", "Julia", "Kieran", "Lorna", "Morgan", "Nadia",
+  "Oswald", "Penelope", "Quentin", "Rosemary", "Silas", "Teresa", "Urias", "Vivian", "Walter", "Yvonne"
+];
+
+const COLONIST_SURNAMES = [
+  "Ashwood", "Blackwood", "Claymore", "Dunstan", "Elmwood", "Foxglove", "Goldcrest", "Hallowell", "Ironwood", "Kingscote",
+  "Lockwell", "Miller", "Northwind", "Oakheart", "Pinehurst", "Quicksilver", "Redford", "Stonebridge", "Thorncroft", "Underhill",
+  "Valerius", "Whitewater", "Yardley", "Zephyrus", "Alderley", "Bracken", "Calder", "Davenport", "Edgecomb", "Fairwind",
+  "Greenwood", "Hardwood", "Ingham", "Jennings", "Kelford", "Lyndwood", "Milligan", "Newbolt", "Overholt", "Pendelton",
+  "Redmayne", "Stanfield", "Trowbridge", "Upton", "Vance", "Westbrook", "Yeardley", "Zouch", "Barlow", "Croft"
+];
+
+function generateColonistName() {
+  const name = COLONIST_NAMES[Math.floor(Math.random() * COLONIST_NAMES.length)];
+  const surname = COLONIST_SURNAMES[Math.floor(Math.random() * COLONIST_SURNAMES.length)];
+  return `${name} ${surname}`;
+}
+
+function generateAttribute() {
+  let weights = { 1: 10, 2: 20, 3: 35, 4: 30, 5: 4, 6: 1 };
+  if (typeof CONFIG !== 'undefined' && CONFIG.AttributeWeight) {
+    weights = {};
+    for (let key in CONFIG.AttributeWeight) {
+      const val = parseInt(key);
+      if (!isNaN(val)) {
+        weights[val] = CONFIG.AttributeWeight[key].yield || 0;
+      }
+    }
+  }
+
+  let totalWeight = 0;
+  for (let key in weights) {
+    totalWeight += weights[key];
+  }
+
+  if (totalWeight <= 0) return 3;
+
+  const r = Math.random() * totalWeight;
+  let currentSum = 0;
+  const sortedKeys = Object.keys(weights).map(Number).sort((a, b) => a - b);
+  for (let key of sortedKeys) {
+    currentSum += weights[key];
+    if (r <= currentSum) {
+      return key;
+    }
+  }
+
+  return 3;
+}
+
+function generateNewColonist(id = null) {
+  const finalId = id !== null ? id : (state.colonists.length ? Math.max(...state.colonists.map(c => c.id)) + 1 : 0);
+  return {
+    id: finalId,
+    name: generateColonistName(),
+    job: null,
+    prevJob: null,
+    attributes: {
+      woodcutting: generateAttribute(),
+      mining: generateAttribute(),
+      farming: generateAttribute(),
+      cooking: generateAttribute(),
+      trading: generateAttribute(),
+      exploration: generateAttribute(),
+      combat: generateAttribute(),
+      construction: generateAttribute()
+    },
+    attributeXP: {
+      woodcutting: 0,
+      mining: 0,
+      farming: 0,
+      cooking: 0,
+      trading: 0,
+      exploration: 0,
+      combat: 0,
+      construction: 0
+    },
+    onMission: false,
+    missionId: null
+  };
+}
+
+function replenishCandidates() {
+  if (!state.candidates) {
+    state.candidates = [];
+  }
+  while (state.candidates.length < 3) {
+    state.candidates.push(generateNewColonist(null));
+  }
+}
 
 // ESTADO ACTIVO
 var state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -161,7 +260,7 @@ function loadGame() {
       for (let key in parsed) {
         if (typeof parsed[key] === 'object' && parsed[key] !== null) {
           if (Array.isArray(parsed[key])) {
-            state[key] = [...parsed[key]];
+            state[key] = JSON.parse(JSON.stringify(parsed[key]));
           } else {
             state[key] = Object.assign(state[key] || {}, parsed[key]);
           }
@@ -169,6 +268,91 @@ function loadGame() {
           state[key] = parsed[key];
         }
       }
+      
+      // Migración de colonos numéricos a arreglo de objetos
+      if (!state.colonists || !Array.isArray(state.colonists) || state.colonists.length === 0) {
+        const totalColonists = parseInt(parsed.currentColonists) || 0;
+        state.colonists = [];
+        for (let i = 0; i < totalColonists; i++) {
+          state.colonists.push(generateNewColonist(i));
+        }
+        
+        // Reconstruir asignación de trabajos
+        const oldJobsToAssign = [];
+        if (parsed.jobs) {
+          for (let i = 0; i < (parsed.jobs.wood || 0); i++) oldJobsToAssign.push('wood');
+          for (let i = 0; i < (parsed.jobs.stone || 0); i++) oldJobsToAssign.push('stone');
+          for (let i = 0; i < (parsed.jobs.berries || 0); i++) oldJobsToAssign.push('berries');
+        }
+        if (parsed.townHall && parsed.townHall.workerAssigned) {
+          for (let i = 0; i < parsed.townHall.workerAssigned; i++) oldJobsToAssign.push('townHall');
+        }
+        const buildingTypes = [
+          { array: 'lumberMills', prefix: 'lumbermills' },
+          { array: 'quarries', prefix: 'quarries' },
+          { array: 'farms', prefix: 'farms' },
+          { array: 'markets', prefix: 'markets' },
+          { array: 'bonfires', prefix: 'bonfires' },
+          { array: 'granaries', prefix: 'granaries' }
+        ];
+        buildingTypes.forEach(bt => {
+          if (parsed[bt.array] && Array.isArray(parsed[bt.array])) {
+            parsed[bt.array].forEach((b, idx) => {
+              const assigned = b.workerAssigned || 0;
+              for (let i = 0; i < assigned; i++) {
+                oldJobsToAssign.push(`${bt.prefix}_${idx}`);
+              }
+            });
+          }
+        });
+        
+        for (let i = 0; i < Math.min(oldJobsToAssign.length, state.colonists.length); i++) {
+          state.colonists[i].job = oldJobsToAssign[i];
+        }
+      }
+      
+      replenishCandidates();
+      if (typeof state.candidateRotationElapsed === 'undefined') state.candidateRotationElapsed = 0;
+      if (typeof state.hasHiredThisWeek === 'undefined') state.hasHiredThisWeek = false;
+      if (typeof state.nextActivationId === 'undefined') state.nextActivationId = 1;
+      
+      // Asegurar que todos los atributos y XPs existen en todos los colonos
+      const allAttrs = ['woodcutting', 'mining', 'farming', 'cooking', 'trading', 'exploration', 'combat', 'construction'];
+      if (state.colonists) {
+        state.colonists.forEach(c => {
+          if (!c.attributes) c.attributes = {};
+          if (!c.attributeXP) c.attributeXP = {};
+          allAttrs.forEach(attr => {
+            if (typeof c.attributes[attr] === 'undefined') {
+              c.attributes[attr] = generateAttribute();
+            }
+            if (typeof c.attributeXP[attr] === 'undefined') {
+              c.attributeXP[attr] = 0;
+            }
+          });
+          if (typeof c.isStarving === 'undefined') {
+            c.isStarving = false;
+          }
+        });
+      }
+      
+      // Asegurar que todos los atributos y XPs existen en todos los candidatos
+      if (state.candidates) {
+        state.candidates.forEach(c => {
+          if (!c.attributes) c.attributes = {};
+          if (!c.attributeXP) c.attributeXP = {};
+          allAttrs.forEach(attr => {
+            if (typeof c.attributes[attr] === 'undefined') {
+              c.attributes[attr] = generateAttribute();
+            }
+            if (typeof c.attributeXP[attr] === 'undefined') {
+              c.attributeXP[attr] = 0;
+            }
+          });
+        });
+      }
+
+      initializeHousingAssignments();
       
       // Compatibilidad para inicializar Ayuntamiento si no existe en el save antiguo
       if (!parsed.hasOwnProperty('townHall')) {
@@ -510,6 +694,7 @@ function loadGame() {
       if (typeof renderFoodPriorityList === 'function') renderFoodPriorityList();
       showToast("Partida cargada con éxito", "success");
     }
+    replenishCandidates();
   } catch (err) {
     console.error("Error al cargar la partida:", err);
     showToast("Error al cargar la partida anterior", "warning");
@@ -537,6 +722,7 @@ function resetGame(isTestMode = false) {
   lastRenderedTownHallUpgrading = null;
   localStorage.removeItem(SAVE_KEY);
   state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  replenishCandidates();
   
   if (isTestMode) {
     state.gold = 10000;
@@ -601,4 +787,45 @@ function updateGlobalFood() {
     }
   });
   state.food = total;
+}
+
+function initializeHousingAssignments() {
+  if (!state.colonists) return;
+  if (!state.houses) state.houses = [];
+  
+  // Clean up non-existent house references
+  state.colonists.forEach(c => {
+    if (c.houseIdx !== undefined && c.houseIdx !== null) {
+      if (c.houseIdx < 0 || c.houseIdx >= state.houses.length) {
+        c.houseIdx = null;
+      }
+    }
+  });
+
+  const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+  const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+  const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+  const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+  const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+  const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
+
+  // Assign houseIdx sequentially to any colonist without a house
+  state.colonists.forEach(c => {
+    if (c.houseIdx === undefined || c.houseIdx === null) {
+      // Find first house with available capacity
+      for (let i = 0; i < state.houses.length; i++) {
+        const house = state.houses[i];
+        if (house.isUnderConstruction) continue;
+        const capacity = house.tier === 1 ? cap1 : (house.tier === 2 ? cap2 : cap3);
+        const currentCount = state.colonists.filter(x => x.houseIdx === i).length;
+        if (currentCount < capacity) {
+          c.houseIdx = i;
+          break;
+        }
+      }
+      if (c.houseIdx === undefined) {
+        c.houseIdx = null;
+      }
+    }
+  });
 }

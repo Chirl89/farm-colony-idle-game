@@ -27,10 +27,6 @@ function initDOMReferences() {
     rateStone: document.getElementById('rate-stone'),
     rateFood: document.getElementById('rate-food'),
     rateCooked: document.getElementById('rate-cooked'),
-
-    allocWood: document.getElementById('alloc-wood'),
-    allocStone: document.getElementById('alloc-stone'),
-    allocBerries: document.getElementById('alloc-berries'),
     woodAutoInfo: document.getElementById('wood-auto-info'),
     stoneAutoInfo: document.getElementById('stone-auto-info'),
     berriesAutoInfo: document.getElementById('berries-auto-info'),
@@ -215,4 +211,98 @@ function addResourceStock(key, amount) {
   } else {
     state[key] = (state[key] || 0) + amount;
   }
+}
+
+// FUNCIONES DE LEVELLING Y XP GLOBAL
+function getXPJobKey(job) {
+  if (!job) return null;
+  if (job === 'wood') return 'wood';
+  if (job.startsWith('lumbermills_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.lumberMills && state.lumberMills[idx]) ? (state.lumberMills[idx].tier || 1) : 1;
+    return `lumbermill_t${tier}`;
+  }
+  if (job === 'stone') return 'stone';
+  if (job.startsWith('quarries_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.quarries && state.quarries[idx]) ? (state.quarries[idx].tier || 1) : 1;
+    return `quarry_t${tier}`;
+  }
+  if (job === 'berries') return 'berries';
+  if (job.startsWith('farms_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.farms && state.farms[idx]) ? (state.farms[idx].tier || 1) : 1;
+    return `farm_t${tier}`;
+  }
+  if (job.startsWith('granaries_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.granaries && state.granaries[idx]) ? (state.granaries[idx].tier || 1) : 1;
+    return `granary_t${tier}`;
+  }
+  if (job.startsWith('bonfires_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.bonfires && state.bonfires[idx]) ? (state.bonfires[idx].tier || 1) : 1;
+    return `bonfire_t${tier}`;
+  }
+  if (job.startsWith('markets_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.markets && state.markets[idx]) ? (state.markets[idx].tier || 1) : 1;
+    return `market_t${tier}`;
+  }
+  if (job === 'construction') return 'construction';
+  return null;
+}
+
+function getXPThreshold(attr, currentLvl) {
+  const key = `${attr}_t${currentLvl}`;
+  if (typeof CONFIG !== 'undefined' && CONFIG.AttributeXP && CONFIG.AttributeXP[key]) {
+    return CONFIG.AttributeXP[key].yield;
+  }
+  // fallback a la formula original si no esta en el config
+  return 10 * Math.pow(2, currentLvl - 1);
+}
+
+function getXPJobYield(job) {
+  const key = getXPJobKey(job);
+  if (key && typeof CONFIG !== 'undefined' && CONFIG.XPYield && CONFIG.XPYield[key]) {
+    return CONFIG.XPYield[key].yield;
+  }
+  // Fallbacks si no esta en el config
+  if (job === 'wood' || job === 'stone') return 0.5;
+  if (job === 'berries') return 0.8;
+  if (job === 'construction') return 1.2;
+  // Para edificios
+  return 1.0;
+}
+
+// Calcular la eficiencia individual de un colono (Falta de casa -40%, Falta de comida -45%, Ambas -85%)
+function getColonistEfficiency(c) {
+  if (!c) return 1.0;
+  
+  let noHousePenalty = 0.40;
+  let noFoodPenalty = 0.45;
+  
+  if (typeof CONFIG !== 'undefined' && CONFIG.EfficiencyPenalty) {
+    if (CONFIG.EfficiencyPenalty.no_house) {
+      noHousePenalty = CONFIG.EfficiencyPenalty.no_house.yield;
+    }
+    if (CONFIG.EfficiencyPenalty.no_food) {
+      noFoodPenalty = CONFIG.EfficiencyPenalty.no_food.yield;
+    }
+  }
+  
+  let penalty = 0;
+  
+  // Verificar si tiene casa (si houseIdx es null, undefined, o fuera de rango)
+  const hasHouse = (c.houseIdx !== null && c.houseIdx !== undefined && c.houseIdx >= 0 && typeof state !== 'undefined' && state.houses && c.houseIdx < state.houses.length);
+  if (!hasHouse) {
+    penalty += noHousePenalty;
+  }
+  
+  // Verificar si está hambriento
+  if (c.isStarving) {
+    penalty += noFoodPenalty;
+  }
+  
+  return Math.max(0.15, 1.0 - penalty);
 }

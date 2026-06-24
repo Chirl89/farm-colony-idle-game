@@ -81,13 +81,191 @@ function updateCycleUI(dayDuration, nightDuration) {
 
 // ACTUALIZACIONES DE UI DE PROGRESO Y BOTONES
 // RENDERIZAR CAJITAS DE EDIFICIOS INDIVIDUALES
+function getBuildingAttributeDetails(type) {
+  const attrMap = {
+    lumbermills: { key: 'woodcutting', name: 'Leñador', emoji: '🪓' },
+    lumberMills: { key: 'woodcutting', name: 'Leñador', emoji: '🪓' },
+    quarries: { key: 'mining', name: 'Cantero', emoji: '⛏️' },
+    farms: { key: 'farming', name: 'Agricultor', emoji: '🌾' },
+    granaries: { key: 'farming', name: 'Agricultor', emoji: '🌾' },
+    bonfires: { key: 'cooking', name: 'Cocinero', emoji: '🍳' },
+    markets: { key: 'trading', name: 'Mercader', emoji: '📈' },
+    houses: { key: 'construction', name: 'Constructor', emoji: '🔨' },
+    townhall: { key: 'construction', name: 'Constructor', emoji: '🔨' },
+    townHall: { key: 'construction', name: 'Constructor', emoji: '🔨' }
+  };
+  return attrMap[type] || { key: 'woodcutting', name: 'Trabajador', emoji: '👷' };
+}
+
+function renderBuildingWorkerDropdowns(type, index, maxWorkers) {
+  const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
+  const assigned = state.colonists ? state.colonists.filter(c => c.job === jobString) : [];
+  const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null) : [];
+  const attrInfo = getBuildingAttributeDetails(type);
+
+  let html = '<div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.35rem;">';
+  for (let slotIdx = 0; slotIdx < maxWorkers; slotIdx++) {
+    const currentOccupant = assigned[slotIdx] || null;
+    
+    let selectHtml = `<select class="worker-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer;" onchange="assignColonistToBuildingSlot('${type}', ${index}, ${slotIdx}, this.value)">`;
+    selectHtml += `<option value="">[Sin Asignar]</option>`;
+    
+    if (currentOccupant) {
+      const val = currentOccupant.attributes[attrInfo.key] || 3;
+      selectHtml += `<option value="${currentOccupant.id}" selected>${currentOccupant.name} (${attrInfo.emoji} ${val})</option>`;
+    }
+    
+    freeColonists.forEach(c => {
+      const val = c.attributes[attrInfo.key] || 3;
+      selectHtml += `<option value="${c.id}">${c.name} (${attrInfo.emoji} ${val})</option>`;
+    });
+    
+    selectHtml += `</select>`;
+    
+    html += `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;">
+        <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Puesto #${slotIdx + 1}:</span>
+        <div style="flex: 1; max-width: 160px;">${selectHtml}</div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  return html;
+}
+
+const basicJobAttrMap = {
+  wood: { key: 'woodcutting', name: 'Leñador', emoji: '🪓' },
+  stone: { key: 'mining', name: 'Cantero', emoji: '⛏️' },
+  berries: { key: 'exploration', name: 'Recolector', emoji: '🍓' }
+};
+
+let lastWoodStatusKey = '';
+let lastStoneStatusKey = '';
+let lastBerriesStatusKey = '';
+
+function renderBasicJobDropdowns(jobType) {
+  const containerId = `alloc-container-${jobType}`;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const attrInfo = basicJobAttrMap[jobType];
+  if (!attrInfo) return;
+
+  const assigned = state.colonists ? state.colonists.filter(c => c.job === jobType) : [];
+  const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null) : [];
+
+  const assignedStr = assigned.map(c => `${c.id}:${c.attributes[attrInfo.key] || 3}`).join(',');
+  const freeStr = freeColonists.map(c => `${c.id}:${c.attributes[attrInfo.key] || 3}`).join(',');
+  const currentStatusKey = `assigned:${assignedStr}|free:${freeStr}`;
+
+  if (jobType === 'wood') {
+    if (currentStatusKey === lastWoodStatusKey && container.innerHTML !== '') return;
+    lastWoodStatusKey = currentStatusKey;
+  } else if (jobType === 'stone') {
+    if (currentStatusKey === lastStoneStatusKey && container.innerHTML !== '') return;
+    lastStoneStatusKey = currentStatusKey;
+  } else if (jobType === 'berries') {
+    if (currentStatusKey === lastBerriesStatusKey && container.innerHTML !== '') return;
+    lastBerriesStatusKey = currentStatusKey;
+  }
+
+  let html = '<div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%;">';
+
+  assigned.forEach((col, slotIdx) => {
+    let selectHtml = `<select class="worker-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer;" onchange="assignBasicJobSlot('${jobType}', ${slotIdx}, this.value)">`;
+    selectHtml += `<option value="">[Sin Asignar]</option>`;
+    
+    const val = col.attributes[attrInfo.key] || 3;
+    selectHtml += `<option value="${col.id}" selected>${col.name} (${attrInfo.emoji} ${val})</option>`;
+    
+    freeColonists.forEach(c => {
+      const valC = c.attributes[attrInfo.key] || 3;
+      selectHtml += `<option value="${c.id}">${c.name} (${attrInfo.emoji} ${valC})</option>`;
+    });
+    
+    selectHtml += `</select>`;
+    
+    html += `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;">
+        <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Puesto #${slotIdx + 1}:</span>
+        <div style="flex: 1; max-width: 160px;">${selectHtml}</div>
+      </div>
+    `;
+  });
+
+  if (freeColonists.length > 0) {
+    const nextSlotIdx = assigned.length;
+    let selectHtml = `<select class="worker-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer; border-style: dashed;" onchange="assignBasicJobSlot('${jobType}', ${nextSlotIdx}, this.value)">`;
+    selectHtml += `<option value="" selected>➕ [Asignar Trabajador]</option>`;
+    
+    freeColonists.forEach(c => {
+      const valC = c.attributes[attrInfo.key] || 3;
+      selectHtml += `<option value="${c.id}">${c.name} (${attrInfo.emoji} ${valC})</option>`;
+    });
+    
+    selectHtml += `</select>`;
+    
+    html += `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;">
+        <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Nuevo puesto:</span>
+        <div style="flex: 1; max-width: 160px;">${selectHtml}</div>
+      </div>
+    `;
+  } else if (assigned.length === 0) {
+    html += `
+      <div style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic; text-align: right; padding-right: 0.5rem;">
+        No hay colonos libres
+      </div>
+    `;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderHouseResidentDropdowns(houseIdx, capacity) {
+  const residents = state.colonists ? state.colonists.filter(c => c.houseIdx === houseIdx) : [];
+  const homelessColonists = state.colonists ? state.colonists.filter(c => c.houseIdx === null || c.houseIdx === undefined) : [];
+
+  let html = '<div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.35rem;">';
+  for (let slotIdx = 0; slotIdx < capacity; slotIdx++) {
+    const currentOccupant = residents[slotIdx] || null;
+    
+    let selectHtml = `<select class="resident-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer;" onchange="assignColonistToHouseSlot(${houseIdx}, ${slotIdx}, this.value)">`;
+    selectHtml += `<option value="">[Cama Vacía]</option>`;
+    
+    if (currentOccupant) {
+      selectHtml += `<option value="${currentOccupant.id}" selected>${currentOccupant.name}</option>`;
+    }
+    
+    homelessColonists.forEach(c => {
+      selectHtml += `<option value="${c.id}">${c.name}</option>`;
+    });
+    
+    selectHtml += `</select>`;
+    
+    html += `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;">
+        <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Cama #${slotIdx + 1}:</span>
+        <div style="flex: 1; max-width: 160px;">${selectHtml}</div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  return html;
+}
+
 let lastLumberMillsConstructionStatus = '';
 function renderLumberMills() {
   const container = document.getElementById('active-lumbermills-list');
   if (!container) return;
   const count = state.lumberMills ? state.lumberMills.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.lumberMills ? state.lumberMills.map(m => m.isUnderConstruction ? '1' : '0').join(',') : '';
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('lumbermills_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.lumberMills ? state.lumberMills.map(m => (m.isUnderConstruction ? '1' : '0') + '_' + (m.isUpgrading ? '1' : '0') + '_' + (m.tier || 1) + '_' + (m.isPaused ? '1' : '0') + '_' + (m.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastLumberMillsConstructionStatus) {
     lastLumberMillsConstructionStatus = currentStatus;
     if (count === 0) {
@@ -98,27 +276,35 @@ function renderLumberMills() {
     }
     let html = '';
     state.lumberMills.forEach((mill, idx) => {
-      if (mill.isUnderConstruction) {
+      const maxWorkers = mill.isUnderConstruction || mill.isUpgrading ? 2 : (mill.tier || 1);
+      if (mill.isUnderConstruction || mill.isUpgrading) {
+        const isPaused = mill.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
+        const badgeText = mill.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = mill.isUpgrading ? 
+          `Cabaña de Leñador #${idx + 1} (Mejorando...)` : 
+          `Cabaña de Leñador #${idx + 1} (En construcción)`;
+        const statusTextVal = mill.isUpgrading ? 'Mejorando...' : 'En construcción';
         html += `
           <div class="building-box" id="mill-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="mill-tier-badge-${idx}">Construyendo</div>
+            <div class="building-tier-badge" id="mill-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="mill-title-${idx}">🏗️ Cabaña de Leñador #${idx + 1} (En construcción)</span>
-              <span class="building-box-prod" id="mill-prod-${idx}">En construcción</span>
+              <span class="building-box-title" id="mill-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="mill-prod-${idx}">${statusTextVal}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="mill-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="mill-btn-${idx}" onclick="togglePlayerConstruct('lumberMills', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="mill-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${mill.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('lumberMills', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="mill-btn-${idx}" onclick="togglePlayerConstruct('lumberMills', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
@@ -132,13 +318,9 @@ function renderLumberMills() {
               <span class="building-box-title" id="mill-title-${idx}">🪵 Cabaña de Leñador #${idx + 1}</span>
               <span class="building-box-prod" id="mill-prod-${idx}">0 Madera/día</span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-              <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
-              <div class="colonist-allocator">
-                <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, -1)">-</button>
-                <span class="allocator-val" id="mill-alloc-${idx}">0</span>
-                <button class="allocator-btn" onclick="assignBuildingWorker('lumberMills', ${idx}, 1)">+</button>
-              </div>
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
+              <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+              ${renderBuildingWorkerDropdowns('lumberMills', idx, maxWorkers)}
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
@@ -155,13 +337,22 @@ function renderLumberMills() {
   
   if (count > 0) {
     state.lumberMills.forEach((mill, idx) => {
-      if (mill.isUnderConstruction) {
+      if (mill.isUnderConstruction || mill.isUpgrading) {
+        const isUpgrading = mill.isUpgrading;
         const pBar = document.getElementById(`mill-progress-${idx}`);
-        const pct = Math.min(100, (mill.constructionElapsed / mill.constructionDuration) * 100);
+        const duration = mill.constructionDuration || 5;
+        const pct = Math.min(100, (mill.constructionElapsed / duration) * 100);
         if (pBar) pBar.style.width = `${pct}%`;
         
-        const allocText = document.getElementById(`mill-alloc-${idx}`);
-        if (allocText) allocText.innerText = `${mill.workerAssigned} / 2`;
+        const statusText = document.getElementById(`mill-prod-${idx}`);
+        if (statusText) {
+          statusText.innerText = isUpgrading ? `Mejorando a Tier ${mill.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
+        }
+
+        const titleText = document.getElementById(`mill-title-${idx}`);
+        if (titleText) {
+          titleText.innerHTML = isUpgrading ? `🪵 Cabaña de Leñador #${idx + 1} (Mejorando...)` : `🪵 Cabaña de Leñador #${idx + 1} (En construcción)`;
+        }
         
         const btn = document.getElementById(`mill-btn-${idx}`);
         const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'lumberMills' && state.playerConstructing.index === idx;
@@ -183,13 +374,18 @@ function renderLumberMills() {
         const tier = mill.tier || 1;
         const baseYield = CONFIG.ProductionRate.lumbermill_prod.yield;
         const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
-        const eff = getWorkEfficiency();
-        const yieldVal = baseYield * multiplier * mill.workerAssigned * eff;
-        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+        const workers = state.colonists ? state.colonists.filter(c => c.job === `lumbermills_${idx}`) : [];
+        let mult = 0;
+        workers.forEach(c => {
+          const lvl = c.attributes.woodcutting || 3;
+          mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+        });
+        const duration = CONFIG.ProductionRate.lumbermill_prod.duration || 1.0;
+        const yieldVal = (baseYield / duration) * multiplier * mult;
+        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 2);
         
         const titleText = document.getElementById(`mill-title-${idx}`);
         const prodText = document.getElementById(`mill-prod-${idx}`);
-        const allocText = document.getElementById(`mill-alloc-${idx}`);
         const tierBadge = document.getElementById(`mill-tier-badge-${idx}`);
         const tierText = document.getElementById(`mill-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`mill-upgrade-btn-${idx}`);
@@ -197,8 +393,7 @@ function renderLumberMills() {
         let bName = tier === 1 ? 'Cabaña de Leñador' : (tier === 2 ? 'Aserradero' : 'Gremio de Leñadores');
         
         if (titleText) titleText.innerHTML = `🪵 ${bName} #${idx + 1}`;
-        if (prodText) prodText.innerText = isWorking ? `+${displayYield} Madera/día` : '0 Madera/día';
-        if (allocText) allocText.innerText = `${mill.workerAssigned} / ${tier}`;
+        if (prodText) prodText.innerText = isWorking ? `+${displayYield} Madera/s` : '0 Madera/s';
         if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
         if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
         
@@ -228,7 +423,11 @@ function renderQuarries() {
   if (!container) return;
   const count = state.quarries ? state.quarries.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.quarries ? state.quarries.map(q => q.isUnderConstruction ? '1' : '0').join(',') : '';
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('quarries_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.quarries ? state.quarries.map(q => (q.isUnderConstruction ? '1' : '0') + '_' + (q.isUpgrading ? '1' : '0') + '_' + (q.tier || 1) + '_' + (q.isPaused ? '1' : '0') + '_' + (q.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastQuarriesConstructionStatus) {
     lastQuarriesConstructionStatus = currentStatus;
     if (count === 0) {
@@ -239,27 +438,35 @@ function renderQuarries() {
     }
     let html = '';
     state.quarries.forEach((quarry, idx) => {
-      if (quarry.isUnderConstruction) {
+      const maxWorkers = quarry.isUnderConstruction || quarry.isUpgrading ? 2 : (quarry.tier || 1);
+      if (quarry.isUnderConstruction || quarry.isUpgrading) {
+        const isPaused = quarry.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
+        const badgeText = quarry.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = quarry.isUpgrading ? 
+          `Foso de Piedra #${idx + 1} (Mejorando...)` : 
+          `Foso de Piedra #${idx + 1} (En construcción)`;
+        const statusTextVal = quarry.isUpgrading ? 'Mejorando...' : 'En construcción';
         html += `
           <div class="building-box" id="quarry-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="quarry-tier-badge-${idx}">Construyendo</div>
+            <div class="building-tier-badge" id="quarry-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="quarry-title-${idx}">🏗️ Foso de Piedra #${idx + 1} (En construcción)</span>
-              <span class="building-box-prod" id="quarry-prod-${idx}">En construcción</span>
+              <span class="building-box-title" id="quarry-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="quarry-prod-${idx}">${statusTextVal}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="quarry-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="quarry-btn-${idx}" onclick="togglePlayerConstruct('quarries', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${quarry.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('quarries', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="quarry-btn-${idx}" onclick="togglePlayerConstruct('quarries', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
@@ -273,13 +480,9 @@ function renderQuarries() {
               <span class="building-box-title" id="quarry-title-${idx}">🪨 Foso de Piedra #${idx + 1}</span>
               <span class="building-box-prod" id="quarry-prod-${idx}">0 Piedra/día</span>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-              <span style="font-size: 0.8rem; color: var(--color-text-muted);">Asignar aldeano:</span>
-              <div class="colonist-allocator">
-                <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, -1)">-</button>
-                <span class="allocator-val" id="quarry-alloc-${idx}">0</span>
-                <button class="allocator-btn" onclick="assignBuildingWorker('quarries', ${idx}, 1)">+</button>
-              </div>
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
+              <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+              ${renderBuildingWorkerDropdowns('quarries', idx, maxWorkers)}
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="quarry-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
@@ -296,13 +499,22 @@ function renderQuarries() {
   
   if (count > 0) {
     state.quarries.forEach((quarry, idx) => {
-      if (quarry.isUnderConstruction) {
+      if (quarry.isUnderConstruction || quarry.isUpgrading) {
+        const isUpgrading = quarry.isUpgrading;
         const pBar = document.getElementById(`quarry-progress-${idx}`);
-        const pct = Math.min(100, (quarry.constructionElapsed / quarry.constructionDuration) * 100);
+        const duration = quarry.constructionDuration || 5;
+        const pct = Math.min(100, (quarry.constructionElapsed / duration) * 100);
         if (pBar) pBar.style.width = `${pct}%`;
         
-        const allocText = document.getElementById(`quarry-alloc-${idx}`);
-        if (allocText) allocText.innerText = `${quarry.workerAssigned} / 2`;
+        const statusText = document.getElementById(`quarry-prod-${idx}`);
+        if (statusText) {
+          statusText.innerText = isUpgrading ? `Mejorando a Tier ${quarry.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
+        }
+
+        const titleText = document.getElementById(`quarry-title-${idx}`);
+        if (titleText) {
+          titleText.innerHTML = isUpgrading ? `🪨 Foso de Piedra #${idx + 1} (Mejorando...)` : `🪨 Foso de Piedra #${idx + 1} (En construcción)`;
+        }
         
         const btn = document.getElementById(`quarry-btn-${idx}`);
         const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'quarries' && state.playerConstructing.index === idx;
@@ -324,13 +536,18 @@ function renderQuarries() {
         const tier = quarry.tier || 1;
         const baseYield = CONFIG.ProductionRate.quarry_prod.yield;
         const multiplier = tier === 1 ? 1.0 : (tier === 2 ? 1.1 : 1.2);
-        const eff = getWorkEfficiency();
-        const yieldVal = baseYield * multiplier * quarry.workerAssigned * eff;
-        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
+        const workers = state.colonists ? state.colonists.filter(c => c.job === `quarries_${idx}`) : [];
+        let mult = 0;
+        workers.forEach(c => {
+          const lvl = c.attributes.mining || 3;
+          mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+        });
+        const duration = CONFIG.ProductionRate.quarry_prod.duration || 1.0;
+        const yieldVal = (baseYield / duration) * multiplier * mult;
+        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 2);
         
         const titleText = document.getElementById(`quarry-title-${idx}`);
         const prodText = document.getElementById(`quarry-prod-${idx}`);
-        const allocText = document.getElementById(`quarry-alloc-${idx}`);
         const tierBadge = document.getElementById(`quarry-tier-badge-${idx}`);
         const tierText = document.getElementById(`quarry-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`quarry-upgrade-btn-${idx}`);
@@ -338,8 +555,7 @@ function renderQuarries() {
         let bName = tier === 1 ? 'Foso de Piedra' : (tier === 2 ? 'Cantera' : 'Gran Mina de Piedra');
         
         if (titleText) titleText.innerHTML = `🪨 ${bName} #${idx + 1}`;
-        if (prodText) prodText.innerText = isWorking ? `+${displayYield} Piedra/día` : '0 Piedra/día';
-        if (allocText) allocText.innerText = `${quarry.workerAssigned} / ${tier}`;
+        if (prodText) prodText.innerText = isWorking ? `+${displayYield} Piedra/s` : '0 Piedra/s';
         if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
         if (tierText) tierText.innerText = `Nivel ${tier} (${bName})`;
         
@@ -369,7 +585,11 @@ function renderFarms() {
   if (!container) return;
   const count = state.farms ? state.farms.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0')).join(',') : '';
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('farms_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0') + '_' + (f.isPaused ? '1' : '0') + '_' + (f.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastFarmsConstructionStatus) {
     lastFarmsConstructionStatus = currentStatus;
     if (count === 0) {
@@ -380,7 +600,10 @@ function renderFarms() {
     }
     let html = '';
     state.farms.forEach((farm, idx) => {
+      const maxWorkers = farm.isUnderConstruction || farm.isUpgrading ? 2 : 1;
       if (farm.isUnderConstruction) {
+        const isPaused = farm.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
         html += `
           <div class="building-box" id="farm-box-${idx}" style="position: relative;">
             <div class="building-tier-badge" id="farm-tier-badge-${idx}">Construyendo</div>
@@ -391,16 +614,16 @@ function renderFarms() {
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="farm-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="farm-btn-${idx}" onclick="togglePlayerConstruct('farms', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="farm-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${farm.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('farms', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="farm-btn-${idx}" onclick="togglePlayerConstruct('farms', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
@@ -421,42 +644,38 @@ function renderFarms() {
               <span class="building-box-prod" id="farm-prod-${idx}">0 Comida/día</span>
             </div>
             
-              <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.2rem;">
-                <span style="font-weight: 500;">Siguiente cultivo:</span>
-                <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; cursor: pointer; outline: none;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
-                  ${cropsOptionsHtml}
-                </select>
-              </div>
-              
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.1rem;">
-                <span id="farm-status-${idx}" style="font-size: 0.75rem; color: var(--color-text-muted);">Inactiva</span>
-              </div>
-              
-              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-                <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
-              </div>
-              
-              <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; justify-content: space-between; margin-top: 0.25rem;">
-                <span>Progreso Global:</span>
-                <span id="farm-global-pct-${idx}">0%</span>
-              </div>
-              <div class="progress-bar-container" style="height: 4px; margin: 0.1rem 0; background-color: rgba(255,255,255,0.05);">
-                <div class="progress-bar-fill" id="farm-global-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%;"></div>
-              </div>
+            <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.2rem;">
+              <span style="font-weight: 500;">Siguiente cultivo:</span>
+              <select class="crop-selector" style="width: 100%; font-size: 0.8rem; padding: 0.25rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; cursor: pointer; outline: none;" id="farm-select-${idx}" onchange="changeFarmCrop(${idx}, this.value)">
+                ${cropsOptionsHtml}
+              </select>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.1rem;">
+              <span id="farm-status-${idx}" style="font-size: 0.75rem; color: var(--color-text-muted);">Inactiva</span>
+            </div>
+            
+            <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+              <div class="progress-bar-fill" id="farm-progress-${idx}"></div>
+            </div>
+            
+            <div style="font-size: 0.7rem; color: var(--color-text-muted); display: flex; justify-content: space-between; margin-top: 0.25rem;">
+              <span>Progreso Global:</span>
+              <span id="farm-global-pct-${idx}">0%</span>
+            </div>
+            <div class="progress-bar-container" style="height: 4px; margin: 0.1rem 0; background-color: rgba(255,255,255,0.05);">
+              <div class="progress-bar-fill" id="farm-global-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #34d399 100%); width: 0%;"></div>
+            </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajador:</span>
+              ${renderBuildingWorkerDropdowns('farms', idx, maxWorkers)}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
                 Sembrar
               </button>
-              
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="farm-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('farms', ${idx}, 1)">+</button>
-                </div>
-              </div>
             </div>
           </div>
         `;
@@ -507,14 +726,18 @@ function renderFarms() {
         const farmTier = farm.tier || 1;
         const tierMultiplier = farmTier === 3 ? 2.5 : (farmTier === 2 ? 1.5 : 1.0);
         
-        const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
-        const cycleDurationInDays = crop ? (getFarmCycleTotal(crop) / dayDuration) : 1;
-        const rate = crop ? ((crop.yield * tierMultiplier) / cycleDurationInDays) : 0;
-        const isWorking = farm.stage !== 'idle';
-        const eff = getWorkEfficiency();
-        const yieldVal = rate * eff;
-        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 1);
-        const prodText = isWorking ? `+${displayYield} Comida/día` : '0 Comida/día';
+        // Multiplicador de agricultura del colono asignado
+        const worker = state.colonists ? state.colonists.find(c => c.job === `farms_${idx}`) : null;
+        const farmingLvl = worker ? (worker.attributes.farming || 3) : 3;
+        const farmingMult = getAttributeMult(farmingLvl);
+
+        const cycleTotal = crop ? getFarmCycleTotal(crop) : 1;
+        const workerEff = worker ? getColonistEfficiency(worker) : 1.0;
+        const rate = crop ? ((crop.yield * tierMultiplier * farmingMult * workerEff) / cycleTotal) : 0;
+        const isWorking = farm.stage !== 'idle' && farm.workerAssigned > 0;
+        const yieldVal = rate;
+        const displayYield = yieldVal.toFixed(yieldVal % 1 === 0 ? 0 : 2);
+        const prodText = isWorking ? `+${displayYield} Comida/s` : '0 Comida/s';
         
         const farmProd = document.getElementById(`farm-prod-${idx}`);
         if (farmProd) farmProd.innerText = prodText;
@@ -584,27 +807,30 @@ function renderFarms() {
           
           if (farm.needsWatering) {
             pct = Math.min(100, ((farm.waterElapsed || 0) / waterDailyDur) * 100);
-            const rem = Math.max(waterDailyDur - (farm.waterElapsed || 0), 0).toFixed(1);
-            if (state.timePhase === 'night') {
-              text = `💧 Regar (Pausado: Es de noche) (Faltan ${rem}s)`;
-            } else if (farm.workerAssigned === 0) {
-              text = `💧 Regar (Pausado: Asigna aldeano) (Faltan ${rem}s)`;
+            const progressRem = Math.max(waterDailyDur - (farm.waterElapsed || 0), 0).toFixed(1);
+            if (farm.workerAssigned === 0) {
+              text = `💧 Regar (Pausado: Asigna aldeano) (Faltan ${progressRem}s)`;
             } else {
+              const worker = state.colonists ? state.colonists.find(c => c.job === `farms_${idx}`) : null;
+              const farmingLvl = worker ? (worker.attributes.farming || 3) : 3;
+              const speedMultiplier = getAttributeMult(farmingLvl) * (worker ? getColonistEfficiency(worker) : 1.0);
+              const rem = (speedMultiplier > 0) ? Math.max((waterDailyDur - (farm.waterElapsed || 0)) / speedMultiplier, 0).toFixed(1) : '—';
               text = `💧 Regando (Faltan ${rem}s)`;
             }
           } else {
             pct = Math.min(100, ((farm.stageElapsed || 0) / stageDuration) * 100);
-            const rem = Math.max(stageDuration - (farm.stageElapsed || 0), 0).toFixed(1);
-            
-            text = `${stageEmoji} ${stageName} (Faltan ${rem}s)`;
-            if (isNightGrow && state.timePhase === 'night') {
-              text = `🌙 Sigue creciendo de noche (${rem}s)`;
-            } else if (requiresWorker && (state.timePhase === 'night' || farm.workerAssigned === 0)) {
-              if (state.timePhase === 'night') {
-                text = `${stageEmoji} ${stageName} (Pausado: Es de noche) (${rem}s)`;
-              } else {
-                text = `${stageEmoji} ${stageName} (Pausado: Asigna aldeano) (${rem}s)`;
+            const progressRem = Math.max(stageDuration - (farm.stageElapsed || 0), 0).toFixed(1);
+            if (farm.workerAssigned === 0) {
+              text = `${stageEmoji} ${stageName} (Pausado: Asigna aldeano) (${progressRem}s)`;
+            } else {
+              let speedMultiplier = 1.0;
+              if (requiresWorker) {
+                const worker = state.colonists ? state.colonists.find(c => c.job === `farms_${idx}`) : null;
+                const farmingLvl = worker ? (worker.attributes.farming || 3) : 3;
+                speedMultiplier = getAttributeMult(farmingLvl) * (worker ? getColonistEfficiency(worker) : 1.0);
               }
+              const rem = (speedMultiplier > 0) ? Math.max((stageDuration - (farm.stageElapsed || 0)) / speedMultiplier, 0).toFixed(1) : '—';
+              text = `${stageEmoji} ${stageName} (Faltan ${rem}s)`;
             }
           }
           
@@ -650,7 +876,11 @@ function renderHouses() {
   if (!container) return;
   const count = state.houses ? state.houses.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.houses ? state.houses.map(h => (h.isUnderConstruction ? '1' : '0') + '_' + (h.isUpgrading ? '1' : '0') + '_' + h.tier).join(',') : '';
+  
+  const residentsStr = state.colonists ? state.colonists.map(c => `${c.id}:${c.houseIdx}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.houses ? state.houses.map(h => (h.isUnderConstruction ? '1' : '0') + '_' + (h.isUpgrading ? '1' : '0') + '_' + h.tier + '_' + (h.isPaused ? '1' : '0') + '_' + (h.workerAssigned || 0)).join(',') : '') + `_residents:${residentsStr}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastHousesConstructionStatus) {
     lastHousesConstructionStatus = currentStatus;
     if (count === 0) {
@@ -664,45 +894,59 @@ function renderHouses() {
       if (house.isUnderConstruction || house.isUpgrading) {
         const badgeText = house.isUpgrading ? 'Mejorando' : 'Construyendo';
         const titleText = house.isUpgrading ? 
-          (house.upgradingToTier === 2 ? `🏗️ Cabaña #${idx + 1} (Mejorando...)` : `🏗️ Casa Grande #${idx + 1} (Mejorando...)`) : 
-          `🏗️ Choza #${idx + 1} (En construcción)`;
+          (house.upgradingToTier === 2 ? `Cabaña #${idx + 1} (Mejorando...)` : `Casa Grande #${idx + 1} (Mejorando...)`) : 
+          `Choza #${idx + 1} (En construcción)`;
         const prodText = house.isUpgrading ? 'Mejorando...' : 'En construcción';
+        const isPaused = house.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
         
         html += `
           <div class="building-box" id="house-box-${idx}" style="position: relative;">
             <div class="building-tier-badge" id="house-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="house-title-${idx}">${titleText}</span>
+              <span class="building-box-title" id="house-title-${idx}">🏗️ ${titleText}</span>
               <span class="building-box-prod" id="house-prod-${idx}">${prodText}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="house-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="house-btn-${idx}" onclick="togglePlayerConstruct('houses', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('houses', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="house-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('houses', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${house.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('houses', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="house-btn-${idx}" onclick="togglePlayerConstruct('houses', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         `;
       } else {
+        const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+        const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+        const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+        const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+        const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+        const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
+        const capacity = house.tier === 1 ? cap1 : (house.tier === 2 ? cap2 : cap3);
         html += `
           <div class="building-box" id="house-box-${idx}" style="position: relative;">
             <div class="building-tier-badge" id="house-tier-badge-${idx}">Tier ${house.tier}</div>
             <div class="building-box-header">
               <span class="building-box-title" id="house-title-${idx}">🏠 Choza #${idx + 1}</span>
-              <span class="building-box-prod" id="house-prod-${idx}">+1 Capacidad</span>
+              <span class="building-box-prod" id="house-prod-${idx}">+${capacity} Capacidad</span>
             </div>
             
-            <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div style="margin-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 0.4rem; display: flex; flex-direction: column; gap: 0.25rem;">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #fff;">Residentes:</span>
+              ${renderHouseResidentDropdowns(idx, capacity)}
+            </div>
+            
+            <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="house-tier-text-${idx}" style="font-size: 0.75rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Choza)</span>
               <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="house-upgrade-btn-${idx}" onclick="upgradeHouseItem(${idx})">
                 Mejorar
@@ -748,10 +992,18 @@ function renderHouses() {
         const tierBadge = document.getElementById(`house-tier-badge-${idx}`);
         
         const hUpgraded = CONFIG.Building.upgraded_house;
+        const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+        const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+        
+        const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+        const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+        
+        const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+        const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
         
         if (house.tier === 1) {
           if (titleText) titleText.innerHTML = `🏠 Choza #${idx + 1}`;
-          if (prodText) prodText.innerText = `+1 Capacidad`;
+          if (prodText) prodText.innerText = `+${cap1} Capacidad`;
           if (tierText) tierText.innerText = `Nivel 1 (Choza)`;
           if (tierBadge) tierBadge.innerText = `Tier 1`;
           if (upgradeBtn) {
@@ -762,18 +1014,19 @@ function renderHouses() {
           }
         } else if (house.tier === 2) {
           if (titleText) titleText.innerHTML = `🏘️ Cabaña #${idx + 1}`;
-          if (prodText) prodText.innerText = `+2 Capacidad`;
+          if (prodText) prodText.innerText = `+${cap2} Capacidad`;
           if (tierText) tierText.innerText = `Nivel 2 (Cabaña)`;
           if (tierBadge) tierBadge.innerText = `Tier 2`;
           if (upgradeBtn) {
-            upgradeBtn.innerText = `Mejorar (🪙50, 🪵80, 🪨60)`;
-            const canAfford = state.gold >= 50 && state.wood >= 80 && state.stone >= 60;
+            const hLuxury = CONFIG.Building && CONFIG.Building.luxury_house ? CONFIG.Building.luxury_house : { cost_gold: 50, cost_wood: 80, cost_stone: 60 };
+            upgradeBtn.innerText = `Mejorar (🪙${hLuxury.cost_gold}, 🪵${hLuxury.cost_wood}, 🪨${hLuxury.cost_stone})`;
+            const canAfford = state.gold >= hLuxury.cost_gold && state.wood >= hLuxury.cost_wood && state.stone >= hLuxury.cost_stone;
             upgradeBtn.disabled = !canAfford;
             upgradeBtn.style.display = 'block';
           }
         } else {
           if (titleText) titleText.innerHTML = `🏰 Casa Grande #${idx + 1}`;
-          if (prodText) prodText.innerText = `+4 Capacidad`;
+          if (prodText) prodText.innerText = `+${cap3} Capacidad`;
           if (tierText) tierText.innerText = `Nivel 3 (Casa Grande)`;
           if (tierBadge) tierBadge.innerText = `Tier 3`;
           if (upgradeBtn) {
@@ -791,7 +1044,11 @@ function renderBonfires() {
   if (!container) return;
   const count = state.bonfires ? state.bonfires.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.bonfires ? state.bonfires.map(b => b.isUnderConstruction ? '1' : '0').join(',') : '';
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('bonfires_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.bonfires ? state.bonfires.map(b => (b.isUnderConstruction ? '1' : '0') + '_' + (b.isUpgrading ? '1' : '0') + '_' + (b.tier || 1) + '_' + (b.selectedRecipe || 'wheat') + '_' + (b.isPaused ? '1' : '0') + '_' + (b.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastBonfiresConstructionStatus) {
     lastBonfiresConstructionStatus = currentStatus;
     if (count === 0) {
@@ -802,7 +1059,10 @@ function renderBonfires() {
     }
     let html = '';
     state.bonfires.forEach((bonfire, idx) => {
+      const maxWorkers = bonfire.isUnderConstruction || bonfire.isUpgrading ? 2 : (bonfire.tier || 1);
       if (bonfire.isUnderConstruction) {
+        const isPaused = bonfire.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
         html += `
           <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
             <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Construyendo</div>
@@ -813,16 +1073,16 @@ function renderBonfires() {
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="bonfire-construct-btn-${idx}" onclick="togglePlayerConstruct('bonfires', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="bonfire-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${bonfire.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('bonfires', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="bonfire-construct-btn-${idx}" onclick="togglePlayerConstruct('bonfires', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
@@ -841,9 +1101,9 @@ function renderBonfires() {
             <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
               <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
             </div>
-
+ 
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Receta seleccionada:</span>
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente receta (próxima iteración):</span>
               <select id="bonfire-recipe-${idx}" onchange="changeBonfireRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
                 <option value="wheat" ${recipe === 'wheat' ? 'selected' : ''}>🍞 Trigo -> Pan</option>
                 <option value="potato" ${recipe === 'potato' ? 'selected' : ''}>🥔 Patata -> Patata Asada</option>
@@ -852,21 +1112,17 @@ function renderBonfires() {
               </select>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+              ${renderBuildingWorkerDropdowns('bonfires', idx, maxWorkers)}
+            </div>
+ 
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
                 Cocinar Manual
               </button>
-              
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="bonfire-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('bonfires', ${idx}, 1)">+</button>
-                </div>
-              </div>
             </div>
-
+ 
             <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
               <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
               <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
@@ -887,9 +1143,6 @@ function renderBonfires() {
         const pct = Math.min(100, (bonfire.constructionElapsed / bonfire.constructionDuration) * 100);
         if (pBar) pBar.style.width = `${pct}%`;
         
-        const allocText = document.getElementById(`bonfire-alloc-${idx}`);
-        if (allocText) allocText.innerText = `${bonfire.workerAssigned} / 2`;
-        
         const btn = document.getElementById(`bonfire-construct-btn-${idx}`);
         const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'bonfires' && state.playerConstructing.index === idx;
         if (btn) {
@@ -909,7 +1162,6 @@ function renderBonfires() {
         const pBar = document.getElementById(`bonfire-progress-${idx}`);
         const btn = document.getElementById(`bonfire-btn-${idx}`);
         const statusText = document.getElementById(`bonfire-status-${idx}`);
-        const allocText = document.getElementById(`bonfire-alloc-${idx}`);
         const titleText = document.getElementById(`bonfire-title-${idx}`);
         const tierText = document.getElementById(`bonfire-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
@@ -954,19 +1206,40 @@ function renderBonfires() {
           if (document.activeElement !== recipeSelect && recipeSelect.value !== recipe) {
             recipeSelect.value = recipe;
           }
-          recipeSelect.disabled = bonfire.isRunning;
+          recipeSelect.disabled = false;
         }
 
         const minFood = autoRec ? autoRec.consume_amount : 1;
-        if (allocText) allocText.innerText = `${bonfire.workerAssigned} / ${bonfire.tier || 1}`;
         if (btn) btn.disabled = bonfire.isRunning || (state[recipe] || 0) < minFood;
 
         if (bonfire.isRunning) {
           const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
           const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
           if (pBar) pBar.style.width = `${pct}%`;
-          const rem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
-          if (statusText) statusText.innerText = `Cocinando (Faltan ${rem}s)`;
+          
+          let speedMultiplier = 1.0;
+          if (bonfire.mode === 'auto') {
+            const workers = state.colonists ? state.colonists.filter(c => c.job === `bonfires_${idx}`) : [];
+            let mult = 0;
+            workers.forEach(c => {
+              const lvl = c.attributes.cooking || 3;
+              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+            });
+            speedMultiplier = mult;
+          }
+          
+          const rem = (speedMultiplier > 0) ? Math.max((targetDuration - bonfire.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+          const runningRecipe = bonfire.activeRecipe || recipe;
+          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+          const ingredientName = rawNames[runningRecipe] || runningRecipe;
+          if (statusText) {
+            if (bonfire.mode === 'auto' && bonfire.workerAssigned === 0) {
+              const progressRem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
+              statusText.innerText = `Cocinando ${ingredientName} (Pausado: Sin Cocinero) (${progressRem}s)`;
+            } else {
+              statusText.innerText = `Cocinando ${ingredientName} (Faltan ${rem}s)`;
+            }
+          }
         } else {
           if (pBar) pBar.style.width = `0%`;
           const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
@@ -984,7 +1257,11 @@ function renderGranaries() {
   if (!container) return;
   const count = state.granaries ? state.granaries.length : 0;
   const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
-  const currentStatus = state.granaries ? state.granaries.map(g => g.isUnderConstruction ? '1' : '0').join(',') : '';
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('granaries_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.granaries ? state.granaries.map(g => (g.isUnderConstruction ? '1' : '0') + '_' + (g.isUpgrading ? '1' : '0') + '_' + (g.tier || 1) + '_' + (g.selectedCrop || 'wheat') + '_' + (g.isPaused ? '1' : '0') + '_' + (g.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastGranariesConstructionStatus) {
     lastGranariesConstructionStatus = currentStatus;
     if (count === 0) {
@@ -995,27 +1272,35 @@ function renderGranaries() {
     }
     let html = '';
     state.granaries.forEach((granary, idx) => {
-      if (granary.isUnderConstruction) {
+      const maxWorkers = granary.isUnderConstruction || granary.isUpgrading ? 2 : (granary.tier || 1);
+      if (granary.isUnderConstruction || granary.isUpgrading) {
+        const badgeText = granary.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = granary.isUpgrading ? 
+          `Granero #${idx + 1} (Mejorando...)` : 
+          `Granero #${idx + 1} (En construcción)`;
+        const statusTextVal = granary.isUpgrading ? 'Mejorando...' : 'En construcción';
+        const isPaused = granary.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
         html += `
           <div class="building-box" id="granary-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="granary-tier-badge-${idx}">Construyendo</div>
+            <div class="building-tier-badge" id="granary-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="granary-title-${idx}">🏗️ Granero #${idx + 1} (En construcción)</span>
-              <span class="building-box-prod" id="granary-status-${idx}">En construcción</span>
+              <span class="building-box-title" id="granary-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="granary-status-${idx}">${statusTextVal}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
               <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; gap: 0.5rem;">
-              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.2rem 0.4rem;" id="granary-construct-btn-${idx}" onclick="togglePlayerConstruct('granaries', ${idx})">
-                🔨 Iniciar Construcción
-              </button>
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="granary-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, 1)">+</button>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${granary.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('granaries', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="granary-construct-btn-${idx}" onclick="togglePlayerConstruct('granaries', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
                 </div>
               </div>
             </div>
@@ -1036,7 +1321,7 @@ function renderGranaries() {
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Cultivo seleccionado:</span>
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente semilla (próxima iteración):</span>
               <select id="granary-crop-${idx}" onchange="changeGranaryRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
                 <option value="wheat" ${crop === 'wheat' ? 'selected' : ''}>🌾 Trigo -> Semillas Trigo</option>
                 <option value="potato" ${crop === 'potato' ? 'selected' : ''}>🥔 Patata -> Semillas Patata</option>
@@ -1044,19 +1329,15 @@ function renderGranaries() {
               </select>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
+            <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+              ${renderBuildingWorkerDropdowns('granaries', idx, maxWorkers)}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
                 Procesar Manual
               </button>
-              
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.75rem; color: var(--color-text-muted);">Auto:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, -1)">-</button>
-                  <span class="allocator-val" id="granary-alloc-${idx}">0</span>
-                  <button class="allocator-btn" onclick="assignBuildingWorker('granaries', ${idx}, 1)">+</button>
-                </div>
-              </div>
             </div>
 
             <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
@@ -1081,9 +1362,6 @@ function renderGranaries() {
         
         const pBar = document.getElementById(`granary-progress-${idx}`);
         if (pBar) pBar.style.width = `${pct}%`;
-        
-        const allocText = document.getElementById(`granary-alloc-${idx}`);
-        if (allocText) allocText.innerText = `${granary.workerAssigned} / 2`;
         
         const statusText = document.getElementById(`granary-status-${idx}`);
         if (statusText) statusText.innerText = isUpgrading ? `Mejorando a Tier ${granary.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
@@ -1112,7 +1390,6 @@ function renderGranaries() {
         const pBar = document.getElementById(`granary-progress-${idx}`);
         const btn = document.getElementById(`granary-btn-${idx}`);
         const statusText = document.getElementById(`granary-status-${idx}`);
-        const allocText = document.getElementById(`granary-alloc-${idx}`);
         const titleText = document.getElementById(`granary-title-${idx}`);
         const tierText = document.getElementById(`granary-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`granary-upgrade-btn-${idx}`);
@@ -1150,19 +1427,42 @@ function renderGranaries() {
           if (document.activeElement !== cropSelect && cropSelect.value !== cropKey) {
             cropSelect.value = cropKey;
           }
-          cropSelect.disabled = granary.isRunning;
+          cropSelect.disabled = false;
         }
         
         const minFood = recipe ? recipe.consume_amount : 5;
-        if (allocText) allocText.innerText = `${granary.workerAssigned} / ${tier}`;
         if (btn) btn.disabled = granary.isRunning || (state[cropKey] || 0) < minFood;
         
         if (granary.isRunning) {
-          const targetDuration = recipe ? recipe.duration : 3.0;
+          const runningCrop = granary.activeCrop || cropKey;
+          const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
+          const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
+          const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
           const pct = Math.min(100, (granary.elapsed / targetDuration) * 100);
           if (pBar) pBar.style.width = `${pct}%`;
-          const rem = Math.max(targetDuration - granary.elapsed, 0).toFixed(0);
-          if (statusText) statusText.innerText = `Procesando (Faltan ${rem}s)`;
+          
+          let speedMultiplier = 1.0;
+          if (granary.mode === 'auto') {
+            const workers = state.colonists ? state.colonists.filter(c => c.job === `granaries_${idx}`) : [];
+            let mult = 0;
+            workers.forEach(c => {
+              const lvl = c.attributes.farming || 3;
+              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+            });
+            speedMultiplier = mult;
+          }
+          
+          const rem = (speedMultiplier > 0) ? Math.max((targetDuration - granary.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+          const ingredientName = rawNames[runningCrop] || runningCrop;
+          if (statusText) {
+            if (granary.mode === 'auto' && granary.workerAssigned === 0) {
+              const progressRem = Math.max(targetDuration - granary.elapsed, 0).toFixed(0);
+              statusText.innerText = `Procesando ${ingredientName} (Pausado: Sin Trabajador) (${progressRem}s)`;
+            } else {
+              statusText.innerText = `Procesando ${ingredientName} (Faltan ${rem}s)`;
+            }
+          }
         } else {
           if (pBar) pBar.style.width = `0%`;
           const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
@@ -1184,11 +1484,15 @@ function renderMarketBuildingUI() {
   const count = state.markets ? state.markets.length : 0;
   const built = count > 0 && !state.markets[0].isUnderConstruction;
   const underConst = count > 0 && state.markets[0].isUnderConstruction;
+  const isPaused = count > 0 ? (state.markets[0].isPaused || false) : false;
+  const workerAssigned = count > 0 ? (state.markets[0].workerAssigned || 0) : 0;
 
   // Render container if state changed
-  if (lastMarketUIBuilt !== built || lastMarketUIUnderConst !== underConst || container.children.length === 0) {
+  if (lastMarketUIBuilt !== built || lastMarketUIUnderConst !== underConst || window.lastMarketUIPaused !== isPaused || window.lastMarketUIWorkerAssigned !== workerAssigned || container.children.length === 0) {
     lastMarketUIBuilt = built;
     lastMarketUIUnderConst = underConst;
+    window.lastMarketUIPaused = isPaused;
+    window.lastMarketUIWorkerAssigned = workerAssigned;
 
     let html = '';
     if (count === 0) {
@@ -1208,6 +1512,7 @@ function renderMarketBuildingUI() {
         </div>
       `;
     } else if (underConst) {
+      const pauseBtnText = isPaused ? '▶️ Reanudar Obra' : '⏸️ Pausar Obra';
       html = `
         <div style="display: flex; flex-direction: column; gap: 0.6rem;">
           <span style="font-size: 0.85rem; color: var(--color-text-muted);">Construyendo el Puesto de Mercado para habilitar el comercio.</span>
@@ -1216,17 +1521,15 @@ function renderMarketBuildingUI() {
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; flex-wrap: wrap; gap: 0.75rem;">
             <span id="market-build-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: 0%</span>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 0.8rem; color: var(--color-text-muted);">Constructores:</span>
-              <div class="colonist-allocator">
-                <button class="allocator-btn" onclick="assignBuildingWorker('markets', 0, -1)">-</button>
-                <span class="allocator-val" id="market-build-alloc">0</span>
-                <button class="allocator-btn" onclick="assignBuildingWorker('markets', 0, 1)">+</button>
-              </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600;">👷 ${state.markets[0].workerAssigned || 0} / 2 Constructores auto</span>
+              <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('markets', 0)">
+                ${pauseBtnText}
+              </button>
+              <button class="btn" id="btn-construct-market" onclick="togglePlayerConstruct('markets', 0)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                Iniciar Construcción
+              </button>
             </div>
-            <button class="btn" id="btn-construct-market" onclick="togglePlayerConstruct('markets', 0)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-              Iniciar Construcción
-            </button>
           </div>
         </div>
       `;
@@ -1292,12 +1595,11 @@ function renderMarketBuildingUI() {
 function updateRatesUI() {
   function formatRate(value) {
     const rateVal = value;
-    if (rateVal > 0.001) {
-      return `+${rateVal.toFixed(0)}/d`;
-    } else if (rateVal < -0.001) {
-      return `${rateVal.toFixed(0)}/d`;
+    if (Math.abs(rateVal) > 0.001) {
+      const formatted = rateVal.toFixed(rateVal % 1 === 0 ? 0 : 2);
+      return rateVal > 0 ? `+${formatted}/s` : `${formatted}/s`;
     } else {
-      return `+0/d`;
+      return `+0/s`;
     }
   }
 
@@ -1350,12 +1652,14 @@ function updateUI() {
   if (DOM.resPotato) DOM.resPotato.textContent = Math.floor(state.potato || 0);
   if (DOM.resCarrot) DOM.resCarrot.textContent = Math.floor(state.carrot || 0);
   if (DOM.resBerries) DOM.resBerries.textContent = Math.floor(state.berries || 0);
+  const totalColonists = state.colonists ? state.colonists.length : 0;
+  const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null).length : 0;
   if (state.starvingColonists > 0) {
-    DOM.resColonists.innerHTML = `${state.currentColonists} / ${state.maxPopulation} <span style="font-size: 0.8rem; color: #f87171; font-weight: bold; margin-left: 0.25rem;">(⚠️${state.starvingColonists})</span>`;
+    DOM.resColonists.innerHTML = `${totalColonists} / ${state.maxPopulation} <span style="font-size: 0.8rem; color: #f87171; font-weight: bold; margin-left: 0.25rem;">(⚠️${state.starvingColonists})</span>`;
   } else {
-    DOM.resColonists.textContent = `${state.currentColonists} / ${state.maxPopulation}`;
+    DOM.resColonists.textContent = `${totalColonists} / ${state.maxPopulation}`;
   }
-  DOM.resFreeColonists.textContent = `Libres: ${state.freeColonists}`;
+  DOM.resFreeColonists.textContent = `Libres: ${freeColonists}`;
 
   // Actualizar tarjeta de Alimentación
   const starvingVal = document.getElementById('starving-count-val');
@@ -1368,24 +1672,45 @@ function updateUI() {
     effVal.style.color = getWorkEfficiency() === 1 ? '#4ade80' : (getWorkEfficiency() > 0.5 ? '#facc15' : '#f87171');
   }
 
-  // Asignación de leñadores/mineros/foragers
-  DOM.allocWood.textContent = state.jobs.wood;
-  DOM.allocStone.textContent = state.jobs.stone;
-  DOM.allocBerries.textContent = state.jobs.berries;
+  // Asignación de leñadores/mineros/foragers con desplegables
+  renderBasicJobDropdowns('wood');
+  renderBasicJobDropdowns('stone');
+  renderBasicJobDropdowns('berries');
   
   const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
 
   const woodDuration = CONFIG.BasicGathering.wood_auto.duration;
   const woodYield = CONFIG.BasicGathering.wood_auto.yield;
-  DOM.woodAutoInfo.textContent = `+${(state.jobs.wood * (woodYield / (woodDuration / dayDuration))).toFixed(0)}/d`;
+  const woodcutters = state.colonists ? state.colonists.filter(c => c.job === 'wood') : [];
+  let woodMult = 0;
+  woodcutters.forEach(c => {
+    const lvl = c.attributes.woodcutting || 3;
+    woodMult += getAttributeMult(lvl);
+  });
+  const woodRateVal = woodMult * (woodYield / woodDuration);
+  DOM.woodAutoInfo.textContent = `+${woodRateVal.toFixed(woodRateVal % 1 === 0 ? 0 : 2)}/s`;
   
   const stoneDuration = CONFIG.BasicGathering.stone_auto.duration;
   const stoneYield = CONFIG.BasicGathering.stone_auto.yield;
-  DOM.stoneAutoInfo.textContent = `+${(state.jobs.stone * (stoneYield / (stoneDuration / dayDuration))).toFixed(0)}/d`;
+  const miners = state.colonists ? state.colonists.filter(c => c.job === 'stone') : [];
+  let stoneMult = 0;
+  miners.forEach(c => {
+    const lvl = c.attributes.mining || 3;
+    stoneMult += getAttributeMult(lvl);
+  });
+  const stoneRateVal = stoneMult * (stoneYield / stoneDuration);
+  DOM.stoneAutoInfo.textContent = `+${stoneRateVal.toFixed(stoneRateVal % 1 === 0 ? 0 : 2)}/s`;
 
   const berriesDuration = CONFIG.BasicGathering.berries_auto.duration;
   const berriesYield = CONFIG.BasicGathering.berries_auto.yield;
-  DOM.berriesAutoInfo.textContent = `+${(state.jobs.berries * (berriesYield / (berriesDuration / dayDuration))).toFixed(0)}/d`;
+  const foragers = state.colonists ? state.colonists.filter(c => c.job === 'berries') : [];
+  let berriesMult = 0;
+  foragers.forEach(c => {
+    const lvl = c.attributes.exploration || 3;
+    berriesMult += getAttributeMult(lvl);
+  });
+  const berriesRateVal = berriesMult * (berriesYield / berriesDuration);
+  DOM.berriesAutoInfo.textContent = `+${berriesRateVal.toFixed(berriesRateVal % 1 === 0 ? 0 : 2)}/s`;
 
   // Renderizar y actualizar los edificios individuales en tab-production
   renderHouses();
@@ -1434,7 +1759,12 @@ function updateUI() {
       else indicator.classList.remove('active');
     }
     if (statusText) {
-      statusText.innerText = anyActive ? 'Operando' : 'Sin Mercader';
+      const runningMarket = state.markets.find(m => m.isRunning);
+      if (runningMarket && !anyActive) {
+        statusText.innerText = 'Pausado: Sin Mercader';
+      } else {
+        statusText.innerText = anyActive ? 'Operando' : 'Sin Mercader';
+      }
     }
     if (globalProgressBar) {
       const runningMarket = state.markets.find(m => m.isRunning);
@@ -1458,8 +1788,8 @@ function updateUI() {
   }
 
   // Actualizar estadísticas de colonos y desglose de trabajos
-  if (DOM.statsFreeColonists) DOM.statsFreeColonists.textContent = state.freeColonists;
-  if (DOM.statsTotalColonists) DOM.statsTotalColonists.textContent = `${state.currentColonists} / ${state.maxPopulation}`;
+  if (DOM.statsFreeColonists) DOM.statsFreeColonists.textContent = freeColonists;
+  if (DOM.statsTotalColonists) DOM.statsTotalColonists.textContent = `${totalColonists} / ${state.maxPopulation}`;
   if (DOM.jobStatWood) DOM.jobStatWood.textContent = state.jobs.wood;
   if (DOM.jobStatStone) DOM.jobStatStone.textContent = state.jobs.stone;
   if (DOM.jobStatBerries) DOM.jobStatBerries.textContent = state.jobs.berries;
@@ -1471,8 +1801,37 @@ function updateUI() {
   if (DOM.jobStatMarket) DOM.jobStatMarket.textContent = state.markets ? state.markets.reduce((sum, m) => sum + (m.workerAssigned || 0), 0) : 0;
   if (DOM.jobStatGranary) DOM.jobStatGranary.textContent = state.granaries ? state.granaries.reduce((sum, g) => sum + (g.workerAssigned || 0), 0) : 0;
 
+  // Renderizar o actualizar el dropdown del mercado en Comercio si está operativo
+  const marketDropdownContainer = document.getElementById('market-worker-dropdown-container');
+  if (marketDropdownContainer) {
+    if (isMarketBuilt) {
+      const assignedIds = state.colonists ? state.colonists.filter(c => c.job === 'markets_0').map(c => c.id).join(',') : '';
+      const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+      const currentDropdownKey = `${assignedIds}_free:${freeColonistsStr}`;
+      
+      if (typeof window.lastRenderedMarketDropdownKey === 'undefined') {
+        window.lastRenderedMarketDropdownKey = null;
+      }
+      if (window.lastRenderedMarketDropdownKey !== currentDropdownKey) {
+        window.lastRenderedMarketDropdownKey = currentDropdownKey;
+        marketDropdownContainer.innerHTML = renderBuildingWorkerDropdowns('markets', 0, 1);
+      }
+    } else {
+      window.lastRenderedMarketDropdownKey = null;
+      marketDropdownContainer.innerHTML = '';
+    }
+  }
+
   renderTownHallUI();
+  renderHiringCandidates();
+  renderColonistsDetailList();
+  renderColonistsSummaryJobs();
   updateButtonStates();
+}
+
+if (typeof window.lastRenderedTownHallAssigned === 'undefined') {
+  window.lastRenderedTownHallAssigned = null;
+  window.lastRenderedTownHallFree = null;
 }
 
 function renderTownHallUI() {
@@ -1483,8 +1842,10 @@ function renderTownHallUI() {
   const tier = state.townHall.tier;
   const underConst = state.townHall.isUnderConstruction;
   const upgrading = state.townHall.isUpgrading;
+  const isPaused = state.townHall.isPaused || false;
+  const workerAssigned = state.townHall.workerAssigned || 0;
   
-  if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier && lastRenderedTownHallUnderConst === underConst && lastRenderedTownHallUpgrading === upgrading) {
+  if (lastRenderedTownHallBuilt === built && lastRenderedTownHallTier === tier && lastRenderedTownHallUnderConst === underConst && lastRenderedTownHallUpgrading === upgrading && window.lastRenderedTownHallIsPaused === isPaused && window.lastRenderedTownHallWorkerAssigned === workerAssigned) {
     if (underConst || upgrading) {
       const pBar = document.getElementById('townhall-progress-bar');
       const duration = state.townHall.constructionDuration || 1;
@@ -1492,9 +1853,6 @@ function renderTownHallUI() {
       if (pBar) pBar.style.width = `${pct}%`;
       const pText = document.getElementById('townhall-progress-text');
       if (pText) pText.innerText = `Progreso: ${pct.toFixed(0)}%`;
-      
-      const allocVal = document.getElementById('townhall-alloc');
-      if (allocVal) allocVal.innerText = `${state.townHall.workerAssigned || 0} / 2`;
       
       const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
       const btn = document.getElementById('btn-construct-townhall');
@@ -1519,6 +1877,8 @@ function renderTownHallUI() {
   lastRenderedTownHallTier = tier;
   lastRenderedTownHallUnderConst = underConst;
   lastRenderedTownHallUpgrading = upgrading;
+  window.lastRenderedTownHallIsPaused = isPaused;
+  window.lastRenderedTownHallWorkerAssigned = workerAssigned;
   
   const cfg = CONFIG.Building.townhall;
   const cfg_t2 = CONFIG.Building.townhall_t2;
@@ -1551,6 +1911,7 @@ function renderTownHallUI() {
     const titleText = state.townHall.isUpgrading ? 
       `Ayuntamiento (Mejorando a Nivel ${state.townHall.upgradingToTier})` : 
       `Ayuntamiento (En construcción)`;
+    const pauseBtnText = isPaused ? '▶️ Reanudar Obra' : '⏸️ Pausar Obra';
     
     container.innerHTML = `
       <div class="building-item" style="border: 1px dashed #3b82f6; background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 8px;">
@@ -1565,15 +1926,12 @@ function renderTownHallUI() {
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
             <span id="townhall-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: ${pct.toFixed(0)}%</span>
             
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <div style="display: flex; align-items: center; gap: 0.4rem;">
-                <span style="font-size: 0.8rem; color: var(--color-text-muted);">Aldeanos:</span>
-                <div class="colonist-allocator">
-                  <button class="allocator-btn" onclick="assignTownHallWorker(-1)">-</button>
-                  <span class="allocator-val" id="townhall-alloc">${state.townHall.workerAssigned || 0}</span>
-                  <button class="allocator-btn" onclick="assignTownHallWorker(1)">+</button>
-                </div>
-              </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600;">👷 ${state.townHall.workerAssigned || 0} / 2 Constructores auto</span>
+              
+              <button class="btn" onclick="togglePauseConstruction('townHall')" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};">
+                ${pauseBtnText}
+              </button>
               
               <button class="btn ${isPlayerOnTH ? 'btn-primary' : 'btn-secondary'}" id="btn-construct-townhall" onclick="togglePlayerConstruct('townHall')" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; ${isPlayerOnTH ? 'background: hsl(var(--color-primary)); border-color: hsl(var(--color-primary)); color: #fff;' : ''}">
                 ${isPlayerOnTH ? '🔨 Construyendo...' : '🔨 Iniciar Construcción'}
@@ -1713,9 +2071,11 @@ function updateButtonStates() {
     DOM.btnBuildGranary.disabled = !thBuilt || !(state.wood >= bGranary.cost_wood && state.stone >= bGranary.cost_stone);
   }
 
-  // Botón contratar colono (Condición: colonos actuales < maxPopulation)
-  const spaceAvailable = state.currentColonists < state.maxPopulation;
-  DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
+  // Botón contratar colono obsoleto (gestionado individualmente por candidato)
+  if (DOM.btnHireColonist) {
+    const spaceAvailable = (state.colonists ? state.colonists.length : 0) < state.maxPopulation;
+    DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
+  }
 
   // Marketplace - Ventas manuales unificadas habilitadas según stock
   if (CONFIG && CONFIG.Sales) {
@@ -1838,8 +2198,10 @@ function updateStaticTextsFromConfig() {
   document.getElementById('cost-basic-wood').innerHTML = `🪵 ${CONFIG.Building.basic_house.cost_wood} Madera`;
   document.getElementById('cost-basic-stone').innerHTML = `🪨 ${CONFIG.Building.basic_house.cost_stone} Piedra`;
   
-  document.getElementById('cost-hire-gold').innerHTML = `🪙 ${CONFIG.Building.hire_colonist.cost_gold} Oro`;
-  document.getElementById('btn-hire-colonist').innerHTML = `🧑‍🌾 Contratar Aldeano (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
+  const costHireGoldEl = document.getElementById('cost-hire-gold');
+  if (costHireGoldEl) costHireGoldEl.innerHTML = `🪙 ${CONFIG.Building.hire_colonist.cost_gold} Oro`;
+  const btnHireColonistEl = document.getElementById('btn-hire-colonist');
+  if (btnHireColonistEl) btnHireColonistEl.innerHTML = `🧑‍🌾 Contratar Aldeano (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
 
   // Edificios
   document.getElementById('cost-lumbermill-gold').innerHTML = `🪙 ${CONFIG.Building.lumbermill.cost_gold} Oro`;
@@ -2042,13 +2404,13 @@ function renderDetailedFoodInventory() {
     if (rateEl && typeof calculatedRates !== 'undefined' && calculatedRates[key] !== undefined) {
       const rateVal = calculatedRates[key];
       if (rateVal > 0.001) {
-        rateEl.innerText = `+${rateVal.toFixed(0)}/d`;
+        rateEl.innerText = `+${rateVal.toFixed(rateVal % 1 === 0 ? 0 : 2)}/s`;
         rateEl.style.color = '#4ade80';
       } else if (rateVal < -0.001) {
-        rateEl.innerText = `${rateVal.toFixed(0)}/d`;
+        rateEl.innerText = `${rateVal.toFixed(rateVal % 1 === 0 ? 0 : 2)}/s`;
         rateEl.style.color = '#f87171';
       } else {
-        rateEl.innerText = '+0/d';
+        rateEl.innerText = '+0/s';
         rateEl.style.color = 'var(--color-text-muted)';
       }
     }
@@ -2216,13 +2578,13 @@ function renderDetailedResourcesInventory() {
       if (!item.isSeed && typeof calculatedRates !== 'undefined' && calculatedRates[item.stateKey] !== undefined) {
         const rateVal = calculatedRates[item.stateKey];
         if (rateVal > 0.001) {
-          rateEl.innerText = `+${rateVal.toFixed(0)}/d`;
+          rateEl.innerText = `+${rateVal.toFixed(rateVal % 1 === 0 ? 0 : 2)}/s`;
           rateEl.style.color = '#4ade80';
         } else if (rateVal < -0.001) {
-          rateEl.innerText = `${rateVal.toFixed(0)}/d`;
+          rateEl.innerText = `${rateVal.toFixed(rateVal % 1 === 0 ? 0 : 2)}/s`;
           rateEl.style.color = '#f87171';
         } else {
-          rateEl.innerText = '+0/d';
+          rateEl.innerText = '+0/s';
           rateEl.style.color = 'var(--color-text-muted)';
         }
       } else {
@@ -2230,5 +2592,435 @@ function renderDetailedResourcesInventory() {
       }
     }
   });
+}
+
+var lastRenderedCandidatesKey = null;
+var lastRenderedColonistsDetailKey = null;
+var lastRenderedColonistsSummaryKey = null;
+var expandedSummaryJobs = new Set();
+
+function getHouseForColonist(colonistIdx) {
+  if (!state.houses || state.houses.length === 0) return 'Sin hogar';
+  
+  let currentColonistCount = 0;
+  for (let i = 0; i < state.houses.length; i++) {
+    const house = state.houses[i];
+    if (house.isUnderConstruction) continue;
+    const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+    const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+    const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+    const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+    const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+    const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
+    const capacity = house.tier === 1 ? cap1 : (house.tier === 2 ? cap2 : cap3);
+    
+    if (colonistIdx < currentColonistCount + capacity) {
+      const tierNames = { 1: 'Choza', 2: 'Cabaña', 3: 'Casa Grande' };
+      return `${tierNames[house.tier || 1]} #${i + 1}`;
+    }
+    currentColonistCount += capacity;
+  }
+  return 'Sin hogar (Sobrecarga)';
+}
+
+function renderHiringCandidates() {
+  const container = document.getElementById('hiring-candidates-container');
+  if (!container) return;
+
+  const cost = 50;
+  const goldAfford = state.gold >= cost;
+  const canHire = goldAfford;
+
+  const rotationDuration = CONFIG.Timing && CONFIG.Timing.candidate_rotation ? CONFIG.Timing.candidate_rotation.duration : 210.0;
+  const secsRemaining = Math.max(0, rotationDuration - (state.candidateRotationElapsed || 0)).toFixed(0);
+  const rotateCost = CONFIG.Sales && CONFIG.Sales.rotate_candidates ? CONFIG.Sales.rotate_candidates.cost_gold : 15;
+  const canAffordRotate = state.gold >= rotateCost;
+
+  // Caching key to prevent rebuilding DOM nodes on every game tick loop (resolving multi-click bug)
+  const candidatesNames = state.candidates ? state.candidates.map(c => c.name).join(',') : '';
+  const currentKey = `${candidatesNames}_${canHire}_${state.gold >= cost}_secs:${secsRemaining}_gold:${Math.floor(state.gold)}`;
+  if (lastRenderedCandidatesKey === currentKey) {
+    return;
+  }
+  lastRenderedCandidatesKey = currentKey;
+
+  const isHousingFull = state.colonists.length >= (state.maxPopulation || 0);
+
+  let html = `
+    <div style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <span style="font-size: 0.85rem; color: var(--color-text-muted); font-weight: 500;">
+          ⏳ Rotación automática en: <strong style="color: #60a5fa; font-size: 0.95rem;">${secsRemaining}s</strong>
+        </span>
+        <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.6rem; display: flex; align-items: center; gap: 0.25rem;" onclick="rotateCandidatesPool()" ${canAffordRotate ? '' : 'disabled'}>
+          🔄 Rotar Candidatos (Costo: 🪙${rotateCost})
+        </button>
+      </div>
+  `;
+
+  if (isHousingFull) {
+    html += `
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.8rem; color: #fbbf24; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
+        <span>⛺</span>
+        <span>Viviendas completas. Los colonos adicionales serán contratados sin hogar, lo que reduce su producción en un 40%.</span>
+      </div>
+    `;
+  }
+
+  if (!state.candidates || state.candidates.length === 0) {
+    html += `
+      <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.8rem; color: #f87171; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+        <span>⚠️</span>
+        <span>Has contratado a todos los candidatos de esta semana. Espera a la rotación automática o rota la lista pagando oro.</span>
+      </div>
+    </div>`;
+  } else {
+    state.candidates.forEach((cand, idx) => {
+      const attrBadges = [
+        { name: '🪓 Leñ', val: cand.attributes.woodcutting, color: '#facc15' },
+        { name: '⛏️ Min', val: cand.attributes.mining, color: '#60a5fa' },
+        { name: '🌾 Agr', val: cand.attributes.farming, color: '#4ade80' },
+        { name: '🍳 Coc', val: cand.attributes.cooking, color: '#f87171' },
+        { name: '🔨 Con', val: cand.attributes.construction, color: '#a78bfa' },
+        { name: '📈 Com', val: cand.attributes.trading, color: '#fb923c' },
+        { name: '🧭 Exp', val: cand.attributes.exploration, color: '#c084fc' },
+        { name: '⚔️ Cba', val: cand.attributes.combat, color: '#f472b6' }
+      ].map(a => `
+        <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 0.25rem 0.4rem; display: flex; justify-content: space-between; align-items: center; gap: 0.25rem; font-size: 0.75rem;">
+          <span style="color: var(--color-text-muted); font-weight: 500;">${a.name}</span>
+          <span style="font-weight: 700; color: ${a.color};">${a.val}</span>
+        </div>
+      `).join('');
+
+      html += `
+        <div class="building-item" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; border-radius: 12px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); transition: transform 0.2s, border-color 0.2s; margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; width: 100%;">
+            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+              <span style="font-size: 0.95rem; font-weight: 700; color: #a5b4fc; letter-spacing: 0.2px;">${cand.name}</span>
+              <span style="font-size: 0.75rem; color: var(--color-text-muted);">Aldeano de Aetheria disponible para reclutar.</span>
+            </div>
+            <span style="font-size: 0.8rem; font-weight: 600; color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 0.15rem 0.4rem; border-radius: 4px;">
+              🪙 ${cost} Oro
+            </span>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; width: 100%;">
+            ${attrBadges}
+          </div>
+          
+          <button class="btn btn-accent-gold" 
+                  style="width: 100%; margin-top: 0.25rem; display: flex; justify-content: center; align-items: center; gap: 0.4rem;" 
+                  onclick="hireColonist(${idx})" 
+                  ${canHire ? '' : 'disabled'}>
+            <span>🧑‍🌾 Reclutar a ${cand.name.split(' ')[0]}</span>
+          </button>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderColonistHouseSelector(colonist) {
+  let selectHtml = `<select style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.35rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; cursor: pointer; outline: none;" onchange="changeColonistHouseDirectly(${colonist.id}, this.value)">`;
+  selectHtml += `<option value="" ${colonist.houseIdx === null || colonist.houseIdx === undefined ? 'selected' : ''}>❌ Sin hogar</option>`;
+  
+  if (Array.isArray(state.houses)) {
+    state.houses.forEach((house, idx) => {
+      if (house.isUnderConstruction) return;
+      
+      const basicHouseCfg = CONFIG.Building && CONFIG.Building.basic_house;
+      const cap1 = basicHouseCfg ? basicHouseCfg.yield_amount : 1;
+      const upgradedHouseCfg = CONFIG.Building && CONFIG.Building.upgraded_house;
+      const cap2 = cap1 + (upgradedHouseCfg ? upgradedHouseCfg.yield_amount : 1);
+      const luxuryHouseCfg = CONFIG.Building && CONFIG.Building.luxury_house;
+      const cap3 = cap2 + (luxuryHouseCfg ? luxuryHouseCfg.yield_amount : 2);
+      const capacity = house.tier === 1 ? cap1 : (house.tier === 2 ? cap2 : cap3);
+      const currentOccupants = state.colonists.filter(x => x.houseIdx === idx && x.id !== colonist.id).length;
+      const isCurrentHouse = colonist.houseIdx === idx;
+      const displayOccupants = isCurrentHouse ? currentOccupants + 1 : currentOccupants;
+      
+      const isFull = displayOccupants >= capacity && !isCurrentHouse;
+      const tierNames = { 1: 'Choza', 2: 'Cabaña', 3: 'Casa Grande' };
+      const label = `${tierNames[house.tier || 1]} #${idx + 1} (${displayOccupants}/${capacity})`;
+      
+      selectHtml += `<option value="${idx}" ${isCurrentHouse ? 'selected' : ''} ${isFull ? 'disabled' : ''}>${label}</option>`;
+    });
+  }
+  
+  selectHtml += `</select>`;
+  return selectHtml;
+}
+
+function renderColonistsDetailList() {
+  const container = document.getElementById('colonists-detail-list-container');
+  if (!container) return;
+
+  if (!state.colonists || state.colonists.length === 0) {
+    container.innerHTML = `<p style="font-size: 0.85rem; color: var(--color-text-muted); text-align: center; margin: 1rem 0;">No tienes aldeanos contratados todavía.</p>`;
+    lastRenderedColonistsDetailKey = 'empty';
+    return;
+  }
+
+  // Key check to prevent dropdown close on game tick loops
+  const colonistsKey = state.colonists.map(c => `${c.id}:${c.job}:${c.houseIdx}:${c.isStarving ? 1 : 0}`).join(',') + `_houses:${state.houses.length}:${state.houses.map(h => h.tier).join(',')}`;
+  if (lastRenderedColonistsDetailKey === colonistsKey) {
+    return;
+  }
+  lastRenderedColonistsDetailKey = colonistsKey;
+
+  // Build the list of job options
+  const jobOptions = [
+    { value: "", label: "❌ Sin Trabajo (Libre)" },
+    { value: "wood", label: "🪵 Leñador Básico" },
+    { value: "stone", label: "🪨 Cantero Básico" },
+    { value: "berries", label: "🍓 Forrajeador de Frutos" },
+    { value: "construction", label: "🔨 Constructor (Auto)" }
+  ];
+
+  const addBuildingJobs = (list, prefix, label) => {
+    if (Array.isArray(list)) {
+      list.forEach((b, idx) => {
+        if (!b.isUnderConstruction && !b.isUpgrading) {
+          jobOptions.push({ value: `${prefix}_${idx}`, label: `${label} #${idx + 1}` });
+        }
+      });
+    }
+  };
+
+  addBuildingJobs(state.lumberMills, 'lumbermills', '🪵 Aserradero');
+  addBuildingJobs(state.quarries, 'quarries', '🪨 Cantera');
+  addBuildingJobs(state.farms, 'farms', '🌾 Granja');
+  addBuildingJobs(state.markets, 'markets', '📈 Mercader');
+  addBuildingJobs(state.bonfires, 'bonfires', '🔥 Cocinero/Hoguera');
+  addBuildingJobs(state.granaries, 'granaries', '🌾 Granero');
+
+  let html = '';
+  state.colonists.forEach((c, idx) => {
+    const attrBadges = [
+      { key: 'woodcutting', name: '🪓', val: c.attributes.woodcutting, color: '#facc15', title: 'Leñador' },
+      { key: 'mining', name: '⛏️', val: c.attributes.mining, color: '#60a5fa', title: 'Cantero' },
+      { key: 'farming', name: '🌾', val: c.attributes.farming, color: '#4ade80', title: 'Agricultor' },
+      { key: 'cooking', name: '🍳', val: c.attributes.cooking, color: '#f87171', title: 'Cocinero' },
+      { key: 'construction', name: '🔨', val: c.attributes.construction, color: '#a78bfa', title: 'Constructor' },
+      { key: 'trading', name: '📈', val: c.attributes.trading, color: '#fb923c', title: 'Mercader' },
+      { key: 'exploration', name: '🧭', val: c.attributes.exploration, color: '#c084fc', title: 'Explorador' },
+      { key: 'combat', name: '⚔️', val: c.attributes.combat, color: '#f472b6', title: 'Combatiente' }
+    ].map(a => {
+      const currentXP = (c.attributeXP && c.attributeXP[a.key]) || 0;
+      const xpReq = getXPThreshold(a.key, a.val);
+      const xpText = a.val < 10 ? ` (${currentXP.toFixed(1)}/${xpReq.toFixed(0)}d)` : ' (Máx)';
+      return `<span title="${a.title}${xpText}" style="cursor:help; font-weight:700; color:${a.color}; background:rgba(255,255,255,0.04); padding:0.15rem 0.3rem; border-radius:4px; border:1px solid rgba(255,255,255,0.06);">${a.name}${a.val}</span>`;
+    }).join(' ');
+
+    const optionsHtml = jobOptions.map(opt => `
+      <option value="${opt.value}" ${c.job === (opt.value === "" ? null : opt.value) ? 'selected' : ''}>
+        ${opt.label}
+      </option>
+    `).join('');
+
+    const isStarving = c.isStarving;
+    const isHomeless = c.houseIdx === null || c.houseIdx === undefined || c.houseIdx < 0 || !state.houses || c.houseIdx >= state.houses.length;
+    const eff = getColonistEfficiency(c);
+    const effPercent = Math.round(eff * 100);
+    
+    let badgesHtml = '';
+    if (isHomeless) {
+      badgesHtml += `
+        <span style="font-size: 0.7rem; color: #fbbf24; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.15rem;">
+          ⛺ Sin hogar
+        </span>
+      `;
+    }
+    if (isStarving) {
+      badgesHtml += `
+        <span style="font-size: 0.7rem; color: #f87171; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.2); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.15rem;">
+          🥩 Hambriento
+        </span>
+      `;
+    }
+    
+    let effColor = '#38bdf8'; // Default blueish
+    if (effPercent >= 100) effColor = '#4ade80'; // Green
+    else if (effPercent >= 50) effColor = '#fbbf24'; // Yellow/Orange
+    else effColor = '#f87171'; // Red
+
+    badgesHtml += `
+      <span style="font-size: 0.7rem; color: ${effColor}; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.15rem;">
+        ⚡ ${effPercent}%
+      </span>
+    `;
+
+    html += `
+      <div class="building-item" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; border-radius: 12px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.1rem;">
+              <span style="font-size: 0.95rem; font-weight: 700; color: #a5b4fc;">${c.name}</span>
+              ${badgesHtml}
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--color-text-muted);">
+              <span>🏠 Residencia:</span>
+              ${renderColonistHouseSelector(c)}
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">Trabajo:</span>
+              <select style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.35rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; cursor: pointer;"
+                      onchange="changeColonistJobDirectly(${c.id}, this.value)">
+                ${optionsHtml}
+              </select>
+            </div>
+            <button class="btn" 
+                    style="font-size: 0.75rem; padding: 0.35rem 0.6rem; border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; background: rgba(239, 68, 68, 0.05); cursor: pointer; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; transition: background 0.2s, border-color 0.2s; outline: none; box-shadow: none;" 
+                    onmouseover="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.borderColor='rgba(239, 68, 68, 0.5)';" 
+                    onmouseout="this.style.background='rgba(239, 68, 68, 0.05)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';" 
+                    onclick="dismissColonist(${c.id})">
+              👋 Despedir
+            </button>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; width: 100%; margin-top: 0.1rem; font-size: 0.75rem;">
+          <span style="color: var(--color-text-muted); align-self: center; margin-right: 0.3rem;">Atributos:</span>
+          ${attrBadges}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderColonistsSummaryJobs() {
+  const container = document.getElementById('colonists-summary-jobs-container');
+  if (!container) return;
+
+  if (!state.colonists || state.colonists.length === 0) {
+    container.innerHTML = `<p style="font-size: 0.85rem; color: var(--color-text-muted); text-align: center; margin: 1rem 0;">No tienes aldeanos contratados todavía.</p>`;
+    lastRenderedColonistsSummaryKey = 'empty';
+    return;
+  }
+
+  const summaryKey = state.colonists.map(c => `${c.id}:${c.job}:${c.houseIdx}:${c.isStarving ? 1 : 0}`).join(',') + `_exp:${Array.from(expandedSummaryJobs).join(',')}`;
+  if (lastRenderedColonistsSummaryKey === summaryKey) {
+    return;
+  }
+  lastRenderedColonistsSummaryKey = summaryKey;
+
+  const categories = [
+    { key: 'wood', label: '🪵 Leñadores Básicos', attrName: 'woodcutting', attrLabel: 'Corte de Madera' },
+    { key: 'stone', label: '🪨 Canteros Básicos', attrName: 'mining', attrLabel: 'Minería' },
+    { key: 'berries', label: '🍓 Recolectores de Frutos', attrName: 'exploration', attrLabel: 'Exploración' },
+    { key: 'construction', label: '🔨 Constructores (Auto)', attrName: 'construction', attrLabel: 'Construcción' },
+    { key: 'lumbermills', label: '🪵 Trabajadores en Aserraderos', attrName: 'woodcutting', attrLabel: 'Corte de Madera' },
+    { key: 'quarries', label: '🪨 Trabajadores en Canteras', attrName: 'mining', attrLabel: 'Minería' },
+    { key: 'farms', label: '🌾 Trabajadores en Granjas', attrName: 'farming', attrLabel: 'Agricultura' },
+    { key: 'markets', label: '📈 Mercaderes', attrName: 'trading', attrLabel: 'Comercio' },
+    { key: 'bonfires', label: '🔥 Cocineros en Fogatas/Cocinas', attrName: 'cooking', attrLabel: 'Cocinado' },
+    { key: 'granaries', label: '🌾 Trabajadores en Graneros', attrName: 'farming', attrLabel: 'Agricultura' }
+  ];
+
+  let html = '';
+  categories.forEach(cat => {
+    const list = state.colonists.filter(c => {
+      if (!c.job) return false;
+      if (cat.key === 'wood' || cat.key === 'stone' || cat.key === 'berries' || cat.key === 'construction') {
+        return c.job === cat.key;
+      }
+      return c.job.startsWith(`${cat.key}_`);
+    });
+
+    const isIndustrial = ['lumbermills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries'].includes(cat.key);
+    if (isIndustrial) {
+      const listKey = cat.key === 'lumbermills' ? 'lumberMills' : cat.key;
+      if ((!state[listKey] || state[listKey].length === 0) && list.length === 0) {
+        return;
+      }
+    }
+
+    const isExpanded = expandedSummaryJobs.has(cat.key);
+    const count = list.length;
+
+    let subListHtml = '';
+    if (isExpanded) {
+      if (count === 0) {
+        subListHtml = `<div style="padding: 0.5rem 0.75rem; font-size: 0.8rem; color: var(--color-text-muted); font-style: italic;">No hay aldeanos asignados a esta tarea.</div>`;
+      } else {
+        subListHtml = list.map(c => {
+          const attrVal = c.attributes[cat.attrName] || 1;
+          
+          let jobDetail = '';
+          if (c.job.includes('_')) {
+            const idx = parseInt(c.job.split('_')[1]) + 1;
+            const singularNames = {
+              lumbermills: 'Aserradero', quarries: 'Cantera', farms: 'Granja',
+              markets: 'Mercado', bonfires: 'Cocina', granaries: 'Granero',
+              houses: 'Vivienda'
+            };
+            jobDetail = ` en ${singularNames[cat.key] || 'Edificio'} #${idx}`;
+          }
+
+          const currentXP = (c.attributeXP && c.attributeXP[cat.attrName]) || 0;
+          const xpReq = getXPThreshold(cat.attrName, attrVal);
+          const xpText = attrVal < 10 ? ` <span style="font-size:0.7rem; color:var(--color-text-muted);">(${currentXP.toFixed(1)}/${xpReq.toFixed(0)}d)</span>` : ' <span style="font-size:0.7rem; color:var(--color-text-muted);">(Máx)</span>';
+
+          const eff = getColonistEfficiency(c);
+          const effPercent = Math.round(eff * 100);
+          let effColor = '#4ade80'; // Green
+          if (effPercent < 50) effColor = '#f87171'; // Red
+          else if (effPercent < 100) effColor = '#fbbf24'; // Yellow
+
+          const effText = ` <span style="color: ${effColor}; font-weight: 600; font-size: 0.75rem; margin-left: 0.25rem;">⚡ ${effPercent}%</span>`;
+
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; border-top: 1px dashed rgba(255,255,255,0.06); font-size: 0.8rem;">
+              <span style="color: #c7d2fe; font-weight: 500; display: inline-flex; align-items: center;">
+                <span>${c.name}${jobDetail}</span>
+                ${effText}
+              </span>
+              <span style="font-size: 0.75rem; color: var(--color-text-muted);">
+                Atributo (${cat.attrLabel}): <strong style="color: #38bdf8; font-size: 0.85rem;">${attrVal}</strong>${xpText}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    html += `
+      <div style="background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 0.4rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; cursor: pointer; user-select: none;" 
+             onclick="toggleSummaryJobExpand('${cat.key}')">
+          <span style="font-size: 0.85rem; font-weight: 600; color: #fff;">${cat.label}</span>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="badge" style="background: rgba(165, 180, 252, 0.15); color: #c7d2fe; font-size: 0.75rem; padding: 0.15rem 0.45rem; border-radius: 99px;">
+              ${count} Asignados
+            </span>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted); transition: transform 0.2s; transform: ${isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'};">▶</span>
+          </div>
+        </div>
+        
+        ${isExpanded ? `<div style="background: rgba(0,0,0,0.1); display: flex; flex-direction: column;">${subListHtml}</div>` : ''}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleSummaryJobExpand(jobKey) {
+  if (expandedSummaryJobs.has(jobKey)) {
+    expandedSummaryJobs.delete(jobKey);
+  } else {
+    expandedSummaryJobs.add(jobKey);
+  }
+  // Force reset key to force re-render
+  lastRenderedColonistsSummaryKey = null;
+  renderColonistsSummaryJobs();
 }
 

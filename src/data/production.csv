@@ -14,7 +14,7 @@ Processing;pot_auto;Cocinar Automático Caldero;0;0;0;1;cooked_selected;Consumes
 Processing;pot_manual;Cocinar Manual Caldero;0;0;0;1;cooked_selected;Consumes:1:raw_selected
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;1;cooked_selected;Consumes:1:raw_selected
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;1;cooked_selected;Consumes:1:raw_selected
-ProductionRate;lumbermill_prod;Producción Cabaña de Leñador;0;0;0;5;wood;
+ProductionRate;lumbermill_prod;Producción Cabaña de Leñador;0;0;0;15;wood;
 ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;5;stone;
 Processing;granary_wheat_t1;Producir Semillas de Trigo T1;0;0;0;1;wheat_seeds;Consumes:5:wheat
 Processing;granary_wheat_t2;Producir Semillas de Trigo T2;0;0;0;1;wheat_seeds;Consumes:5:wheat
@@ -25,4 +25,5 @@ Processing;granary_potato_t3;Producir Semillas de Patata T3;0;0;0;2;potato_seeds
 Processing;granary_carrot_t1;Producir Semillas de Zanahoria T1;0;0;0;1;carrot_seeds;Consumes:5:carrot
 Processing;granary_carrot_t2;Producir Semillas de Zanahoria T2;0;0;0;1;carrot_seeds;Consumes:5:carrot
 Processing;granary_carrot_t3;Producir Semillas de Zanahoria T3;0;0;0;2;carrot_seeds;Consumes:10:carrot
-
+EfficiencyPenalty;no_house;Penalización por Falta de Casa;0;0;0;0.2;;
+EfficiencyPenalty;no_food;Penalización por Falta de Comida;0;0;0;0.2;;

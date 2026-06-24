@@ -444,6 +444,8 @@ async function initGameData(isManual = false) {
     if (typeof CROPS !== 'undefined') {
       Object.assign(CROPS, CONFIG.Crop);
     }
+    if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
+    if (typeof initializeHousingAssignments === 'function') initializeHousingAssignments();
     
     if (typeof updateStaticTextsFromConfig === 'function') updateStaticTextsFromConfig();
     if (typeof recalculateRates === 'function') recalculateRates();
@@ -532,6 +534,8 @@ function importCSVFolder(event) {
     if (typeof CROPS !== 'undefined') {
       Object.assign(CROPS, CONFIG.Crop);
     }
+    if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
+    if (typeof initializeHousingAssignments === 'function') initializeHousingAssignments();
     
     if (typeof updateStaticTextsFromConfig === 'function') updateStaticTextsFromConfig();
     if (typeof recalculateRates === 'function') recalculateRates();

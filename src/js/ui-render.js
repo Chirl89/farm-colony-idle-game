@@ -299,6 +299,9 @@ function renderLumberMills() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${mill.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('lumberMills', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('lumberMills', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -324,9 +327,14 @@ function renderLumberMills() {
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
-              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
-                Mejorar
-              </button>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('lumberMills', ${idx})">
+                  🗑️
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
+                  Mejorar
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -461,6 +469,9 @@ function renderQuarries() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${quarry.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('quarries', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('quarries', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -486,9 +497,14 @@ function renderQuarries() {
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="quarry-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
-              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="quarry-upgrade-btn-${idx}" onclick="upgradeQuarry(${idx})">
-                Mejorar
-              </button>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('quarries', ${idx})">
+                  🗑️
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="quarry-upgrade-btn-${idx}" onclick="upgradeQuarry(${idx})">
+                  Mejorar
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -618,6 +634,9 @@ function renderFarms() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${farm.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('farms', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('farms', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -672,8 +691,11 @@ function renderFarms() {
               ${renderBuildingWorkerDropdowns('farms', idx, maxWorkers)}
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.25rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem; width: 100%;">
+              <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('farms', ${idx})">
+                🗑️
+              </button>
+              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
                 Sembrar
               </button>
             </div>
@@ -914,6 +936,9 @@ function renderHouses() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${house.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('houses', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('houses', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -948,9 +973,14 @@ function renderHouses() {
             
             <div style="margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="house-tier-text-${idx}" style="font-size: 0.75rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Choza)</span>
-              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="house-upgrade-btn-${idx}" onclick="upgradeHouseItem(${idx})">
-                Mejorar
-              </button>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('houses', ${idx})">
+                  🗑️
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="house-upgrade-btn-${idx}" onclick="upgradeHouseItem(${idx})">
+                  Mejorar
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -1077,6 +1107,9 @@ function renderBonfires() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${bonfire.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('bonfires', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('bonfires', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -1125,9 +1158,14 @@ function renderBonfires() {
  
             <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
               <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
-              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
-                Mejorar
-              </button>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('bonfires', ${idx})">
+                  🗑️
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
+                  Mejorar
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -1295,6 +1333,9 @@ function renderGranaries() {
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${granary.workerAssigned || 0} / 2 Constructores auto</span>
                 <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('granaries', ${idx})">
+                    🗑️
+                  </button>
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('granaries', ${idx})">
                     ${pauseBtnText}
                   </button>
@@ -1319,7 +1360,7 @@ function renderGranaries() {
             <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
               <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
             </div>
-
+ 
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
               <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente semilla (próxima iteración):</span>
               <select id="granary-crop-${idx}" onchange="changeGranaryRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
@@ -1333,18 +1374,23 @@ function renderGranaries() {
               <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
               ${renderBuildingWorkerDropdowns('granaries', idx, maxWorkers)}
             </div>
-
+ 
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
                 Procesar Manual
               </button>
             </div>
-
+ 
             <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
               <span id="granary-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Granero)</span>
-              <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
-                Mejorar
-              </button>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('granaries', ${idx})">
+                  🗑️
+                </button>
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
+                  Mejorar
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -1516,13 +1562,16 @@ function renderMarketBuildingUI() {
       html = `
         <div style="display: flex; flex-direction: column; gap: 0.6rem;">
           <span style="font-size: 0.85rem; color: var(--color-text-muted);">Construyendo el Puesto de Mercado para habilitar el comercio.</span>
-          <div class="progress-bar-container" style="height: 10px; margin: 0.5rem 0; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; width: 100%;">
+          <div class="progress-bar-container" style="height: 10px; margin: 0.5rem 0; background: rgba(25, 25, 25, 0.1); border-radius: 4px; overflow: hidden; width: 100%;">
             <div class="progress-bar-fill" id="market-build-progress-bar" style="height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); transition: width 0.1s ease-out; width: 0%;"></div>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; flex-wrap: wrap; gap: 0.75rem;">
             <span id="market-build-progress-text" style="font-size: 0.8rem; color: var(--color-text-muted);">Progreso: 0%</span>
             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
               <span style="font-size: 0.8rem; color: #a78bfa; font-weight: 600;">👷 ${state.markets[0].workerAssigned || 0} / 2 Constructores auto</span>
+              <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('markets', 0)">
+                🗑️ Demoler
+              </button>
               <button class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('markets', 0)">
                 ${pauseBtnText}
               </button>
@@ -1535,11 +1584,18 @@ function renderMarketBuildingUI() {
       `;
     } else {
       html = `
-        <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.75rem 1rem; border-radius: 8px;">
-          <span style="font-size: 1.5rem;">✅</span>
-          <div style="display: flex; flex-direction: column;">
-            <span style="font-size: 0.9rem; font-weight: 700; color: #34d399;">Edificio Construido y Operativo</span>
-            <span style="font-size: 0.8rem; color: var(--color-text-muted);">El Puesto de Mercado está activo. Puedes gestionar mercaderes y automatización desde la pestaña de <strong>Comercio</strong>.</span>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.75rem 1rem; border-radius: 8px;">
+            <span style="font-size: 1.5rem;">✅</span>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 0.9rem; font-weight: 700; color: #34d399;">Edificio Construido y Operativo</span>
+              <span style="font-size: 0.8rem; color: var(--color-text-muted);">El Puesto de Mercado está activo. Puedes gestionar mercaderes y automatización desde la pestaña de <strong>Comercio</strong>.</span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; display: flex; align-items: center; gap: 0.25rem;" onclick="destroyBuildingPrompt('markets', 0)">
+              🗑️ Demoler Mercado
+            </button>
           </div>
         </div>
       `;
@@ -2234,9 +2290,9 @@ function updateStaticTextsFromConfig() {
 
   // Descripciones de Edificios
   const lumberDesc = document.querySelector('#cost-lumbermill-gold').parentElement.parentElement.querySelector('.building-desc');
-  if (lumberDesc) lumberDesc.innerHTML = `Habilita leñadores industriales (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/día por trabajador).`;
+  if (lumberDesc) lumberDesc.innerHTML = `Habilita leñadores industriales (+${CONFIG.ProductionRate.lumbermill_prod.yield.toFixed(0)} Madera/s por trabajador).`;
   const quarryDesc = document.querySelector('#cost-quarry-gold').parentElement.parentElement.querySelector('.building-desc');
-  if (quarryDesc) quarryDesc.innerHTML = `Habilita canteros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/día por trabajador).`;
+  if (quarryDesc) quarryDesc.innerHTML = `Habilita canteros industriales (+${CONFIG.ProductionRate.quarry_prod.yield.toFixed(0)} Piedra/s por trabajador).`;
 
   // Comercio - Compras y Ventas manuales dinámicas
   const rawNames = {
@@ -2378,7 +2434,7 @@ function renderDetailedFoodInventory() {
                 <span id="res-detail-${f.key}" style="font-size: 0.95rem; font-weight: 700; color: ${f.color};">0</span>
                 <span id="res-val-${f.key}" style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">(0)</span>
               </div>
-              <span id="res-rate-${f.key}" style="font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted);">+0/d</span>
+              <span id="res-rate-${f.key}" style="font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted);">+0/s</span>
             </div>
           </div>
         </div>

@@ -370,8 +370,8 @@ function recalculateRates() {
   const total = state.colonists ? state.colonists.length : 0;
   if (total > 0) {
     const dailyNeed = (CONFIG.FoodNeed && CONFIG.FoodNeed.colonist_need) ? CONFIG.FoodNeed.colonist_need.yield : 5;
-    const mealNeed = (dailyNeed / 2) / (dayDuration + nightDuration);
-    let remainingConsumptionValue = total * mealNeed;
+    const dailyNeedRate = dailyNeed / (dayDuration + nightDuration);
+    let remainingConsumptionValue = total * dailyNeedRate;
 
     const priority = state.foodPriority || ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'];
     for (let type of priority) {
@@ -484,6 +484,7 @@ function recalculateRates() {
   calculatedRates.cooked_potato = cooked_potatoRate;
   calculatedRates.cooked_carrot = cooked_carrotRate;
   calculatedRates.cooked_berries = cooked_berriesRate;
+  calculatedRates.cooked = cooked_wheatRate + cooked_potatoRate + cooked_carrotRate + cooked_berriesRate;
   calculatedRates.gold = goldRate;
 
   // Tasa de comida global

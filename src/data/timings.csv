@@ -1,7 +1,7 @@
 Category;Type;Name;Duration
 Timing;day_duration;Duración del Día;100
 Timing;night_duration;Duración de la Noche;5
-Timing;basic_house;Construcción Choza;1
+Timing;basic_house;Construcción Choza;10
 Timing;upgraded_house;Mejora Choza a Cabaña;20
 Timing;upgraded_house_t3;Mejora Cabaña a Casa Grande;30
 Timing;lumbermill;Construcción Cabaña de Leñador;15
@@ -14,15 +14,15 @@ Timing;townhall_t2;Mejora Ayuntamiento T2;25
 Timing;townhall_t3;Mejora Ayuntamiento T3;40
 Timing;wood_auto;Tiempo Leñador;1
 Timing;stone_auto;Tiempo Cantero;1
-Timing;berries_auto;Tiempo Recolector de Frutos;1
-Timing;lumbermill_prod;Producción Cabaña de Leñador;1
+Timing;berries_auto;Tiempo Recolector de Frutos;100
+Timing;lumbermill_prod;Producción Cabaña de Leñador;20
 Timing;quarry_prod;Producción Foso de Piedra;1
 Timing;wheat;Tiempo Crecimiento Trigo;30
 Timing;potato;Tiempo Crecimiento Patata;50
 Timing;carrot;Tiempo Crecimiento Zanahoria;100
 Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;5
-Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;3
-Timing;pot_auto;Tiempo Cocinar Automático Caldero;4
+Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;20
+Timing;pot_auto;Tiempo Cocinar Automático Caldero;10
 Timing;pot_manual;Tiempo Cocinar Manual Caldero;2
 Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;3
 Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;1.5

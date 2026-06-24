@@ -941,3 +941,165 @@ function processGranaryManually(idx) {
     showToast(`${rawNames[consumeResource] || consumeResource} insuficiente para procesar manualmente (Mín. ${minFood})`, "warning");
   }
 }
+
+function destroyBuildingPrompt(arrayName, idx) {
+  if (!state[arrayName] || !state[arrayName][idx]) return;
+  const building = state[arrayName][idx];
+  
+  // Calculate cumulative costs
+  let totalGold = 0;
+  let totalWood = 0;
+  let totalStone = 0;
+
+  const baseKeys = {
+    lumberMills: 'lumbermill',
+    quarries: 'quarry',
+    farms: 'farm',
+    bonfires: 'bonfire',
+    granaries: 'granary',
+    markets: 'market',
+    houses: 'basic_house'
+  };
+  const baseKey = baseKeys[arrayName];
+  if (baseKey && CONFIG.Building[baseKey]) {
+    const cfg = CONFIG.Building[baseKey];
+    totalGold += cfg.cost_gold || 0;
+    totalWood += cfg.cost_wood || 0;
+    totalStone += cfg.cost_stone || 0;
+  }
+
+  const tier = building.tier || 1;
+  if (arrayName === 'lumberMills') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.lumbermill_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.lumbermill_t3;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'quarries') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.quarry_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.quarry_t3;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'farms') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.farm_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.farm_t3;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'bonfires') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.pot_upgrade;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.kitchen_upgrade;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'granaries') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.granary_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.granary_t3;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'houses') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.upgraded_house;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+    if (tier >= 3 || building.upgradingToTier >= 3) {
+      const cfg = CONFIG.Building.luxury_house;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  }
+
+  const refundGold = Math.floor(totalGold * 0.5);
+  const refundWood = Math.floor(totalWood * 0.5);
+  const refundStone = Math.floor(totalStone * 0.5);
+
+  const displayNames = {
+    lumberMills: 'Aserradero',
+    quarries: 'Cantera',
+    farms: 'Granja',
+    bonfires: 'Hoguera/Cocina',
+    granaries: 'Granero',
+    markets: 'Puesto de Mercado',
+    houses: 'Choza/Residencia'
+  };
+  const bName = `${displayNames[arrayName] || 'Edificio'} #${idx + 1}`;
+  
+  let refundMsg = [];
+  if (refundGold > 0) refundMsg.push(`🪙 ${refundGold} Oro`);
+  if (refundWood > 0) refundMsg.push(`🪵 ${refundWood} Madera`);
+  if (refundStone > 0) refundMsg.push(`🪨 ${refundStone} Piedra`);
+  
+  const refundText = refundMsg.length > 0 ? `Reembolso estimado: ${refundMsg.join(', ')}` : 'No se reembolsarán recursos.';
+  
+  if (!confirm(`¿Estás seguro de que deseas destruir ${bName}? ${refundText}`)) {
+    return;
+  }
+  
+  // Apply refund
+  state.gold += refundGold;
+  state.wood += refundWood;
+  state.stone += refundStone;
+  
+  // Unassign workers and shift indices
+  const jobPrefix = arrayName.toLowerCase();
+  state.colonists.forEach(c => {
+    if (c.job === `${jobPrefix}_${idx}`) {
+      c.job = null;
+    }
+  });
+  state.colonists.forEach(c => {
+    if (c.job && c.job.startsWith(`${jobPrefix}_`)) {
+      const parts = c.job.split('_');
+      const bIdx = parseInt(parts[1]);
+      if (bIdx > idx) {
+        c.job = `${jobPrefix}_${bIdx - 1}`;
+      }
+    }
+  });
+  
+  // For houses, unhouse residents and shift indices
+  if (arrayName === 'houses') {
+    state.colonists.forEach(c => {
+      if (c.houseIdx === idx) {
+        c.houseIdx = null;
+      } else if (c.houseIdx > idx) {
+        c.houseIdx = c.houseIdx - 1;
+      }
+    });
+  }
+  
+  // Delete from array and reindex
+  state[arrayName].splice(idx, 1);
+  state[arrayName].forEach((b, i) => {
+    b.id = i;
+  });
+  
+  // Recalculate population and assignments
+  if (arrayName === 'houses') {
+    if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
+    if (typeof initializeHousingAssignments === 'function') initializeHousingAssignments();
+  }
+  
+  showToast(`💥 ${bName} destruido correctamente.`, "success");
+  
+  fixColonistAllocation();
+  autoAssignBuilders();
+  recalculateRates();
+  updateUI();
+}

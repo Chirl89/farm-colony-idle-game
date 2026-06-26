@@ -1,10 +1,36 @@
-Category;Type;Name;Yield_Amount
+# ============================================================
+# EQUIVALENCES.csv — Equivalencia nutritiva de alimentos
+# ============================================================
+# NOTA: A partir de la refactorizacion de CSVs (2026-06-25),
+# la columna Food_Value de resources.csv es la fuente de verdad.
+# Este archivo se mantiene por compatibilidad con el data-loader
+# actual hasta que se migre a leer de resources.csv.
+#
+# Columnas:
+#   Category   : FoodEquivalence | FoodNeed
+#   ID         : clave del recurso en state.*
+#   Name       : nombre legible
+#   Food_Value : unidades de comida equivalentes por unidad de recurso
+# ============================================================
+
+Category;ID;Name;Food_Value
+
+# Alimentos crudos
 FoodEquivalence;wheat;Trigo;1
 FoodEquivalence;potato;Patata;1
 FoodEquivalence;carrot;Zanahoria;1
 FoodEquivalence;berries;Frutos;2
+
+# Alimentos cocinados (5x mas nutritivos que crudos)
 FoodEquivalence;cooked_wheat;Pan;5
 FoodEquivalence;cooked_potato;Patata Asada;5
 FoodEquivalence;cooked_carrot;Zanahoria Asada;5
 FoodEquivalence;cooked_berries;Mermelada;5
-FoodNeed;colonist_need;Necesidad de Comida de Aldeano;10
+
+# Procesados (Paso K — futuros)
+FoodEquivalence;bread;Pan Artesano (harina);8
+FoodEquivalence;stew;Guiso;10
+FoodEquivalence;eggs;Huevos;3
+
+# Necesidad diaria
+FoodNeed;colonist_need;Necesidad diaria de colono;10;Se divide en 2 comidas (mañana y noche)

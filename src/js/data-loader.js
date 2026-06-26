@@ -241,27 +241,81 @@ XPYield;bonfire_t1;XP por día Fogata T1;1.0
 XPYield;bonfire_t2;XP por día Caldero T2;1.5
 XPYield;bonfire_t3;XP por día Cocina T3;2.0
 XPYield;market_t1;XP por día Mercado T1;1.0
-XPYield;construction;XP por día Constructor;1.2`
+XPYield;construction;XP por día Constructor;1.2`,
+  mechanics: `Category;ID;Name;Value;Notes
+Colonist;attr_base;Nivel base de atributo;3;
+Colonist;attr_scale;Escala de produccion por nivel;0.1;
+Colonist;attr_min;Nivel minimo posible;1;
+Colonist;attr_max;Nivel maximo posible;10;
+Colonist;efficiency_min;Eficiencia minima de colono;0.15;
+Colonist;candidates_pool;Candidatos disponibles;3;
+Colonist;specialist_attr_main;Atributo principal especialista;9;
+Colonist;specialist_attr_secondary;Atributos secundarios especialista;2;
+Efficiency;no_house;Penalizacion sin casa;0.40;
+Efficiency;no_food;Penalizacion por hambre;0.45;
+Efficiency;player_build_speed;Velocidad jugador construyendo;0.25;
+Efficiency;worker_build_speed;Velocidad colono construyendo;0.5;
+TierMult;lumbermill_t1;Mult Aserradero T1;1.0;
+TierMult;lumbermill_t2;Mult Aserradero T2;1.1;
+TierMult;lumbermill_t3;Mult Aserradero T3;1.2;
+TierMult;quarry_t1;Mult Cantera T1;1.0;
+TierMult;quarry_t2;Mult Cantera T2;1.1;
+TierMult;quarry_t3;Mult Cantera T3;1.2;
+TierMult;bonfire_t1;Mult Fogata T1;1.0;
+TierMult;bonfire_t2;Mult Caldero T2;1.1;
+TierMult;bonfire_t3;Mult Cocina T3;1.3;
+TierMult;farm_t1;Mult Granja T1;1.0;
+TierMult;farm_t2;Mult Granja T2;1.5;
+TierMult;farm_t3;Mult Granja T3;2.5;
+Economy;demolish_refund;Reembolso al demoler;0.5;
+Economy;rotation_cost_gold;Coste rotar candidatos;15;
+Economy;hire_rep_per_colonist;Reputacion extra por colono;5;
+Raid;base_prob_per_day;Prob base raid por dia;0.003;
+Raid;scaling_per_day;Incremento prob por dia;0.0001;
+Raid;base_strength;Fuerza base raid;5;
+Raid;resource_loss_pct;Recursos perdidos al fallar;0.2;
+Tool;durability_max;Durabilidad maxima herramienta;100;
+Tool;durability_loss_t1;Perdida durabilidad dia T1;1.5;
+Tool;durability_loss_t2;Perdida durabilidad dia T2;0.8;
+Tool;production_penalty_no_tool;Multiplicador sin herramienta;0.0;`,
+  resources: `Category;ID;Name;Emoji;Food_Value;Sellable;AutoSell_Def;AutoBuy_Def;Min_Stock_Def;Max_Stock_Def
+Currency;gold;Oro;🪙;0;false;false;false;0;0
+Material;wood;Madera;🪵;0;true;false;false;100;100
+Material;stone;Piedra;🪨;0;true;false;false;100;100
+Raw;wheat;Trigo;🌾;1;true;false;false;50;50
+Raw;potato;Patata;🥔;1;true;false;false;50;50
+Raw;carrot;Zanahoria;🥕;1;true;false;false;50;50
+Raw;berries;Frutos;🍓;2;true;false;false;20;50
+Cooked;cooked_wheat;Pan;🍞;5;true;false;false;0;20
+Cooked;cooked_potato;Patata Asada;🍠;5;true;false;false;0;20
+Cooked;cooked_carrot;Zanahoria Asada;🥕;5;true;false;false;0;20
+Cooked;cooked_berries;Mermelada;🪼;5;true;false;false;0;10
+Seed;wheat_seeds;Semillas Trigo;🌱;0;true;false;false;0;10
+Seed;potato_seeds;Semillas Patata;🌱;0;true;false;false;0;10
+Seed;carrot_seeds;Semillas Zanahoria;🌱;0;true;false;false;0;10
+Currency;reputation;Reputacion;🏆;0;false;false;false;0;0`
 };
 
 // Variable CONFIG global (se inicializará con fallbacks inmediatamente)
 var CONFIG = {};
 
 // Parsear un texto CSV a objeto estructurado
-function parseCSV(csvText) {
+function parseCSV(csvText, fileName = '') {
   const lines = csvText.split('\n');
   const parsedConfig = {};
   
   if (lines.length === 0) return parsedConfig;
   
-  // Auto-detectar delimitador en base a la primera línea no vacía
-  let delimiter = ',';
+  // Auto-detectar delimitador en base a la primera línea no vacía que no sea un comentario
+  let delimiter = ';';
   let headerLine = '';
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line) {
+    if (line && !line.startsWith('#')) {
       if (line.includes(';')) {
         delimiter = ';';
+      } else if (line.includes(',')) {
+        delimiter = ',';
       }
       headerLine = line;
       break;
@@ -272,28 +326,65 @@ function parseCSV(csvText) {
   
   const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
   const idxCategory = headers.indexOf('category');
-  const idxType = headers.indexOf('type');
+  const idxType = headers.indexOf('type') !== -1 ? headers.indexOf('type')
+    : headers.indexOf('id') !== -1 ? headers.indexOf('id')
+    : headers.indexOf('level');
   const idxName = headers.indexOf('name');
-  const idxCostGold = headers.indexOf('cost_gold');
+  const idxCostGold = headers.indexOf('cost_gold') !== -1 ? headers.indexOf('cost_gold') : headers.indexOf('gold_each');
   const idxCostWood = headers.indexOf('cost_wood');
   const idxCostStone = headers.indexOf('cost_stone');
   const idxDuration = headers.indexOf('duration');
-  const idxYieldAmount = headers.indexOf('yield_amount');
-  const idxYieldType = headers.indexOf('yield_type');
-  const idxExtraInfo = headers.indexOf('extra_info');
+  const idxYieldAmount = headers.indexOf('yield_amount') !== -1 ? headers.indexOf('yield_amount')
+    : headers.indexOf('yield_pop') !== -1 ? headers.indexOf('yield_pop')
+    : headers.indexOf('value') !== -1 ? headers.indexOf('value')
+    : headers.indexOf('weight') !== -1 ? headers.indexOf('weight')
+    : headers.indexOf('output_amt') !== -1 ? headers.indexOf('output_amt')
+    : headers.indexOf('amount') !== -1 ? headers.indexOf('amount')
+    : headers.indexOf('food_value');
+  const idxYieldType = headers.indexOf('yield_type') !== -1 ? headers.indexOf('yield_type')
+    : headers.indexOf('output') !== -1 ? headers.indexOf('output')
+    : headers.indexOf('resource');
+  const idxExtraInfo = headers.indexOf('extra_info') !== -1 ? headers.indexOf('extra_info') : headers.indexOf('notes');
+  const idxInput = headers.indexOf('input');
+  const idxInputAmt = headers.indexOf('input_amt');
+  const idxAttr = headers.indexOf('attr');
+  const emojiIdx = headers.indexOf('emoji');
+  const idxEmoji = emojiIdx !== -1 ? emojiIdx : headers.indexOf('emoji');
+  const idxFoodValue = headers.indexOf('food_value');
+  const idxSellable = headers.indexOf('sellable');
+  const idxMinStock = headers.indexOf('min_stock_def') !== -1 ? headers.indexOf('min_stock_def') : headers.indexOf('min_stock');
+  const idxMaxStock = headers.indexOf('max_stock_def');
+  const idxTier = headers.indexOf('tier');
+  const idxReqTH = headers.indexOf('req_th');
+  const idxCostIron = headers.indexOf('cost_iron');
+  const idxYieldPop = headers.indexOf('yield_pop');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
+    if (!line || line.startsWith('#')) continue;
     const columns = line.split(delimiter);
     if (columns.length < 3) continue;
     
-    const category = columns[idxCategory] || '';
+    let category = columns[idxCategory] || '';
     if (category === 'Category' || category.toLowerCase() === 'category') continue;
+    
+    const originalCategory = category;
+    
+    // Normalizar categorías basadas en el archivo CSV para mantener compatibilidad con el código JS
+    if (fileName === 'production') {
+      if (category === 'Gathering') category = 'BasicGathering';
+      else if (category === 'Building') category = 'ProductionRate';
+    } else if (fileName === 'prices') {
+      if (category === 'Buy' || category === 'Sell' || category === 'Action') category = 'Sales';
+    } else if (fileName === 'buildings') {
+      if (category === 'Upgrade') category = 'Building';
+    } else if (fileName === 'timings') {
+      category = 'Timing';
+    }
     
     const type = columns[idxType] || '';
     const name = columns[idxName] || '';
-    const cost_gold = idxCostGold !== -1 ? (parseFloat(columns[idxCostGold]) || 0) : 0;
+    const cost_gold = idxCostGold !== -1 ? Math.abs(parseFloat(columns[idxCostGold]) || 0) : 0;
     const cost_wood = idxCostWood !== -1 ? (parseFloat(columns[idxCostWood]) || 0) : 0;
     const cost_stone = idxCostStone !== -1 ? (parseFloat(columns[idxCostStone]) || 0) : 0;
     const duration = idxDuration !== -1 ? (parseFloat(columns[idxDuration]) || 0) : 0;
@@ -319,34 +410,58 @@ function parseCSV(csvText) {
     
     if (!parsedConfig[category]) parsedConfig[category] = {};
     
+    // Campos extra de los nuevos CSVs
+    let input = idxInput !== -1 ? (columns[idxInput] || 'none') : consume_type || 'none';
+    let input_amt = idxInputAmt !== -1 ? (parseFloat(columns[idxInputAmt]) || 0) : consume_amount || 0;
+    const attr = idxAttr !== -1 ? (columns[idxAttr] || 'none') : 'none';
+    const emoji = idxEmoji !== -1 ? (columns[idxEmoji] || '') : '';
+    const food_value = idxFoodValue !== -1 ? (parseFloat(columns[idxFoodValue]) || 0) : yield_amount;
+    const sellable = idxSellable !== -1 ? (columns[idxSellable] || 'false') === 'true' : false;
+    const min_stock = idxMinStock !== -1 ? (parseFloat(columns[idxMinStock]) || 0) : 0;
+    const max_stock = idxMaxStock !== -1 ? (parseFloat(columns[idxMaxStock]) || 0) : 0;
+    const tier = idxTier !== -1 ? (parseInt(columns[idxTier]) || 1) : 1;
+    const req_th = idxReqTH !== -1 ? (parseInt(columns[idxReqTH]) || 0) : 0;
+    const cost_iron = idxCostIron !== -1 ? (parseFloat(columns[idxCostIron]) || 0) : 0;
+    const yield_pop = idxYieldPop !== -1 ? (parseFloat(columns[idxYieldPop]) || 0) : 0;
+    
+    let final_yield_amount = yield_amount;
+    let final_yield_type = yield_type;
+    let final_consume_amount = input_amt;
+    let final_consume_type = input;
+    let final_cost_gold = cost_gold;
+    
+    // Si es prices.csv y es una venta (Sell), entonces consume el recurso y da oro
+    if (fileName === 'prices' && originalCategory === 'Sell') {
+      final_consume_amount = yield_amount; // Amount (e.g. 1)
+      final_consume_type = yield_type;     // Resource (e.g. wood)
+      final_yield_amount = cost_gold;      // Gold_Each (e.g. 1)
+      final_yield_type = 'gold';
+      final_cost_gold = 0;
+    }
+    
     if (category === 'Crop') {
       parsedConfig[category][type] = {
         name: name,
-        cost: cost_gold,
+        cost: final_cost_gold,
         duration: duration,
-        yield: yield_amount
+        yield: final_yield_amount
       };
-    } else if (category === 'Building') {
+    } else if (category === 'Building' || category === 'Upgrade') {
       parsedConfig[category][type] = {
-        name: name,
-        cost_gold: cost_gold,
-        cost_wood: cost_wood,
-        cost_stone: cost_stone,
-        duration: duration,
-        yield_type: yield_type,
-        yield_amount: yield_amount
+        name, cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron,
+        duration, yield_type: final_yield_type, yield_amount: final_yield_amount, yield_pop,
+        tier, req_th
       };
     } else {
       parsedConfig[category][type] = {
-        name: name,
-        duration: duration,
-        yield: yield_amount,
-        yield_type: yield_type,
-        consume_amount: consume_amount,
-        consume_type: consume_type,
-        cost_gold: cost_gold,
-        cost_wood: cost_wood,
-        cost_stone: cost_stone
+        name, duration,
+        yield: final_yield_amount, yield_type: final_yield_type,
+        consume_amount: final_consume_amount, consume_type: final_consume_type,
+        input: final_consume_type, input_amt: final_consume_amount, attr,
+        emoji, food_value, sellable, min_stock, max_stock,
+        cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron,
+        // 'value' alias para mechanics.csv
+        value: final_yield_amount
       };
     }
   }
@@ -354,6 +469,12 @@ function parseCSV(csvText) {
 }
 
 function applyTimingsFromConfig() {
+  if (typeof CONFIG !== 'undefined') {
+    if (CONFIG.Sales && CONFIG.Sales.hire_colonist && CONFIG.Building && !CONFIG.Building.hire_colonist) {
+      CONFIG.Building.hire_colonist = CONFIG.Sales.hire_colonist;
+    }
+  }
+
   if (typeof CONFIG !== 'undefined' && CONFIG.Timing) {
     // 1. Aplicar todos los tiempos específicos que coincidan exactamente en tipo
     for (let type in CONFIG.Timing) {
@@ -384,9 +505,9 @@ function applyTimingsFromConfig() {
 // Inicialización síncrona inmediata con los datos por defecto
 function initDefaultConfig() {
   const testConfig = {};
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources'];
   for (const name of files) {
-    const parsed = parseCSV(DEFAULT_CSV_DATA[name] || '');
+    const parsed = parseCSV(DEFAULT_CSV_DATA[name] || '', name);
     for (const category in parsed) {
       if (!testConfig[category]) {
         testConfig[category] = {};
@@ -403,18 +524,18 @@ initDefaultConfig();
 
 // Carga asíncrona de todos los archivos CSV desde el servidor local
 async function loadAllCSVs() {
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources'];
   const results = {};
-  for (const name of files) {
-    try {
-      const res = await fetch(`src/data/${name}.csv?t=${Date.now()}`);
-      if (!res.ok) throw new Error('not found');
-      results[name] = parseCSV(await res.text());
-    } catch (e) {
-      console.warn(`No se pudo cargar ${name}.csv, usando datos por defecto:`, e);
-      results[name] = parseCSV(DEFAULT_CSV_DATA[name] || '');
+    for (const name of files) {
+      try {
+        const res = await fetch(`src/data/${name}.csv?t=${Date.now()}`);
+        if (!res.ok) throw new Error('not found');
+        results[name] = parseCSV(await res.text(), name);
+      } catch (e) {
+        console.warn(`No se pudo cargar ${name}.csv, usando datos por defecto:`, e);
+        results[name] = parseCSV(DEFAULT_CSV_DATA[name] || '', name);
+      }
     }
-  }
   return results;
 }
 
@@ -435,8 +556,8 @@ async function initGameData(isManual = false) {
     }
     
     // Validar categorías críticas obligatorias para el arranque
-    if (!testConfig.Building || !testConfig.Crop || !testConfig.Sales) {
-      throw new Error("Formato de configuración inválido. Faltan categorías críticas.");
+    if (!testConfig.Building || !testConfig.Crop) {
+      throw new Error("Formato de configuración inválido. Faltan categorías críticas (Building, Crop).");
     }
     
     CONFIG = testConfig;
@@ -476,7 +597,7 @@ function importCSVFolder(event) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
   
-  const expectedNames = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling'];
+  const expectedNames = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources'];
   const pendingReads = [];
   const results = {};
   
@@ -489,7 +610,7 @@ function importCSVFolder(event) {
       const promise = new Promise((resolve) => {
         reader.onload = function(e) {
           try {
-            results[nameWithoutExt] = parseCSV(e.target.result);
+            results[nameWithoutExt] = parseCSV(e.target.result, nameWithoutExt);
           } catch (err) {
             console.error(`Error al parsear el archivo importado ${file.name}:`, err);
           }

@@ -1,0 +1,85 @@
+# ============================================================
+# RESOURCES.csv — Definición de todos los recursos del juego
+# ============================================================
+# Centraliza nombre, emoji, tipo y equivalencias en un solo lugar.
+# El data-loader usa esto para saber qué recursos existen,
+# evitando que el código tenga arrays hardcodeados de nombres.
+#
+# Columnas:
+#   Category     : Raw | Cooked | Material | Processed | Animal | Seed | Currency
+#   ID           : clave en state.* (snake_case)
+#   Name         : nombre en UI
+#   Emoji        : emoji para mostrar
+#   Food_Value   : equivalencia en unidades de comida (0 si no es comida)
+#   Sellable     : true/false — aparece en el mercado manual
+#   AutoSell_Def : true/false — autoventa activada por defecto
+#   AutoBuy_Def  : true/false — autocompra activada por defecto
+#   Min_Stock_Def: stock mínimo por defecto para autoventa
+#   Max_Stock_Def: stock máximo por defecto para autocompra
+# ============================================================
+
+Category;ID;Name;Emoji;Food_Value;Sellable;AutoSell_Def;AutoBuy_Def;Min_Stock_Def;Max_Stock_Def
+
+# ============================================================
+# MONEDA
+# ============================================================
+Currency;gold;Oro;🪙;0;false;false;false;0;0
+
+# ============================================================
+# MATERIALES DE CONSTRUCCION
+# ============================================================
+Material;wood;Madera;🪵;0;true;false;false;100;100
+Material;stone;Piedra;🪨;0;true;false;false;100;100
+
+# ============================================================
+# ALIMENTOS CRUDOS
+# ============================================================
+Raw;wheat;Trigo;🌾;1;true;false;false;50;50
+Raw;potato;Patata;🥔;1;true;false;false;50;50
+Raw;carrot;Zanahoria;🥕;1;true;false;false;50;50
+Raw;berries;Frutos;🍓;2;true;false;false;20;50
+
+# ============================================================
+# ALIMENTOS COCINADOS (mayor valor nutritivo)
+# ============================================================
+Cooked;cooked_wheat;Pan;🍞;5;true;false;false;0;20
+Cooked;cooked_potato;Patata Asada;🍠;5;true;false;false;0;20
+Cooked;cooked_carrot;Zanahoria Asada;🥕;5;true;false;false;0;20
+Cooked;cooked_berries;Mermelada;🫙;5;true;false;false;0;10
+
+# ============================================================
+# SEMILLAS (para granjas)
+# ============================================================
+Seed;wheat_seeds;Semillas Trigo;🌱;0;true;false;false;0;10
+Seed;potato_seeds;Semillas Patata;🌱;0;true;false;false;0;10
+Seed;carrot_seeds;Semillas Zanahoria;🌱;0;true;false;false;0;10
+
+# ============================================================
+# MATERIALES PROCESADOS (Pasos G/K/futuros)
+# ============================================================
+Processed;iron;Mineral de Hierro;⚙️;0;false;false;false;0;0
+Processed;iron_bar;Lingote de Hierro;🔩;0;true;false;false;0;0
+Processed;flour;Harina;🌾;0;true;false;false;0;0
+Processed;bread;Pan Artesano;🍞;8;true;false;false;0;0
+Processed;stew;Guiso;🍲;10;true;false;false;0;0
+
+# ============================================================
+# GANADERIA Y SUB-PRODUCTOS (Paso I)
+# ============================================================
+Animal;eggs;Huevos;🥚;3;true;false;false;0;0
+Animal;feathers;Plumas;🪶;0;true;false;false;0;0
+Animal;skins;Pieles;🐾;0;true;false;false;0;0
+Animal;fertilizer;Fertilizante;💩;0;false;false;false;0;0
+
+# ============================================================
+# EQUIPO / ARMADURAS (Paso L — no vendible directamente)
+# ============================================================
+# Nota: las herramientas (pickaxe_t1, etc.) no son recursos de state
+# sino objetos en state.tools[] con durabilidad individual
+Processed;armor_leather;Armadura de Cuero;🛡️;0;false;false;false;0;0
+Processed;armor_iron;Armadura de Hierro;⚔️;0;false;false;false;0;0
+
+# ============================================================
+# SOCIEDAD (abstractos, no items fisicos)
+# ============================================================
+Currency;reputation;Reputacion;🏆;0;false;false;false;0;0

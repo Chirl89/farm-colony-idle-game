@@ -1,93 +1,77 @@
-Category;Type;Name;Yield_Amount;;;;;
-AttributeXP;woodcutting_t1;XP Leñador 1 a 2;10;;;;;
-AttributeXP;woodcutting_t2;XP Leñador 2 a 3;20;;;;;
-AttributeXP;woodcutting_t3;XP Leñador 3 a 4;40;;;;;
-AttributeXP;woodcutting_t4;XP Leñador 4 a 5;80;;;;;
-AttributeXP;woodcutting_t5;XP Leñador 5 a 6;160;;;;;
-AttributeXP;woodcutting_t6;XP Leñador 6 a 7;320;;;;;
-AttributeXP;woodcutting_t7;XP Leñador 7 a 8;640;;;;;
-AttributeXP;woodcutting_t8;XP Leñador 8 a 9;1280;;;;;
-AttributeXP;woodcutting_t9;XP Leñador 9 a 10;2560;;;;;
-AttributeXP;mining_t1;XP Cantero 1 a 2;10;;;;;
-AttributeXP;mining_t2;XP Cantero 2 a 3;20;;;;;
-AttributeXP;mining_t3;XP Cantero 3 a 4;40;;;;;
-AttributeXP;mining_t4;XP Cantero 4 a 5;80;;;;;
-AttributeXP;mining_t5;XP Cantero 5 a 6;160;;;;;
-AttributeXP;mining_t6;XP Cantero 6 a 7;320;;;;;
-AttributeXP;mining_t7;XP Cantero 7 a 8;640;;;;;
-AttributeXP;mining_t8;XP Cantero 8 a 9;1280;;;;;
-AttributeXP;mining_t9;XP Cantero 9 a 10;2560;;;;;
-AttributeXP;farming_t1;XP Agricultor 1 a 2;10;;;;;
-AttributeXP;farming_t2;XP Agricultor 2 a 3;20;;;;;
-AttributeXP;farming_t3;XP Agricultor 3 a 4;40;;;;;
-AttributeXP;farming_t4;XP Agricultor 4 a 5;80;;;;;
-AttributeXP;farming_t5;XP Agricultor 5 a 6;160;;;;;
-AttributeXP;farming_t6;XP Agricultor 6 a 7;320;;;;;
-AttributeXP;farming_t7;XP Agricultor 7 a 8;640;;;;;
-AttributeXP;farming_t8;XP Agricultor 8 a 9;1280;;;;;
-AttributeXP;farming_t9;XP Agricultor 9 a 10;2560;;;;;
-AttributeXP;cooking_t1;XP Cocinero 1 a 2;10;;;;;
-AttributeXP;cooking_t2;XP Cocinero 2 a 3;20;;;;;
-AttributeXP;cooking_t3;XP Cocinero 3 a 4;40;;;;;
-AttributeXP;cooking_t4;XP Cocinero 4 a 5;80;;;;;
-AttributeXP;cooking_t5;XP Cocinero 5 a 6;160;;;;;
-AttributeXP;cooking_t6;XP Cocinero 6 a 7;320;;;;;
-AttributeXP;cooking_t7;XP Cocinero 7 a 8;640;;;;;
-AttributeXP;cooking_t8;XP Cocinero 8 a 9;1280;;;;;
-AttributeXP;cooking_t9;XP Cocinero 9 a 10;2560;;;;;
-AttributeXP;trading_t1;XP Mercader 1 a 2;10;;;;;
-AttributeXP;trading_t2;XP Mercader 2 a 3;20;;;;;
-AttributeXP;trading_t3;XP Mercader 3 a 4;40;;;;;
-AttributeXP;trading_t4;XP Mercader 4 a 5;80;;;;;
-AttributeXP;trading_t5;XP Mercader 5 a 6;160;;;;;
-AttributeXP;trading_t6;XP Mercader 6 a 7;320;;;;;
-AttributeXP;trading_t7;XP Mercader 7 a 8;640;;;;;
-AttributeXP;trading_t8;XP Mercader 8 a 9;1280;;;;;
-AttributeXP;trading_t9;XP Mercader 9 a 10;2560;;;;;
-AttributeXP;exploration_t1;XP Explorador 1 a 2;10;;;;;
-AttributeXP;exploration_t2;XP Explorador 2 a 3;20;;;;;
-AttributeXP;exploration_t3;XP Explorador 3 a 4;40;;;;;
-AttributeXP;exploration_t4;XP Explorador 4 a 5;80;;;;;
-AttributeXP;exploration_t5;XP Explorador 5 a 6;160;;;;;
-AttributeXP;exploration_t6;XP Explorador 6 a 7;320;;;;;
-AttributeXP;exploration_t7;XP Explorador 7 a 8;640;;;;;
-AttributeXP;exploration_t8;XP Explorador 8 a 9;1280;;;;;
-AttributeXP;exploration_t9;XP Explorador 9 a 10;2560;;;;;
-AttributeXP;construction_t1;XP Constructor 1 a 2;10;;;;;
-AttributeXP;construction_t2;XP Constructor 2 a 3;20;;;;;
-AttributeXP;construction_t3;XP Constructor 3 a 4;40;;;;;
-AttributeXP;construction_t4;XP Constructor 4 a 5;80;;;;;
-AttributeXP;construction_t5;XP Constructor 5 a 6;160;;;;;
-AttributeXP;construction_t6;XP Constructor 6 a 7;320;;;;;
-AttributeXP;construction_t7;XP Constructor 7 a 8;640;;;;;
-AttributeXP;construction_t8;XP Constructor 8 a 9;1280;;;;;
-AttributeXP;construction_t9;XP Constructor 9 a 10;2560;;;;;
-AttributeXP;combat_t1;XP Combatiente 1 a 2;10;;;;;
-AttributeXP;combat_t2;XP Combatiente 2 a 3;20;;;;;
-AttributeXP;combat_t3;XP Combatiente 3 a 4;40;;;;;
-AttributeXP;combat_t4;XP Combatiente 4 a 5;80;;;;;
-AttributeXP;combat_t5;XP Combatiente 5 a 6;160;;;;;
-AttributeXP;combat_t6;XP Combatiente 6 a 7;320;;;;;
-AttributeXP;combat_t7;XP Combatiente 7 a 8;640;;;;;
-AttributeXP;combat_t8;XP Combatiente 8 a 9;1280;;;;;
-AttributeXP;combat_t9;XP Combatiente 9 a 10;2560;;;;;
-XPYield;wood;XP por día Leñador Manual;0.5;;;;;
-XPYield;lumbermill_t1;XP por día Aserradero T1;1;;;;;
-XPYield;lumbermill_t2;XP por día Aserradero T2;1.5;;;;;
-XPYield;lumbermill_t3;XP por día Aserradero T3;2;;;;;
-XPYield;stone;XP por día Cantero Manual;0.5;;;;;
-XPYield;quarry_t1;XP por día Cantera T1;1;;;;;
-XPYield;quarry_t2;XP por día Cantera T2;1.5;;;;;
-XPYield;quarry_t3;XP por día Cantera T3;2;;;;;
-XPYield;berries;XP por día Recolector Manual;0.8;;;;;
-XPYield;farm_t1;XP por día Granja T1;1;;;;;
-XPYield;farm_t2;XP por día Granja T2;1.5;;;;;
-XPYield;farm_t3;XP por día Granja T3;2;;;;;
-XPYield;granary_t1;XP por día Granero T1;1;;;;;
-XPYield;granary_t2;XP por día Granero T2;1.5;;;;;
-XPYield;granary_t3;XP por día Granero T3;2;;;;;
-XPYield;bonfire_t1;XP por día Fogata T1;1;;;;;
-XPYield;bonfire_t2;XP por día Caldero T2;1.5;;;;;
-XPYield;bonfire_t3;XP por día Cocina T3;2;;;;;
-XPYield;market_t1;XP por día Mercado T1;1;;;;;
-XPYield;construction;XP por día Constructor;1.2;;;;;
+# ============================================================
+# LEVELLING.csv — Sistema de XP y subida de nivel de atributos
+# ============================================================
+# El sistema usa una curva XP universal para todos los atributos.
+# No hace falta repetir la tabla para cada atributo.
+#
+# Columnas:
+#   Category : XPCurve | XPYield
+#   ID       : nivel de origen (para XPCurve) o fuente de XP (para XPYield)
+#   Name     : descripcion
+#   Value    : XP requerida para subir desde este nivel (XPCurve)
+#              o XP ganada por dia trabajando en esta fuente (XPYield)
+#   Attr     : atributo que se sube (solo para XPYield). "all" si aplica a todos
+# ============================================================
+
+Category;ID;Name;Value;Attr
+
+# ============================================================
+# CURVA DE XP — Universal para todos los atributos
+# XP para subir del nivel N al N+1
+# ============================================================
+XPCurve;1;XP para subir nivel 1→2;10;all
+XPCurve;2;XP para subir nivel 2→3;20;all
+XPCurve;3;XP para subir nivel 3→4;40;all
+XPCurve;4;XP para subir nivel 4→5;80;all
+XPCurve;5;XP para subir nivel 5→6;160;all
+XPCurve;6;XP para subir nivel 6→7;320;all
+XPCurve;7;XP para subir nivel 7→8;640;all
+XPCurve;8;XP para subir nivel 8→9;1280;all
+XPCurve;9;XP para subir nivel 9→10;2560;all
+
+# ============================================================
+# XP GANADA POR DIA — Segun fuente de trabajo del colono
+# ============================================================
+# Recoleccion basica (sin edificio)
+XPYield;wood_manual;XP Leñador manual por dia;0.5;woodcutting
+XPYield;stone_manual;XP Cantero manual por dia;0.5;mining
+XPYield;berries_manual;XP Recolector manual por dia;0.3;none
+
+# Edificios de recursos
+XPYield;lumbermill_t1;XP Aserradero T1 por dia;1.0;woodcutting
+XPYield;lumbermill_t2;XP Aserradero T2 por dia;1.5;woodcutting
+XPYield;lumbermill_t3;XP Aserradero T3 por dia;2.0;woodcutting
+XPYield;quarry_t1;XP Cantera T1 por dia;1.0;mining
+XPYield;quarry_t2;XP Cantera T2 por dia;1.5;mining
+XPYield;quarry_t3;XP Cantera T3 por dia;2.0;mining
+
+# Edificios de alimentos
+XPYield;farm_t1;XP Granja T1 por dia;1.0;farming
+XPYield;farm_t2;XP Granja T2 por dia;1.5;farming
+XPYield;farm_t3;XP Granja T3 por dia;2.0;farming
+XPYield;granary_t1;XP Granero T1 por dia;1.0;farming
+XPYield;granary_t2;XP Granero T2 por dia;1.5;farming
+XPYield;granary_t3;XP Granero T3 por dia;2.0;farming
+
+# Cocinas
+XPYield;bonfire_t1;XP Fogata T1 por dia;1.0;cooking
+XPYield;bonfire_t2;XP Caldero T2 por dia;1.5;cooking
+XPYield;bonfire_t3;XP Cocina T3 por dia;2.0;cooking
+
+# Comercio y construccion
+XPYield;market_t1;XP Mercado T1 por dia;1.0;trading
+XPYield;market_t2;XP Mercado T2 por dia;1.5;trading
+XPYield;market_t3;XP Mercado T3 por dia;2.0;trading
+XPYield;construction;XP por dia en construccion;1.2;construction
+
+# Crafteo (Paso E/G/K)
+XPYield;smithy_t1;XP Taller T1 por dia;1.0;woodcutting
+XPYield;smithy_t2;XP Taller T2 por dia;1.5;woodcutting
+XPYield;forge_t1;XP Forja T1 por dia;1.0;mining
+XPYield;forge_t2;XP Forja T2 por dia;1.5;mining
+XPYield;mill_t1;XP Molino T1 por dia;1.0;farming
+XPYield;mill_t2;XP Molino T2 por dia;1.5;farming
+
+# Misiones (Paso C) — XP ganada al completar (no por dia)
+XPYield;mission_success;XP extra por mision exitosa (multiplica base);1.0;variable
+XPYield;mission_fail;XP parcial por mision fallida (multiplica base);0.5;variable

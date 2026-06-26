@@ -1,52 +1,117 @@
-Category;Type;Name;Duration
-Timing;day_duration;Duración del Día;100
-Timing;night_duration;Duración de la Noche;5
-Timing;basic_house;Construcción Choza;10
-Timing;upgraded_house;Mejora Choza a Cabaña;20
-Timing;upgraded_house_t3;Mejora Cabaña a Casa Grande;30
-Timing;lumbermill;Construcción Cabaña de Leñador;15
-Timing;quarry;Construcción Foso de Piedra;15
-Timing;farm;Construcción Granja;1
-Timing;market;Construcción Puesto de Mercado;3
-Timing;bonfire;Construcción Fogata;15
-Timing;townhall;Construcción Ayuntamiento T1;1
-Timing;townhall_t2;Mejora Ayuntamiento T2;25
-Timing;townhall_t3;Mejora Ayuntamiento T3;40
-Timing;wood_auto;Tiempo Leñador;1
-Timing;stone_auto;Tiempo Cantero;1
-Timing;berries_auto;Tiempo Recolector de Frutos;100
-Timing;lumbermill_prod;Producción Cabaña de Leñador;20
-Timing;quarry_prod;Producción Foso de Piedra;1
-Timing;wheat;Tiempo Crecimiento Trigo;30
-Timing;potato;Tiempo Crecimiento Patata;50
-Timing;carrot;Tiempo Crecimiento Zanahoria;100
-Timing;bonfire_auto;Tiempo Cocinar Automático Fogata;5
-Timing;bonfire_manual;Tiempo Cocinar Manual Fogata;20
-Timing;pot_auto;Tiempo Cocinar Automático Caldero;10
-Timing;pot_manual;Tiempo Cocinar Manual Caldero;2
-Timing;kitchen_auto;Tiempo Cocinar Automático Cocina;3
-Timing;kitchen_manual;Tiempo Cocinar Manual Cocina;1.5
-Timing;farm_plow;Tiempo de Arar Granja;3
-Timing;farm_sow;Tiempo de Sembrar Granja;3
-Timing;farm_water;Tiempo de Riego Inicial;2
-Timing;farm_water_daily;Tiempo de Riego Diario;1.5
-Timing;global_buy;Tiempo Compra Mercado;3
-Timing;global_sell;Tiempo Venta Mercado;3
-Timing;gather_cooldown;Cooldown de Recolección Manual;2
-Timing;granary;Construcción Granero;15
-Timing;granary_t2;Mejora Granero T2;25
-Timing;granary_t3;Mejora Granero T3;40
-Timing;granary_wheat_t1;Tiempo Semillas Trigo T1;3
-Timing;granary_wheat_t2;Tiempo Semillas Trigo T2;2
-Timing;granary_wheat_t3;Tiempo Semillas Trigo T3;3
-Timing;granary_potato_t1;Tiempo Semillas Patata T1;5
-Timing;granary_potato_t2;Tiempo Semillas Patata T2;3
-Timing;granary_potato_t3;Tiempo Semillas Patata T3;5
-Timing;granary_carrot_t1;Tiempo Semillas Zanahoria T1;10
-Timing;granary_carrot_t2;Tiempo Semillas Zanahoria T2;7
-Timing;granary_carrot_t3;Tiempo Semillas Zanahoria T3;10
-Timing;candidate_rotation;Rotación Automática de Candidatos;210
-Timing;lumbermill_t2;Mejora Aserradero T2;20
-Timing;lumbermill_t3;Mejora Aserradero T3;30
-Timing;quarry_t2;Mejora Cantera T2;20
-Timing;quarry_t3;Mejora Cantera T3;30
+# ============================================================
+# TIMINGS.csv — Todos los tiempos del juego (en días de juego)
+# ============================================================
+# Columnas:
+#   Category : Cycle | Construction | Crop | Gather | System
+#   ID       : identificador único en código (igual que buildings.csv cuando aplique)
+#   Name     : descripción legible
+#   Duration : duración en días de juego (excepto Cycle que usa segundos reales)
+# ============================================================
+
+Category;ID;Name;Duration
+
+# --- CICLO DÍA/NOCHE (segundos reales, no días de juego) ---
+Cycle;day_duration;Duración del Día (segundos reales);100
+Cycle;night_duration;Duración de la Noche (segundos reales);5
+Cycle;gather_cooldown;Cooldown Recolección Manual (días de juego);0.5
+Cycle;candidate_rotation;Rotación Automática de Candidatos (días);210
+
+# --- CONSTRUCCIÓN DE EDIFICIOS ---
+Construction;townhall;Construcción Ayuntamiento T1;1
+Construction;townhall_t2;Mejora Ayuntamiento T2;25
+Construction;townhall_t3;Mejora Ayuntamiento T3;40
+Construction;basic_house;Construcción Choza;10
+Construction;upgraded_house;Mejora Choza → Cabaña;20
+Construction;luxury_house;Mejora Cabaña → Casa Grande;30
+Construction;lumbermill;Construcción Aserradero;15
+Construction;lumbermill_t2;Mejora Aserradero T2;20
+Construction;lumbermill_t3;Mejora Aserradero T3;30
+Construction;quarry;Construcción Cantera;15
+Construction;quarry_t2;Mejora Cantera T2;20
+Construction;quarry_t3;Mejora Cantera T3;30
+Construction;farm;Construcción Granja;1
+Construction;farm_t2;Mejora Granja T2;15
+Construction;farm_t3;Mejora Granja T3;25
+Construction;granary;Construcción Granero;15
+Construction;granary_t2;Mejora Granero T2;25
+Construction;granary_t3;Mejora Granero T3;40
+Construction;bonfire;Construcción Fogata;15
+Construction;bonfire_t2;Mejora Fogata → Caldero;20
+Construction;bonfire_t3;Mejora Caldero → Cocina;30
+Construction;market;Construcción Mercado;3
+Construction;market_t2;Mejora Mercado T2;20
+Construction;market_t3;Mejora Mercado T3;30
+Construction;smithy;Construcción Taller del Herrero;15
+Construction;smithy_t2;Mejora Taller T2;25
+Construction;forge;Construcción Forja;20
+Construction;forge_t2;Mejora Forja T2;30
+Construction;mill;Construcción Molino;15
+Construction;mill_t2;Mejora Molino T2;25
+Construction;armory;Construcción Armería;25
+
+# --- CICLOS DE PRODUCCIÓN DE EDIFICIOS ---
+# Aserraderos
+Production;lumbermill_t1;Ciclo Producción Aserradero T1;20
+Production;lumbermill_t2;Ciclo Producción Aserradero T2;15
+Production;lumbermill_t3;Ciclo Producción Aserradero T3;10
+
+# Canteras
+Production;quarry_t1;Ciclo Producción Cantera T1;1
+Production;quarry_t2;Ciclo Producción Cantera T2;0.8
+Production;quarry_t3;Ciclo Producción Cantera T3;0.6
+
+# Fogatas / Cocinas
+Production;bonfire_t1_auto;Ciclo Cocinado Automático Fogata;5
+Production;bonfire_t1_manual;Ciclo Cocinado Manual Fogata;20
+Production;bonfire_t2_auto;Ciclo Cocinado Automático Caldero;10
+Production;bonfire_t2_manual;Ciclo Cocinado Manual Caldero;2
+Production;bonfire_t3_auto;Ciclo Cocinado Automático Cocina;3
+Production;bonfire_t3_manual;Ciclo Cocinado Manual Cocina;1.5
+
+# Graneros (producción de semillas por tipo y tier)
+Production;granary_wheat_t1;Ciclo Semillas Trigo T1;3
+Production;granary_wheat_t2;Ciclo Semillas Trigo T2;2
+Production;granary_wheat_t3;Ciclo Semillas Trigo T3;3
+Production;granary_potato_t1;Ciclo Semillas Patata T1;5
+Production;granary_potato_t2;Ciclo Semillas Patata T2;3
+Production;granary_potato_t3;Ciclo Semillas Patata T3;5
+Production;granary_carrot_t1;Ciclo Semillas Zanahoria T1;10
+Production;granary_carrot_t2;Ciclo Semillas Zanahoria T2;7
+Production;granary_carrot_t3;Ciclo Semillas Zanahoria T3;10
+
+# Mercados (ciclo auto compra/venta)
+Production;market_t1;Ciclo Mercado T1;3
+Production;market_t2;Ciclo Mercado T2;2
+Production;market_t3;Ciclo Mercado T3;1
+
+# Recolección manual con asignados (ciclo por colono)
+Production;wood_auto;Ciclo Leñador Manual Asignado;1
+Production;stone_auto;Ciclo Cantero Manual Asignado;1
+Production;berries_auto;Ciclo Recolector Frutos Asignado;100
+
+# --- ETAPAS DE CULTIVO (para granjas) ---
+Crop;farm_plow;Arar el Campo;3
+Crop;farm_sow;Sembrar el Campo;3
+Crop;farm_water;Riego Inicial;2
+Crop;farm_water_daily;Riego Diario (por ciclo de crecimiento);1.5
+
+# Duración de crecimiento por cultivo (desde sow hasta cosecha)
+Crop;wheat;Crecimiento Trigo;30
+Crop;potato;Crecimiento Patata;50
+Crop;carrot;Crecimiento Zanahoria;100
+
+# --- CRAFTEO (Paso E/G/K — futuro) ---
+Production;smithy_pickaxe_t1;Producir Pico Madera T1;5
+Production;smithy_axe_t1;Producir Hacha Madera T1;4
+Production;smithy_hoe_t1;Producir Azada Madera T1;3
+Production;smithy_weapon_t1;Producir Arma Básica T1;8
+Production;smithy_pickaxe_t2;Producir Pico Hierro T2;4
+Production;smithy_axe_t2;Producir Hacha Hierro T2;3
+Production;smithy_hoe_t2;Producir Azada Hierro T2;2.5
+Production;smithy_weapon_t2;Producir Arma Hierro T2;6
+Production;forge_iron_t1;Fundir Lingotes Hierro T1;3
+Production;forge_iron_t2;Fundir Lingotes Hierro T2;2
+Production;mill_flour_t1;Moler Harina T1;2
+Production;mill_flour_t2;Moler Harina T2;1
+Production;armory_leather;Fabricar Armadura Cuero;5
+Production;armory_iron;Fabricar Armadura Hierro;8

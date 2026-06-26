@@ -1,41 +1,84 @@
-Category;Type;Name;Cost_Gold;Cost_Wood;Cost_Stone;Yield_Amount;Yield_Type;Extra_Info
-Sales;sell_wood_manual;Venta Manual Madera;0;0;0;1;gold;Consumes:1:wood
-Sales;sell_stone_manual;Venta Manual Piedra;0;0;0;1;gold;Consumes:1:stone
-Sales;market_wood;Venta Automática Madera;0;0;0;1;gold;Consumes:1:wood
-Sales;market_stone;Venta Automática Piedra;0;0;0;1;gold;Consumes:1:stone
-Sales;sell_wheat_manual;Venta Manual Trigo;0;0;0;3;gold;Consumes:1:wheat
-Sales;sell_potato_manual;Venta Manual Patata;0;0;0;4;gold;Consumes:1:potato
-Sales;sell_carrot_manual;Venta Manual Zanahoria;0;0;0;5;gold;Consumes:1:carrot
-Sales;sell_berries_manual;Venta Manual Frutos;0;0;0;20;gold;Consumes:1:berries
-Sales;sell_cooked_wheat_manual;Venta Manual Pan;0;0;0;15;gold;Consumes:1:cooked_wheat
-Sales;sell_cooked_potato_manual;Venta Manual Patata Asada;0;0;0;18;gold;Consumes:1:cooked_potato
-Sales;sell_cooked_carrot_manual;Venta Manual Zanahoria Asada;0;0;0;22;gold;Consumes:1:cooked_carrot
-Sales;sell_cooked_berries_manual;Venta Manual Mermelada;0;0;0;10;gold;Consumes:1:cooked_berries
-Sales;market_wheat;Venta Automática Trigo;0;0;0;3;gold;Consumes:1:wheat
-Sales;market_potato;Venta Automática Patata;0;0;0;4;gold;Consumes:1:potato
-Sales;market_carrot;Venta Automática Zanahoria;0;0;0;5;gold;Consumes:1:carrot
-Sales;market_berries;Venta Automática Frutos;0;0;0;2;gold;Consumes:1:berries
-Sales;market_cooked_wheat;Venta Automática Pan;0;0;0;15;gold;Consumes:1:cooked_wheat
-Sales;market_cooked_potato;Venta Automática Patata Asada;0;0;0;18;gold;Consumes:1:cooked_potato
-Sales;market_cooked_carrot;Venta Automática Zanahoria Asada;0;0;0;22;gold;Consumes:1:cooked_carrot
-Sales;market_cooked_berries;Venta Automática Mermelada;0;0;0;10;gold;Consumes:1:cooked_berries
-Sales;buy_wheat_seeds;Comprar Granos de Trigo;5;0;0;0;1;wheatSeeds
-Sales;buy_potato_seeds;Comprar Semillas de Patata;8;0;0;0;1;potatoSeeds
-Sales;buy_carrot_seeds;Comprar Semillas de Zanahoria;12;0;0;0;1;carrotSeeds
-Sales;sell_wheat_seeds_manual;Venta Manual Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds
-Sales;sell_potato_seeds_manual;Venta Manual Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds
-Sales;sell_carrot_seeds_manual;Venta Manual Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds
-Sales;market_wheat_seeds;Venta Automática Semillas Trigo;0;0;0;3;gold;Consumes:1:wheat_seeds
-Sales;market_potato_seeds;Venta Automática Semillas Patata;0;0;0;5;gold;Consumes:1:potato_seeds
-Sales;market_carrot_seeds;Venta Automática Semillas Zanahoria;0;0;0;8;gold;Consumes:1:carrot_seeds
-Sales;buy_wood;Comprar Madera;2;0;0;1;wood;
-Sales;buy_stone;Comprar Piedra;2;0;0;1;stone;
-Sales;buy_wheat;Comprar Trigo;5;0;0;1;wheat;
-Sales;buy_potato;Comprar Patata;6;0;0;1;potato;
-Sales;buy_carrot;Comprar Zanahoria;8;0;0;1;carrot;
-Sales;buy_berries;Comprar Frutos;3;0;0;1;berries;
-Sales;buy_cooked_wheat;Comprar Pan;20;0;0;1;cooked_wheat;
-Sales;buy_cooked_potato;Comprar Patata Asada;24;0;0;1;cooked_potato;
-Sales;buy_cooked_carrot;Comprar Zanahoria Asada;30;0;0;1;cooked_carrot;
-Sales;buy_cooked_berries;Comprar Mermelada;15;0;0;1;cooked_berries;
-Sales;rotate_candidates;Rotación de Candidatos;15;0;0;0;;
+# ============================================================
+# PRICES.csv — Todo lo que tiene precio de compra o venta
+# ============================================================
+# Columnas:
+#   Category  : Buy | Sell | Action
+#   ID        : identificador único en código
+#   Name      : descripción en UI
+#   Resource  : clave del recurso en state.* (lo que se compra/vende)
+#   Amount    : cantidad por transacción
+#   Gold_Each : precio unitario en oro (positivo=recibe oro, negativo=paga oro)
+#   Min_Stock : stock mínimo para que la autoventa se active. 0 = sin mínimo
+#   Notes     : notas
+# ============================================================
+
+Category;ID;Name;Resource;Amount;Gold_Each;Min_Stock;Notes
+
+# ============================================================
+# COMPRAS — El jugador paga oro, recibe recurso
+# ============================================================
+Buy;buy_wood;Comprar Madera;wood;1;2;0;
+Buy;buy_stone;Comprar Piedra;stone;1;2;0;
+Buy;buy_wheat;Comprar Trigo;wheat;1;5;0;
+Buy;buy_potato;Comprar Patata;potato;1;6;0;
+Buy;buy_carrot;Comprar Zanahoria;carrot;1;8;0;
+Buy;buy_berries;Comprar Frutos;berries;1;3;0;
+Buy;buy_cooked_wheat;Comprar Pan;cooked_wheat;1;20;0;
+Buy;buy_cooked_potato;Comprar Patata Asada;cooked_potato;1;24;0;
+Buy;buy_cooked_carrot;Comprar Zanahoria Asada;cooked_carrot;1;30;0;
+Buy;buy_cooked_berries;Comprar Mermelada;cooked_berries;1;15;0;
+Buy;buy_wheat_seeds;Comprar Semillas de Trigo;wheat_seeds;1;5;0;
+Buy;buy_potato_seeds;Comprar Semillas de Patata;potato_seeds;1;8;0;
+Buy;buy_carrot_seeds;Comprar Semillas de Zanahoria;carrot_seeds;1;12;0;
+# Ganaderia (Paso I)
+Buy;buy_chicken;Comprar Gallina;chicken;1;30;0;Animal. Produce huevos
+Buy;buy_pig;Comprar Cerdo;pig;1;80;0;Animal. Produce pieles
+Buy;buy_cow;Comprar Vaca;cow;1;150;0;Animal. Produce pieles y fertilizante
+
+# ============================================================
+# VENTAS MANUALES — El jugador vende, recibe oro
+# ============================================================
+Sell;sell_wood;Venta Manual Madera;wood;1;1;0;
+Sell;sell_stone;Venta Manual Piedra;stone;1;1;0;
+Sell;sell_wheat;Venta Manual Trigo;wheat;1;3;0;
+Sell;sell_potato;Venta Manual Patata;potato;1;4;0;
+Sell;sell_carrot;Venta Manual Zanahoria;carrot;1;5;0;
+Sell;sell_berries;Venta Manual Frutos;berries;1;20;0;Los frutos son raros y valen mas
+Sell;sell_cooked_wheat;Venta Manual Pan;cooked_wheat;1;15;0;
+Sell;sell_cooked_potato;Venta Manual Patata Asada;cooked_potato;1;18;0;
+Sell;sell_cooked_carrot;Venta Manual Zanahoria Asada;cooked_carrot;1;22;0;
+Sell;sell_cooked_berries;Venta Manual Mermelada;cooked_berries;1;10;0;
+Sell;sell_wheat_seeds;Venta Manual Semillas Trigo;wheat_seeds;1;3;0;
+Sell;sell_potato_seeds;Venta Manual Semillas Patata;potato_seeds;1;5;0;
+Sell;sell_carrot_seeds;Venta Manual Semillas Zanahoria;carrot_seeds;1;8;0;
+# Recursos procesados (Paso G/K)
+Sell;sell_iron_bar;Venta Manual Lingotes;iron_bar;1;12;0;
+Sell;sell_flour;Venta Manual Harina;flour;1;8;0;
+Sell;sell_bread;Venta Manual Pan (harina);bread;1;25;0;
+Sell;sell_eggs;Venta Manual Huevos;eggs;1;6;0;
+Sell;sell_skins;Venta Manual Pieles;skins;1;15;0;
+Sell;sell_feathers;Venta Manual Plumas;feathers;1;4;0;
+
+# ============================================================
+# VENTAS AUTOMATICAS (mercado con colono asignado)
+# Los precios son mas bajos que manual para incentivar el manual
+# ============================================================
+Sell;market_wood;Venta Auto Madera;wood;1;1;100;Min 100 en stock para activarse
+Sell;market_stone;Venta Auto Piedra;stone;1;1;100;
+Sell;market_wheat;Venta Auto Trigo;wheat;1;3;50;
+Sell;market_potato;Venta Auto Patata;potato;1;4;50;
+Sell;market_carrot;Venta Auto Zanahoria;carrot;1;5;50;
+Sell;market_berries;Venta Auto Frutos;berries;1;2;20;
+Sell;market_cooked_wheat;Venta Auto Pan;cooked_wheat;1;15;0;
+Sell;market_cooked_potato;Venta Auto Patata Asada;cooked_potato;1;18;0;
+Sell;market_cooked_carrot;Venta Auto Zanahoria Asada;cooked_carrot;1;22;0;
+Sell;market_cooked_berries;Venta Auto Mermelada;cooked_berries;1;10;0;
+Sell;market_wheat_seeds;Venta Auto Semillas Trigo;wheat_seeds;1;3;0;
+Sell;market_potato_seeds;Venta Auto Semillas Patata;potato_seeds;1;5;0;
+Sell;market_carrot_seeds;Venta Auto Semillas Zanahoria;carrot_seeds;1;8;0;
+
+# ============================================================
+# ACCIONES ESPECIALES
+# ============================================================
+Action;rotate_candidates;Rotacion Candidatos;gold;15;-15;0;Coste negativo = paga oro
+Action;hire_colonist;Contratar Aldeano;colonist;1;3;0;Coste base (sube con reputacion en paso C)

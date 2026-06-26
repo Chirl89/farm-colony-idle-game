@@ -282,12 +282,15 @@ function getColonistEfficiency(c) {
   let noHousePenalty = 0.40;
   let noFoodPenalty = 0.45;
   
-  if (typeof CONFIG !== 'undefined' && CONFIG.EfficiencyPenalty) {
-    if (CONFIG.EfficiencyPenalty.no_house) {
-      noHousePenalty = CONFIG.EfficiencyPenalty.no_house.yield;
-    }
-    if (CONFIG.EfficiencyPenalty.no_food) {
-      noFoodPenalty = CONFIG.EfficiencyPenalty.no_food.yield;
+  if (typeof CONFIG !== 'undefined') {
+    const effGroup = CONFIG.Efficiency || CONFIG.EfficiencyPenalty;
+    if (effGroup) {
+      if (effGroup.no_house) {
+        noHousePenalty = (effGroup.no_house.value !== undefined) ? effGroup.no_house.value : effGroup.no_house.yield;
+      }
+      if (effGroup.no_food) {
+        noFoodPenalty = (effGroup.no_food.value !== undefined) ? effGroup.no_food.value : effGroup.no_food.yield;
+      }
     }
   }
   

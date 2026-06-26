@@ -156,7 +156,10 @@ function generateAttribute() {
     for (let key in CONFIG.AttributeWeight) {
       const val = parseInt(key);
       if (!isNaN(val)) {
-        weights[val] = CONFIG.AttributeWeight[key].yield || 0;
+        const w = CONFIG.AttributeWeight[key].yield || 0;
+        if (w > 0) {
+          weights[val] = w;
+        }
       }
     }
   }

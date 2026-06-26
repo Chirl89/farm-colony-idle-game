@@ -2050,6 +2050,8 @@ function renderTownHallUI() {
 
 // Controla habilitado/deshabilitado de botones
 function updateButtonStates() {
+  if (!CONFIG || !CONFIG.Building) return;
+
   const hBasic = CONFIG.Building.basic_house;
   const hUpgraded = CONFIG.Building.upgraded_house;
   const bLumber = CONFIG.Building.lumbermill;
@@ -2057,7 +2059,7 @@ function updateButtonStates() {
   const bFarm = CONFIG.Building.farm;
   const bMarket = CONFIG.Building.market;
   const bBonfire = CONFIG.Building.bonfire;
-  const bHire = CONFIG.Building.hire_colonist;
+  const bHire = CONFIG.Building.hire_colonist || (CONFIG.Sales && CONFIG.Sales.hire_colonist) || { cost_gold: 50 };
   const bGranary = CONFIG.Building.granary;
 
   // Costos básicos colores visuales
@@ -2250,14 +2252,17 @@ function toggleCostAffordability(element, currentAmount, costAmount) {
 }
 
 function updateStaticTextsFromConfig() {
+  if (!CONFIG || !CONFIG.Building) return;
+
   // Viviendas y Aldeanos
   document.getElementById('cost-basic-wood').innerHTML = `🪵 ${CONFIG.Building.basic_house.cost_wood} Madera`;
   document.getElementById('cost-basic-stone').innerHTML = `🪨 ${CONFIG.Building.basic_house.cost_stone} Piedra`;
   
+  const bHire = CONFIG.Building.hire_colonist || (CONFIG.Sales && CONFIG.Sales.hire_colonist) || { cost_gold: 50 };
   const costHireGoldEl = document.getElementById('cost-hire-gold');
-  if (costHireGoldEl) costHireGoldEl.innerHTML = `🪙 ${CONFIG.Building.hire_colonist.cost_gold} Oro`;
+  if (costHireGoldEl) costHireGoldEl.innerHTML = `🪙 ${bHire.cost_gold} Oro`;
   const btnHireColonistEl = document.getElementById('btn-hire-colonist');
-  if (btnHireColonistEl) btnHireColonistEl.innerHTML = `🧑‍🌾 Contratar Aldeano (${CONFIG.Building.hire_colonist.cost_gold}🪙)`;
+  if (btnHireColonistEl) btnHireColonistEl.innerHTML = `🧑‍🌾 Contratar Aldeano (${bHire.cost_gold}🪙)`;
 
   // Edificios
   document.getElementById('cost-lumbermill-gold').innerHTML = `🪙 ${CONFIG.Building.lumbermill.cost_gold} Oro`;

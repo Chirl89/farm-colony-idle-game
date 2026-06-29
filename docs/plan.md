@@ -35,64 +35,62 @@
 
 ---
 
-## TABLA DE SEGUIMIENTO
+## TABLA DE SEGUIMIENTO DE MECÁNICAS
 
-| # | Paso | Riesgo | Descripcion | Archivos clave | Estado |
+| # | Paso | Riesgo | Descripción | Archivos clave | Estado |
 |---|------|--------|-------------|----------------|--------|
-| **BLOQUE 0 -- Quick Wins (sin dependencias)** ||||||
-| 1 | Q | Verde | Panel de desarrollo Ctrl+Shift+D | ui-render.js, ui-events.js | Pendiente |
-| 2 | M1 | Verde | Tasas de produccion en dias de juego | ui-render.js | Pendiente |
-| 3 | M2 | Verde | Renombrar Ayto por tiers | buildings.csv, ui-render.js | Pendiente |
-| 4 | M4 | Verde | Hambre reactiva | gameloop.js | Pendiente |
+| **BLOQUE 0 -- Quick Wins (sin dependencias, sin riesgo)** ||||||
+| 1 | **PASO A** - `[DEV]` | Verde | Panel de desarrollo Ctrl+Shift+D | ui-render.js, ui-events.js | Pendiente |
+| 2 | **PASO B** - `[UI-DIAS]` | Verde | Tasas de produccion en dias de juego | ui-render.js | Pendiente |
+| 3 | **PASO C** - `[UI-AYTO]` | Verde | Renombrar Ayuntamiento por tiers | buildings.csv, ui-render.js | Pendiente |
+| 4 | **PASO D** - `[COL-HAMBRE]` | Verde | Hambre reactiva (colonos comen al instante) | gameloop.js | Pendiente |
 | **BLOQUE 1 -- Infraestructura basica** ||||||
-| 5 | M5 | Amarillo | Jugador bloqueado durante construccion | gamestate.js, gameloop.js, ui | Pendiente |
-| 6 | M3 | Rojo | Pozo de agua | 8 archivos | Pendiente |
-| 7 | M6 | Rojo | Almacenes + capacidad maxima | 8 archivos | Pendiente |
+| 5 | **PASO E** - `[CON-OBRA]` | Amarillo | Jugador bloqueado durante construccion | gamestate.js, gameloop.js, ui | Pendiente |
+| 6 | **PASO F** - `[INF-POZO]` | Rojo | Pozo de agua (recurso diario limitado) | 8 archivos | Pendiente |
+| 7 | **PASO G** - `[INF-ALMA]` | Rojo | Almacenes y capacidad maxima de recursos | 8 archivos | Pendiente |
 | 7.B | BACKUP | - | Backup vBloque1 | - | Pendiente |
 | **BLOQUE 2 -- Produccion y reputacion** ||||||
-| 8 | M11 | Verde | Aleatoriedad en produccion | production.csv, gameloop.js | Pendiente |
-| 9 | A | Amarillo | Tablon de pedidos (reputacion) | 6 archivos | Pendiente |
-| 10 | C | Rojo | Sistema de misiones completo | missiondata.csv + 8 archivos | Pendiente |
+| 8 | **PASO H** - `[PROD-RAND]` | Verde | Aleatoriedad en produccion (rango min-max) | production.csv, gameloop.js | Pendiente |
+| 9 | **PASO I** - `[REP-TABL]` | Amarillo | Tablon de pedidos (reputacion sin misiones) | 6 archivos | Pendiente |
+| 10 | **PASO J** - `[REP-MISI]` | Rojo | Sistema de misiones + especialistas (missiondata.csv) | missiondata.csv + 8 archivos | Pendiente |
 | 10.B | BACKUP | - | Backup vBloque2 | - | Pendiente |
 | **BLOQUE 3 -- Arbol de tecnologia** ||||||
-| 11 | M9 | Rojo | Arbol de tecnologia | tech.csv + 6 archivos | Pendiente |
+| 11 | **PASO K** - `[TEC-ARBOL]` | Rojo | Arbol de tecnologia (desbloqueo de edificios) | tech.csv + 6 archivos | Pendiente |
 | 11.B | BACKUP | - | Backup vBloque3 | - | Pendiente |
 | **BLOQUE 4 -- Herramientas y metal** ||||||
-| 12 | E | Amarillo | Herramientas + Taller del Herrero | 8 archivos | Pendiente |
-| 13 | G | Amarillo | Mineral de hierro + Forja | 8 archivos | Pendiente |
+| 12 | **PASO L** - `[MET-TALL]` | Amarillo | Herramientas + Taller del Herrero | 8 archivos | Pendiente |
+| 13 | **PASO M** - `[MET-FORJA]` | Amarillo | Mineral de hierro + Forja | 8 archivos | Pendiente |
 | 13.B | BACKUP | - | Backup vBloque4 | - | Pendiente |
 | **BLOQUE 5 -- Sistema de trabajo (RUPTURA)** ||||||
-| 14 | M7 | Rojo | Prioridades de colonos [RUPTURA] | 4 archivos | Pendiente |
-| 15 | M8 | Amarillo | Prioridades de edificios | 3 archivos | Pendiente |
-| 16 | M15 | Rojo | Slots multiples por tier | mechanics.csv + 4 archivos | Pendiente |
+| 14 | **PASO N** - `[WORK-PRIO]` | Rojo | Prioridades de colonos [RUPTURA] | 4 archivos | Pendiente |
+| 15 | **PASO O** - `[WORK-EDIF]` | Amarillo | Prioridades de edificios | 3 archivos | Pendiente |
+| 16 | **PASO P** - `[WORK-SLOT]` | Rojo | Slots multiples por tier | mechanics.csv + 4 archivos | Pendiente |
 | 16.B | BACKUP | - | Backup vBloque5 | - | Pendiente |
 | **BLOQUE 6 -- Cadena alimentaria** ||||||
-| 17 | I | Amarillo | Ganaderia + sub-productos | 6 archivos | Pendiente |
-| 18 | K | Amarillo | Molino + cadena harina->pan | 8 archivos | Pendiente |
-| 19 | M17 | Amarillo | Trigo->grano+paja [MIGRACION CRITICA] | 6 archivos + grep | Pendiente |
+| 17 | **PASO Q** - `[FOOD-GRAN]` | Amarillo | Ganaderia y sub-productos | 6 archivos | Pendiente |
+| 18 | **PASO R** - `[FOOD-MOLI]` | Amarillo | Molino + cadena harina->pan | 8 archivos | Pendiente |
+| 19 | **PASO S** - `[FOOD-GRANO]` | Amarillo | Trigo->grano+paja [MIGRACION CRITICA] | 6 archivos + grep | Pendiente |
 | 19.B | BACKUP | - | Backup vBloque6 | - | Pendiente |
 | **BLOQUE 7 -- Combate y defensa** ||||||
-| 20 | L | Amarillo | Armeria + equipo para colonos | 7 archivos | Pendiente |
-| 21 | N | Rojo | Sistema de bandidos e incursiones | 5 archivos | Pendiente |
-| 22 | O | Amarillo | Escalado de raids + historial | gameloop.js, ui-render.js | Pendiente |
-| 23 | M14 | Amarillo | Murallas + Puestos de guardia | 8 archivos | Pendiente |
+| 20 | **PASO T** - `[COMB-ARME]` | Amarillo | Armeria + equipo para colonos | 7 archivos | Pendiente |
+| 21 | **PASO U** - `[COMB-RAID]` | Rojo | Sistema de bandidos e incursiones | 5 archivos | Pendiente |
+| 22 | **PASO V** - `[COMB-ESCA]` | Amarillo | Escalado de raids + historial | gameloop.js, ui-render.js | Pendiente |
+| 23 | **PASO W** - `[COMB-MURA]` | Amarillo | Murallas + Puestos de guardia | 8 archivos | Pendiente |
 | 23.B | BACKUP | - | Backup vBloque7 | - | Pendiente |
 | **BLOQUE 8 -- Medioambiente** ||||||
-| 24 | M12 | Rojo | Estaciones del anyo | 4 archivos | Pendiente |
-| 25 | M13a | Amarillo | Quemador + recurso Calor | 8 archivos | Pendiente |
-| 26 | M13b | Amarillo | Calor en casas (invierno) | 3 archivos | Pendiente |
+| 24 | **PASO X** - `[ENV-ESTA]` | Rojo | Estaciones del anyo | 4 archivos | Pendiente |
+| 25 | **PASO Y** - `[ENV-CALO]` | Amarillo | Quemador + recurso Calor | 8 archivos | Pendiente |
+| 26 | **PASO Z** - `[ENV-INVI]` | Amarillo | Calor en casas (invierno) | 3 archivos | Pendiente |
 | 26.B | BACKUP | - | Backup vBloque8 | - | Pendiente |
 | **BLOQUE 9 -- Materiales avanzados** ||||||
-| 27 | M16 | Verde | Recolector de barro | 10 archivos | Pendiente |
-| 28 | M18 | Amarillo | Adobe + aislamiento de casas | 7 archivos | Pendiente |
+| 27 | **PASO AA** - `[MAT-BARRO]` | Verde | Recolector de barro | 10 archivos | Pendiente |
+| 28 | **PASO AB** - `[MAT-ADOBE]` | Amarillo | Adobe + aislamiento de casas | 7 archivos | Pendiente |
 | 28.B | BACKUP | - | Backup vBloque9 | - | Pendiente |
 | **BLOQUE 10 -- Pulido final** ||||||
-| 29 | R | Amarillo | Panel de metricas de economia | gameloop.js, ui-render.js | Pendiente |
-| 30 | T | Amarillo | Balance pass de CSVs | CSVs | Pendiente |
-| 31 | V | Amarillo | Tutorial de primera partida | 5 archivos | Pendiente |
-| 32 | M10 | Amarillo | Vista 2D del pueblo (opcional) | ui-render.js, CSS | Pendiente |
-
----
+| 29 | **PASO AC** - `[POL-METR]` | Amarillo | Panel de metricas de economia | gameloop.js, ui-render.js | Pendiente |
+| 30 | **PASO AD** - `[POL-BALA]` | Amarillo | Balance pass de CSVs | CSVs | Pendiente |
+| 31 | **PASO AE** - `[POL-TUTO]` | Amarillo | Tutorial de primera partida | 5 archivos | Pendiente |
+| 32 | **PASO AF** - `[POL-VISTA]` | Amarillo | Vista 2D del pueblo (opcional) | ui-render.js, CSS | Pendiente |
 
 ## POR QUE ESTE ORDEN?
 
@@ -148,7 +146,7 @@ BLOQUE 10: R (metricas) antes que T (necesitas ver las metricas para
 
 ---
 
-### PASO Q — 🟢 Panel de desarrollo (modo dev) ⬜
+### PASO A - [DEV] Panel de desarrollo Ctrl+Shift+D
 
 **Archivos:** `src/js/ui-render.js`, `src/js/ui-events.js`, `src/css/styles.css`
 
@@ -217,11 +215,26 @@ En index.html — añade al final del body (antes del toast-container):
 ✅ Verificar: Ctrl+Shift+D abre/cierra panel; x50 acelera visiblemente el juego.
 ```
 
+PRUEBAS -- [DEV] -- CSV: test/test_DEV_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Panel aparece al pulsar Ctrl+Shift+D;Juego cargado;Pulsar Ctrl+Shift+D;Panel dev visible;-;Pendiente
+  U02;Unit;Panel desaparece al volver a pulsar;Panel visible;Pulsar otra vez;Panel oculto;-;Pendiente
+  U03;Unit;Boton x5 acelera el juego x5;Panel abierto;Clic x5;dayDelta multiplicado;-;Pendiente
+  U04;Unit;Inyectar +500 madera funciona;Panel abierto;Clic boton Madera;state.wood += 500;-;Pendiente
+  U05;Unit;Max All inyecta todos los recursos;Panel abierto;Clic Max All;Todos recursos en max;-;Pendiente
+  U06;Unit;Panel no rompe el juego al estar abierto;Panel abierto;Jugar 5 min;Sin errores;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_DEV_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_DEV_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M1 -- VERDE Mostrar producciones en dias de juego [PENDIENTE]
+### PASO B - [UI-DIAS] Mostrar tasas de produccion en dias de juego
 
 Archivos: src/js/ui-render.js, src/js/gameloop.js
 
@@ -240,11 +253,25 @@ En src/js/ui-render.js -- renderResourcesDetails() y barra de recursos global:
 
 VERIFICAR -> TEST: test/test_ui_proddia_[timestamp].csv
 
+PRUEBAS -- [UI-DIAS] -- CSV: test/test_UI-DIAS_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Tasa madera muestra /dia no /s;Aserradero activo;Ver panel recursos;Texto "X/dia";-;Pendiente
+  U02;Unit;Tasa piedra muestra /dia;Cantera activa;Ver panel;Texto "X/dia";-;Pendiente
+  U03;Unit;Tasa negativa (consumo) muestra -X/dia;Colono activo;Ver comida;"-X/dia";-;Pendiente
+  U04;Unit;Sin produccion: 0/dia;Sin edificios;Ver tasas;"0/dia";-;Pendiente
+  R01;Regresion;Valores internos state.wood no cambiaron;Antes y despues;Verificar incremento;Mismo valor;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_UI-DIAS_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_UI-DIAS_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M2 -- VERDE Renombrar Ayuntamiento por tiers [PENDIENTE]
+### PASO C - [UI-AYTO] Renombrar Ayuntamiento segun tier
 
 Archivos: src/data/buildings.csv, src/js/ui-render.js, src/js/buildings.js, index.html
 
@@ -263,11 +290,25 @@ En index.html -- grep "Ayuntamiento": actualizar textos hardcodeados.
 VERIFICAR: Nombre correcto en cada tier. Logica de gate no se rompe.
 TEST: test/test_renombrar_ayto_[timestamp].csv
 
+PRUEBAS -- [UI-AYTO] -- CSV: test/test_UI-AYTO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;T1 muestra Casa del Jugador;Ayto T1;Ver header;Texto correcto;-;Pendiente
+  U02;Unit;T2 muestra Centro Comunitario;Ayto T2;Ver header;Texto correcto;-;Pendiente
+  U03;Unit;T3 muestra Ayuntamiento;Ayto T3;Ver header;Texto correcto;-;Pendiente
+  U04;Unit;Toast de mejora muestra nombre nuevo;Mejorar T1->T2;Ver toast;Nombre actualizado;-;Pendiente
+  R01;Regresion;Gate de construcciones no afectado;Ayto T1;Intentar edificio T2;Sigue bloqueado;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_UI-AYTO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_UI-AYTO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M4 -- AMARILLO Hambre reactiva [PENDIENTE]
+### PASO D - [COL-HAMBRE] Hambre reactiva (colonos comen al instante)
 
 Archivos: src/js/gameloop.js
 
@@ -292,6 +333,19 @@ VERIFICAR:
   - No hambriento -> no consume fuera de horario
 TEST: test/test_hambre_reactiva_[timestamp].csv
 
+PRUEBAS -- [COL-HAMBRE] -- CSV: test/test_COL-HAMBRE_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Colono hambriento come al anadir comida;isStarving=true food=0;Anadir 10 comida;isStarving=false;-;Pendiente
+  U02;Unit;Colono sano no consume fuera de horario;isStarving=false;Anadir comida;food no baja;-;Pendiente
+  U03;Unit;2 hambrientos comida para 1: solo 1 come;2 starving food para 1;Tick;1 sated 1 hambriento;-;Pendiente
+  R01;Regresion;Ciclo normal de comida (manana/noche) no afectado;food>0;Esperar ciclo;Colonos comen en horario;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COL-HAMBRE_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_COL-HAMBRE_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -302,7 +356,7 @@ TEST: test/test_hambre_reactiva_[timestamp].csv
 
 ---
 
-### M5 -- AMARILLO Jugador bloqueado durante construccion [PENDIENTE]
+### PASO E - [CON-OBRA] Jugador bloqueado durante construccion
 
 Archivos: gamestate.js, gameloop.js, ui-render.js, ui-events.js
 
@@ -331,11 +385,26 @@ VERIFICAR:
   - "Retirarme" libera al jugador
 TEST: test/test_jugador_construyendo_[timestamp].csv
 
+PRUEBAS -- [CON-OBRA] -- CSV: test/test_CON-OBRA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Construir yo pone playerBuilding!=null;Edificio en obra;Clic Construir yo;state.playerBuilding set;-;Pendiente
+  U02;Unit;Recolectar mientras construye muestra toast;playerBuilding set;Clic recolectar;Toast de aviso;-;Pendiente
+  U03;Unit;Botones recoleccion deshabilitados;playerBuilding set;Ver UI;Botones disabled;-;Pendiente
+  U04;Unit;Edificio avanza de noche con playerSpeed;playerBuilding set noche;Esperar noche;constructionElapsed sube;-;Pendiente
+  U05;Unit;Retirarme pone playerBuilding=null;playerBuilding set;Clic Retirarme;state.playerBuilding=null;-;Pendiente
+  R01;Regresion;Construccion por colonos no afectada;Colono en obra;Ver progreso;Colono sigue avanzando;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_CON-OBRA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_CON-OBRA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M3 -- ROJO Pozo de agua [PENDIENTE]
+### PASO F - [INF-POZO] Pozo de agua (recurso diario limitado)
 
 Archivos: buildings.csv, timings.csv, mechanics.csv, gamestate.js, buildings.js, gameloop.js, ui-render.js, index.html
 
@@ -374,11 +443,30 @@ VERIFICAR:
   - Al amanecer: agua se repone
 TEST: test/test_pozo_agua_[timestamp].csv
 
+PRUEBAS -- [INF-POZO] -- CSV: test/test_INF-POZO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Sin pozo waterMax=0;Sin pozos;Ver state.waterMax;0;-;Pendiente
+  U02;Unit;1 pozo T1 waterMax=50;Pozo T1 construido;Ver waterMax;50;-;Pendiente
+  U03;Unit;2 pozos T1 waterMax=100;2 pozos T1;Ver waterMax;100;-;Pendiente
+  U04;Unit;Agua se repone al amanecer;waterToday=0 llega amanecer;Amanecer;waterToday=waterMax-consumo;-;Pendiente
+  U05;Unit;Colono consume 2 agua al amanecer;1 colono 1 pozo T1;Amanecer;waterToday=48;-;Pendiente
+  U06;Unit;Granja water espera si waterToday=0;waterToday=0 granja en water;Tick;stageElapsed no avanza;-;Pendiente
+  U07;Unit;Granja riega y descuenta 5 agua;waterToday=10;Tick;waterToday=5;-;Pendiente
+  I01;Integracion;Ciclo completo cultivo con pozo;1 pozo 1 granja;Cultivar completo;Cosecha exitosa;-;Pendiente
+  I02;Integracion;Sin pozo la granja nunca cosecha;0 pozos 1 granja;50 dias;Atascada en stage water;-;Pendiente
+  R01;Regresion;Eficiencia colonos no afectada;Sistema anterior;Jugar con pozo;Eficiencia igual;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_INF-POZO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_INF-POZO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M6 -- ROJO Almacenes + limite de capacidad de recursos [PENDIENTE]
+### PASO G - [INF-ALMA] Almacenes y capacidad maxima de recursos
 
 Archivos: buildings.csv, timings.csv, mechanics.csv, gamestate.js, buildings.js, gameloop.js, ui-render.js, index.html
 
@@ -421,6 +509,24 @@ VERIFICAR:
   - Subir Ayto T2 -> caps base suben a 200
 TEST: test/test_almacenes_cap_[timestamp].csv + REGRESION: produccion madera, piedra, comida
 
+PRUEBAS -- [INF-ALMA] -- CSV: test/test_INF-ALMA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Capacidad base Ayto T1 = 100 madera;Ayto T1 sin almacenes;Ver storageCapacity.wood;100;-;Pendiente
+  U02;Unit;Capacidad Ayto T2 = 200;Ayto T2;Ver storageCapacity.wood;200;-;Pendiente
+  U03;Unit;Almacen madera T1 anade 200 de cap;1 almacen madera T1;Ver storageCapacity.wood;300;-;Pendiente
+  U04;Unit;Produccion se detiene al llegar al cap;wood=100 cap=100;Tick;wood sigue en 100;-;Pendiente
+  U05;Unit;Toast almacen lleno al tocar el cap;wood=99 prod=5;Tick;Toast visible;-;Pendiente
+  U06;Unit;Barra roja al >90% cap;wood=95 cap=100;Ver UI;Barra roja;-;Pendiente
+  I01;Integracion;Produccion madera + almacen conjuntamente;Almacen construido;Producir hasta lleno;Para al llegar cap;-;Pendiente
+  R01;Regresion;Produccion comida no se rompe;Fogata activa;Producir hasta cap;Comida acumula normal;-;Pendiente
+  R02;Regresion;Mercado puede vender aunque lleno;Almacen lleno;Venta manual;Venta exitosa;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_INF-ALMA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_INF-ALMA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -433,7 +539,7 @@ TEST: test/test_almacenes_cap_[timestamp].csv + REGRESION: produccion madera, pi
 
 ---
 
-### M11 -- VERDE Aleatoriedad en produccion [PENDIENTE]
+### PASO H - [PROD-RAND] Aleatoriedad en produccion (rango min-max)
 
 Archivos: src/data/production.csv, src/js/gameloop.js, src/js/ui-render.js
 
@@ -453,11 +559,25 @@ En ui-render.js -- tasas: mostrar "10-20/dia" en vez de "15/dia"
 VERIFICAR: 10 ciclos -> valores entre 10 y 20. Media aprox 15.
 TEST: test/test_aleatoriedad_prod_[timestamp].csv
 
+PRUEBAS -- [PROD-RAND] -- CSV: test/test_PROD-RAND_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;10 ciclos aserradero T1 entre 10 y 20;Aserradero T1;Dev x50 10 ciclos;Min>=10 Max<=20;-;Pendiente
+  U02;Unit;Recoleccion manual puede dar 0;Recoleccion activa;Clic 20 veces;Al menos 1 resultado 0;-;Pendiente
+  U03;Unit;Media 10 cosechas trigo cerca de 60;Granja trigo;10 cosechas dev;Media 50-70;-;Pendiente
+  U04;Unit;UI muestra rango 10-20/dia;Aserradero activo;Ver tasas;"X-Y/dia";-;Pendiente
+  R01;Regresion;Balance economico no cambia drasticamente;Juego normal;120 dias;Madera en rango esperado;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_PROD-RAND_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_PROD-RAND_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO A — 🟡 Tablón de pedidos (misiones de entrega de recursos) ⬜
+### PASO I - [REP-TABL] Tablon de pedidos (reputacion sin misiones)
 
 **Archivos:** `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `src/js/ui-events.js`, `index.html`
 
@@ -523,11 +643,27 @@ En src/js/ui-events.js — en initEventHandlers():
 ✅ Verificar: 3 pedidos nuevos cada día; entregar reduce stock y añade reputación.
 ```
 
+PRUEBAS -- [REP-TABL] -- CSV: test/test_REP-TABL_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;3 pedidos generados al inicio cada dia;Nuevo dia;Ver tablon;3 pedidos visibles;-;Pendiente
+  U02;Unit;Entregar pedido descuenta recurso correcto;10 madera pedido=5;Clic Entregar;state.wood-=5;-;Pendiente
+  U03;Unit;Entregar anade reputacion;rep=0;Entregar;rep>0;-;Pendiente
+  U04;Unit;Boton Entregar disabled sin stock;0 madera pedido madera;Ver boton;boton disabled;-;Pendiente
+  U05;Unit;Pedidos se refrescan al dia siguiente;Dia 1 pedidos;Llega dia 2;Nuevos 3 pedidos;-;Pendiente
+  I01;Integracion;Rep de pedidos permite contratar 4o colono;3 colonos rep suficiente;Contratar;Exitoso;-;Pendiente
+  R01;Regresion;Mercado sigue funcionando con reputacion activa;Mercado previo;Comprar y vender;Sin cambios;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_REP-TABL_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_REP-TABL_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO C — 🔴 Sistema de misiones (missiondata.csv) ⬜
+### PASO J - [REP-MISI] Sistema de misiones + especialistas (missiondata.csv)
 
 **Archivos:** `src/data/missiondata.csv` (nuevo), `src/js/data-loader.js`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `src/js/ui-events.js`, `index.html`
 
@@ -695,6 +831,24 @@ En src/js/buildings.js — función hireColonist(candidateIdx):
   - Contratar colonos 4+ requiere reputación
 ```
 
+PRUEBAS -- [REP-MISI] -- CSV: test/test_REP-MISI_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;3 misiones disponibles al inicio;Juego cargado;Ver Misiones;3 tarjetas visibles;-;Pendiente
+  U02;Unit;Colono en mision: badge En mision;1 colono libre;Enviar a mision;Badge visible;-;Pendiente
+  U03;Unit;Colono en mision no asignable a edificio;En mision;Intentar asignar;Controles disabled;-;Pendiente
+  U04;Unit;Mision exitosa: recompensas aplicadas;Mision activa;Esperar duracion;Gold/Rep subieron;-;Pendiente
+  U05;Unit;Mision fallida: XP parcial (50%) para colonos;Mision activa;Forzar fallo;XP < exito;-;Pendiente
+  U06;Unit;headhunt exitoso anade especialista dorado;Mision headhunt;Completar;Colono con border dorado;-;Pendiente
+  I01;Integracion;Rep misiones + pedidos se acumula;Ambos sistemas;5 pedidos + 2 misiones;Rep total correcta;-;Pendiente
+  I02;Integracion;Especialista tiene atributo >= 8 en especialidad;headhunt OK;Ver stats;Atributo >= 8;-;Pendiente
+  R01;Regresion;REP-TABL no afectado;Pedidos activos;Tener misiones activas;Pedidos siguen generandose;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_REP-MISI_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_REP-MISI_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -707,7 +861,7 @@ En src/js/buildings.js — función hireColonist(candidateIdx):
 
 ---
 
-### M9 -- ROJO Arbol de tecnologia [PENDIENTE]
+### PASO K - [TEC-ARBOL] Arbol de tecnologia (desbloqueo de edificios)
 
 Archivos: src/data/tech.csv (nuevo), data-loader.js, gamestate.js, buildings.js, ui-render.js, ui-events.js, index.html
 
@@ -751,6 +905,23 @@ VERIFICAR:
   - Solo una investigacion activa a la vez
 TEST: test/test_arbol_tecnologia_[timestamp].csv
 
+PRUEBAS -- [TEC-ARBOL] -- CSV: test/test_TEC-ARBOL_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Sin basic_construction: construir Choza da error;unlockedTechs=[];Intentar buildHouse;Toast Requiere investigacion;-;Pendiente
+  U02;Unit;basic_construction desbloqueada por defecto;Estado inicial;Ver unlockedTechs;Contiene basic_construction;-;Pendiente
+  U03;Unit;startResearch descuenta recursos correctamente;Recursos suficientes;Iniciar improved_tools;Recursos descontados;-;Pendiente
+  U04;Unit;Solo 1 investigacion activa;researchQueue activo;Intentar otra tech;Toast de error;-;Pendiente
+  U05;Unit;Investigacion completa en N dias;improved_tools en curso;Esperar N dias;Tech desbloqueada;-;Pendiente
+  U06;Unit;Tech desbloqueada habilita edificios;improved_tools OK;Ver Construccion;Smithy visible;-;Pendiente
+  I01;Integracion;Flujo: investigar -> construir -> producir;basic_construction OK;Todo el flujo;Produccion activa;-;Pendiente
+  R01;Regresion;Edificios pre-existentes siguen funcionando;Edificios antes de tech;Cargar save;Edificios activos;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_TEC-ARBOL_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_TEC-ARBOL_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -763,7 +934,7 @@ TEST: test/test_arbol_tecnologia_[timestamp].csv
 
 ---
 
-### PASO E — 🟡 Modelo de herramientas + Taller del Herrero ⬜
+### PASO L - [MET-TALL] Herramientas + Taller del Herrero
 
 **Archivos:** `src/data/buildings.csv`, `src/data/production.csv`, `src/data/timings.csv`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `index.html`
 
@@ -867,11 +1038,27 @@ En updateUI() añade: renderSmithies()
   - Herramienta pierde durabilidad; al llegar a 0 se desasigna con toast
 ```
 
+PRUEBAS -- [MET-TALL] -- CSV: test/test_MET-TALL_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Construir Taller descuenta madera y piedra;Recursos OK;Construir smithy;Recursos descontados;-;Pendiente
+  U02;Unit;Taller produce hacha al completar timer;Worker asignado;Esperar 4 dias;axe en inventario;-;Pendiente
+  U03;Unit;Sin hacha aserradero produce 0;Aserradero T1 sin hacha;Ver produccion;woodRate=0;-;Pendiente
+  U04;Unit;Hacha pierde durabilidad;Hacha asignada;10 dias;durability < 100;-;Pendiente
+  U05;Unit;Hacha a 0 durabilidad se desasigna;Hacha en 1%;Esperar;assignedTo=null toast;-;Pendiente
+  I01;Integracion;Ciclo: producir hacha -> asignar -> aserradero produce;0 hachas;Producir y asignar;Madera produciendose;-;Pendiente
+  R01;Regresion;Canteras sin pico existen pero rate=0;Cantera construida;Quitar pico;Visible pero rate=0;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_MET-TALL_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_MET-TALL_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO G — 🟡 Sub-recurso mineral de hierro + Forja ⬜
+### PASO M - [MET-FORJA] Mineral de hierro + Forja
 
 **Archivos:** `src/data/buildings.csv`, `src/data/production.csv`, `src/data/timings.csv`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `index.html`
 
@@ -924,6 +1111,21 @@ En index.html — añade Forja en pestaña Construcción y en Producción/subtab
   - Herramienta T2 (pico de hierro) requiere 2 lingotes al producirse
 ```
 
+PRUEBAS -- [MET-FORJA] -- CSV: test/test_MET-FORJA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Cantera con pico produce mineral de hierro;Cantera T1 pico asignado;Tick;state.iron sube;-;Pendiente
+  U02;Unit;Forja convierte 5 mineral en 1 lingote;iron=5 Forja activa;Ciclo;ironBars+=1 iron-=5;-;Pendiente
+  U03;Unit;Herramienta T2 requiere ironBars;ironBars=2 Taller T2;Producir pico T2;ironBars-=2;-;Pendiente
+  U04;Unit;Sin mineral Forja no produce;iron=0;Tick;ironBars sin cambio;-;Pendiente
+  I01;Integracion;Cadena completa cantera->mineral->forja->lingote->herramienta T2;Todo construido;Producir;Pico T2 obtenido;-;Pendiente
+  R01;Regresion;Herramientas T1 siguen produciendose;Taller T1;Producir hacha T1;Hacha T1 OK;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_MET-FORJA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_MET-FORJA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -936,7 +1138,7 @@ En index.html — añade Forja en pestaña Construcción y en Producción/subtab
 
 ---
 
-### M7 -- ROJO Sistema de prioridades para colonos [PENDIENTE]
+### PASO N - [WORK-PRIO] Prioridades de colonos (sustituye asignacion directa)
 
 Archivos: gamestate.js, gameloop.js, ui-render.js, ui-events.js
 
@@ -974,11 +1176,29 @@ VERIFICAR:
   - recalculateRates() sigue correcta
 TEST: test/test_prioridades_colonos_[timestamp].csv + REGRESION: M3, M4, M5 y toda la produccion
 
+PRUEBAS -- [WORK-PRIO] -- CSV: test/test_WORK-PRIO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Colono P1=fogata asignado a fogata;1 fogata 1 colono P1=fogata;Tick;currentTask=fogata;-;Pendiente
+  U02;Unit;Colono pasa a P2 si P1 llena;P1=fogata llena P2=granja;Tick;currentTask=granja;-;Pendiente
+  U03;Unit;Colono idle si todas prioridades llenas;Todas ocupadas;Tick;currentTask=null;-;Pendiente
+  U04;Unit;Sin prioridades colono idle;priorities=[];Tick;currentTask=null;-;Pendiente
+  U05;Unit;Tasas de produccion correctas;2 colonos fogata;Ver rates;foodRate x2 vs 1 colono;-;Pendiente
+  I01;Integracion;Produccion colonia correcta con prioridades;5 colonos 3 edificios;10 dias;Produccion similar a antes;-;Pendiente
+  R01;Regresion;INF-POZO sigue funcionando;Pozo activo;Colono P1=granja;Granja avanza con agua;-;Pendiente
+  R02;Regresion;COL-HAMBRE sigue funcionando;isStarving=true;Anadir comida;Come inmediatamente;-;Pendiente
+  R03;Regresion;CON-OBRA sigue funcionando;playerBuilding set;Intentar recolectar;Toast de error;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_WORK-PRIO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_WORK-PRIO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M8 -- AMARILLO Prioridades de edificios (fallback automatico de recetas) [PENDIENTE]
+### PASO O - [WORK-EDIF] Prioridades de edificios (fallback automatico de recetas)
 
 Archivos: gamestate.js, gameloop.js, ui-render.js
 
@@ -1007,11 +1227,26 @@ VERIFICAR:
   - Al llegar trigo: vuelve a trigo
 TEST: test/test_prioridades_edificios_[timestamp].csv + REGRESION: bonfires y graneros
 
+PRUEBAS -- [WORK-EDIF] -- CSV: test/test_WORK-EDIF_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Fogata sin trigo cambia a patata;trigo=0 patata>0;Tick;cookingRecipeNow=patata;-;Pendiente
+  U02;Unit;Fogata vuelve a trigo al haber trigo;cocinando patata;Anadir trigo;cookingRecipeNow=trigo;-;Pendiente
+  U03;Unit;Para si no hay ninguna receta;Todas sin stock;Tick;cookingRecipeNow=null badge Sin ingredientes;-;Pendiente
+  U04;Unit;Granero sin semillas trigo pasa a patata;sem_trigo=0 sem_patata>0;Tick;produce sem patata;-;Pendiente
+  R01;Regresion;selectedRecipe no cambia solo cookingRecipeNow;selectedRecipe=trigo;Sin trigo;selectedRecipe sigue trigo;-;Pendiente
+  R02;Regresion;WORK-PRIO funciona junto a prioridades edificios;WORK-PRIO activo;Activar fallback;Prioridades colonos OK;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_WORK-EDIF_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_WORK-EDIF_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M15 -- ROJO Slots multiples por tier en edificios [PENDIENTE]
+### PASO P - [WORK-SLOT] Slots multiples por tier en edificios
 
 Archivos: mechanics.csv, gamestate.js, gameloop.js, ui-render.js
 
@@ -1042,6 +1277,23 @@ VERIFICAR:
   - T1: comportamiento sin cambios
 TEST: test/test_slots_multiples_[timestamp].csv + REGRESION: bonfires, graneros, M7
 
+PRUEBAS -- [WORK-SLOT] -- CSV: test/test_WORK-SLOT_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Fogata T1 solo permite 1 worker;Fogata T1;Asignar 2 colonos;Solo 1 aceptado;-;Pendiente
+  U02;Unit;Caldero T2 permite 2 workers con recetas distintas;Caldero T2;Asignar 2 colonos;Ambos producen;-;Pendiente
+  U03;Unit;Cocina T3 bonus +30% velocidad;Cocina T3 1 worker;Comparar ciclo;Ciclo mas rapido;-;Pendiente
+  U04;Unit;Cambiar receta slot 1 no afecta slot 2;Caldero T2 2 slots;Cambiar receta slot 1;Slot 2 sin cambio;-;Pendiente
+  U05;Unit;Migracion save con workerAssigned carga OK;Save antiguo;Cargar;workers array OK;-;Pendiente
+  I01;Integracion;2 colonos Caldero T2 doblan produccion vs 1 Fogata T1;Ambos activos;10 dias;Caldero T2 x2;-;Pendiente
+  R01;Regresion;WORK-PRIO sigue asignando correctamente;WORK-PRIO activo;Asignar via prioridades;Slots respetan limites;-;Pendiente
+  R02;Regresion;WORK-EDIF sigue funcionando con slots;Fallback activo;Sin ingredientes slot 1;Slot 2 sin cambios;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_WORK-SLOT_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_WORK-SLOT_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -1054,7 +1306,7 @@ TEST: test/test_slots_multiples_[timestamp].csv + REGRESION: bonfires, graneros,
 
 ---
 
-### PASO I — 🟡 Ganadería y sub-productos ⬜
+### PASO Q - [FOOD-GRAN] Ganaderia y sub-productos (huevos, pieles, fertilizante)
 
 **Archivos:** `src/js/gamestate.js`, `src/data/prices.csv`, `src/js/gameloop.js`, `src/js/ui-render.js`, `src/js/ui-events.js`, `index.html`
 
@@ -1127,11 +1379,27 @@ En index.html:
   - Pieles de cerdos/vacas se acumulan en state.skins
 ```
 
+PRUEBAS -- [FOOD-GRAN] -- CSV: test/test_FOOD-GRAN_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Comprar gallina descuenta oro;gold>=30;Comprar gallina;gallina en state.animals gold-=30;-;Pendiente
+  U02;Unit;Gallina produce huevos por tick;1 gallina;1 dia;state.eggs>0;-;Pendiente
+  U03;Unit;Cerdo produce fertilizante;1 cerdo;1 dia;state.fertilizer>0;-;Pendiente
+  U04;Unit;Fertilizar granja acelera crecimiento;Granja en grow fert>1;Clic Fertilizar;stageElapsed+=0.5;-;Pendiente
+  U05;Unit;Animales consumen comida diariamente;1 gallina;Ver consumo;food disminuye;-;Pendiente
+  I01;Integracion;Ciclo gallina->huevos->venta mercado;Sistema activo;Producir y vender;Gold sube;-;Pendiente
+  R01;Regresion;Granjas siguen funcionando con animales;Granjas existentes;Comprar animales;Granjas sin cambio;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_FOOD-GRAN_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_FOOD-GRAN_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO K — 🟡 Molino + Cadena de Harina ⬜
+### PASO R - [FOOD-MOLI] Molino + cadena trigo-harina-pan
 
 **Archivos:** `src/data/buildings.csv`, `src/data/timings.csv`, `src/data/production.csv`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `index.html`
 
@@ -1184,11 +1452,26 @@ En updateUI() añade: renderMills()
   - Pan tiene equivalencia de comida mayor que trigo crudo
 ```
 
+PRUEBAS -- [FOOD-MOLI] -- CSV: test/test_FOOD-MOLI_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Molino convierte 5 trigos en 1 harina;wheat=5 Molino activo;Ciclo T1;flour+=1 wheat-=5;-;Pendiente
+  U02;Unit;Fogata T2 puede seleccionar Pan;Fogata T2 flour>=2;Ver selector;Opcion Pan disponible;-;Pendiente
+  U03;Unit;Pan requiere 2 harinas;Caldero T2 flour=2;Ciclo pan;bread+=1 flour-=2;-;Pendiente
+  U04;Unit;Pan equivale a mas comida que trigo;Ambos disponibles;Ver equivalencias;pan_value > wheat_value;-;Pendiente
+  I01;Integracion;Cadena: granja->trigo->molino->harina->pan->comida;Todo activo;30 dias;Colonos alimentados con pan;-;Pendiente
+  R01;Regresion;Recetas previas de fogata siguen disponibles;Fogata T2;Ver selector;Zanahoria patata visibles;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_FOOD-MOLI_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_FOOD-MOLI_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M17 -- AMARILLO Trigo -> grano + paja (MIGRACION CRITICA) [PENDIENTE]
+### PASO S - [FOOD-GRANO] Trigo produce grano + paja (MIGRACION CRITICA state.wheat)
 
 Archivos: production.csv, resources.csv, equivalences.csv, gamestate.js, gameloop.js + GREP en todos los JS
 
@@ -1222,6 +1505,24 @@ VERIFICAR:
   - Fogata sigue cocinando grain
 TEST: test/test_grano_paja_[timestamp].csv + REGRESION CRITICA: granjas, fogatas, mercado, equivalencias, save/load
 
+PRUEBAS -- [FOOD-GRANO] -- CSV: test/test_FOOD-GRANO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Cosechar produce grano Y paja;Granja trigo cosecha;Cosechar;state.grain>0 AND state.straw>0;-;Pendiente
+  U02;Unit;Ratio paja/grano correcto;Cosechar 60 grano;Ver straw;straw=30;-;Pendiente
+  U03;Unit;Save antiguo con wheat carga como grain;Save con wheat>0;Cargar;state.grain=wheat anterior;-;Pendiente
+  U04;Unit;state.wheat=0 tras migracion;Save antiguo;Cargar;wheat=0;-;Pendiente
+  U05;Unit;Fogata sigue cocinando con grain;Fogata grain>0;Tick;Comida producida;-;Pendiente
+  U06;Unit;Mercado muestra grain no wheat;Mercado;Ver lista venta;Grano visible no Trigo;-;Pendiente
+  I01;Integracion;FOOD-MOLI funciona con grain;Molino activo;Moler grano;Harina producida;-;Pendiente
+  R01;Regresion;Equivalencias de comida OK con grain;grain>0;Ver eficiencia;Sin cambio vs antes;-;Pendiente
+  R02;Regresion;Grep state.wheat: 0 resultados excepto migracion;-;Grep src/js;0 refs a wheat;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_FOOD-GRANO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_FOOD-GRANO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -1234,7 +1535,7 @@ TEST: test/test_grano_paja_[timestamp].csv + REGRESION CRITICA: granjas, fogatas
 
 ---
 
-### PASO L — 🟡 Armería y equipo para colonos ⬜
+### PASO T - [COMB-ARME] Armeria y equipo para colonos
 
 **Archivos:** `src/data/buildings.csv`, `src/data/timings.csv`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `index.html`
 
@@ -1275,11 +1576,26 @@ En index.html:
 ✅ Verificar: Armería produce armaduras; equipar colono muestra badge.
 ```
 
+PRUEBAS -- [COMB-ARME] -- CSV: test/test_COMB-ARME_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Armeria requiere ironBars>=20;ironBars<20;Construir;Toast de error;-;Pendiente
+  U02;Unit;Armeria produce armadura cuero con pieles;skins>=2;Completar ciclo;1 armadura cuero;-;Pendiente
+  U03;Unit;Equipar colono con armadura;1 armadura;Equipar;state.equipment set;-;Pendiente
+  U04;Unit;Badge Armadura en colono equipado;Colono equipado;Ver ficha;Badge visible;-;Pendiente
+  I01;Integracion;Cadena: pieles->armeria->armar colonos;Todo activo;Producir y equipar;Colonos armados;-;Pendiente
+  R01;Regresion;FOOD-GRAN sigue produciendo pieles;Ganaderia activa;10 dias;Pieles aumentando;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COMB-ARME_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_COMB-ARME_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO N — 🔴 Sistema de bandidos e incursiones ⬜
+### PASO U - [COMB-RAID] Sistema de bandidos e incursiones
 
 **Archivos:** `src/js/gamestate.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `src/js/buildings.js`, `index.html`
 
@@ -1353,11 +1669,28 @@ En index.html:
   - Sin defensa: pérdida de recursos
 ```
 
+PRUEBAS -- [COMB-RAID] -- CSV: test/test_COMB-RAID_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Probabilidad raid aumenta con dias;Dia 1 vs dia 200;Ver prob;Dia 200 > Dia 1;-;Pendiente
+  U02;Unit;Toast aviso con dias de cuenta atras;Raid activado;Ver UI;Toast visible;-;Pendiente
+  U03;Unit;Banner rojo visible durante cuenta atras;Raid activo;Ver UI;Banner rojo;-;Pendiente
+  U04;Unit;Victoria si defensePoints >= strength;dp>=strength;Ejecutar raid;Gold ganado;-;Pendiente
+  U05;Unit;Derrota pierde 20% madera y comida;dp<strength;Ejecutar raid;Recursos reducidos;-;Pendiente
+  U06;Unit;raidHistory actualizado tras cada raid;1 raid;Ver state.raidHistory;1 entrada;-;Pendiente
+  I01;Integracion;Armadura COMB-ARME anade bonus defensa;Colono equipado;Raid;defensePoints mas alto;-;Pendiente
+  R01;Regresion;Produccion no se detiene durante aviso;Raid en curso;Ver produccion;Edificios produciendo;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COMB-RAID_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_COMB-RAID_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO O — 🟡 Escalado de raids y panel de defensa ⬜
+### PASO V - [COMB-ESCA] Escalado de raids y panel de defensa
 
 **Archivos:** `src/js/gameloop.js`, `src/js/ui-render.js`
 
@@ -1376,11 +1709,25 @@ En src/js/ui-render.js:
 ✅ Verificar: historial de raids se muestra y escala correctamente.
 ```
 
+PRUEBAS -- [COMB-ESCA] -- CSV: test/test_COMB-ESCA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Raid 2 mas fuerte que raid 1;2 raids historial;Comparar strength;strength[1]>strength[0];-;Pendiente
+  U02;Unit;Raid epico (cada 10) tiene doble fuerza;10 raids OK;Raid 11;strength x2;-;Pendiente
+  U03;Unit;Historial visible con al menos 1 raid;1 raid;Ver historial;Tabla con 1 fila;-;Pendiente
+  U04;Unit;Contador raids repelidos correcto;3 victorias 1 derrota;Ver stats;Repelidos=3 Derrotas=1;-;Pendiente
+  R01;Regresion;COMB-RAID base no afectado por escalado;Raids activos;Ver base;Aviso y resultado OK;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COMB-ESCA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_COMB-ESCA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M14 -- AMARILLO Murallas + Puestos de guardia [PENDIENTE]
+### PASO W - [COMB-MURA] Murallas + Puestos de guardia
 
 Archivos: buildings.csv, timings.csv, mechanics.csv, gamestate.js, buildings.js, gameloop.js, ui-render.js, index.html
 
@@ -1413,6 +1760,21 @@ VERIFICAR:
   - 3 guardias en puesto: +15 puntos defensa
 TEST: test/test_murallas_guardia_[timestamp].csv + REGRESION: raids (Paso N)
 
+PRUEBAS -- [COMB-MURA] -- CSV: test/test_COMB-MURA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Empalizada T1 reduce prob raid 20%;Sin vs con empalizada;Ver effectiveProbability;Baja 0.20;-;Pendiente
+  U02;Unit;2 empalizadas T1 reducen 40%;2 empalizadas T1;Ver prob;Baja 0.40;-;Pendiente
+  U03;Unit;Guardia anade 5 defensePoints;1 guardia;Ver defensePoints;+5;-;Pendiente
+  U04;Unit;Puesto max 3 guardias;4 colonos;Asignar 4;Solo 3 aceptados;-;Pendiente
+  I01;Integracion;Empalizada T2 + 3 guardias: raids muy poco frecuentes;Todo activo;500 dias dev;Pocos raids;-;Pendiente
+  R01;Regresion;COMB-RAID sigue ocurriendo (menos frecuente);Raids activos;Jugar con muralla;Raids ocurren;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COMB-MURA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_COMB-MURA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -1425,7 +1787,7 @@ TEST: test/test_murallas_guardia_[timestamp].csv + REGRESION: raids (Paso N)
 
 ---
 
-### M12 -- ROJO Estaciones del anyo [PENDIENTE]
+### PASO X - [ENV-ESTA] Estaciones del anyo (primavera/verano/otono/invierno)
 
 Archivos: mechanics.csv, gamestate.js, gameloop.js, ui-render.js, index.html
 
@@ -1462,11 +1824,29 @@ VERIFICAR:
   - Anyo 2 empieza en dia 121
 TEST: test/test_estaciones_[timestamp].csv + REGRESION: granjas y recoleccion frutos
 
+PRUEBAS -- [ENV-ESTA] -- CSV: test/test_ENV-ESTA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Dia 1-30 del anyo: primavera;yearDay=1;Ver currentSeason;spring;-;Pendiente
+  U02;Unit;Dia 91 del anyo: invierno;yearDay=91;Ver currentSeason;winter;-;Pendiente
+  U03;Unit;Al llegar invierno: cultivos reseteados;Granja en grow dia 91;Ver granjas;stage=idle activeCrop=null;-;Pendiente
+  U04;Unit;En invierno granjas no avanzan;Invierno granja sembrada;Tick;stageElapsed no cambia;-;Pendiente
+  U05;Unit;Frutos silvestres: produccion=0 en invierno;Invierno recoleccion;Tick;berries sin aumento;-;Pendiente
+  U06;Unit;Primavera: cultivo disponible de nuevo;Invierno->primavera;Plantar;Granja avanza;-;Pendiente
+  I01;Integracion;Jugador sobrevive el invierno con stock;Comida stockeada;Pasar invierno;Colonos vivos;-;Pendiente
+  R01;Regresion;PROD-RAND no afectado en invierno (solo granjas y frutos);Aserradero activo;Invierno;Madera sigue produciendose;-;Pendiente
+  R02;Regresion;INF-POZO: agua se repone en invierno;Pozo activo;Amanecer invierno;waterToday=waterMax-consumo;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_ENV-ESTA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_ENV-ESTA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M13a -- AMARILLO Quemador de madera + recurso Calor [PENDIENTE]
+### PASO Y - [ENV-CALO] Quemador de madera + recurso Calor global
 
 Archivos: buildings.csv, timings.csv, mechanics.csv, gamestate.js, buildings.js, gameloop.js, ui-render.js, index.html
 
@@ -1510,11 +1890,28 @@ VERIFICAR:
   - Con deficit: fogata para automaticamente
 TEST: test/test_calor_quemador_[timestamp].csv + REGRESION: fogatas y forjas
 
+PRUEBAS -- [ENV-CALO] -- CSV: test/test_ENV-CALO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Sin quemador: fogata no cocina;0 quemadores;Tick fogata;foodRate=0;-;Pendiente
+  U02;Unit;Quemador activo: heatStock sube;Quemador activo wood>0;1 dia;heatStock>0;-;Pendiente
+  U03;Unit;Fogata consume heatStock;heatStock=10 fogata ON;Tick;heatStock<10;-;Pendiente
+  U04;Unit;heatStock no supera heatCapacity;Quemador activo;Muchos dias;heatStock<=heatCapacity;-;Pendiente
+  U05;Unit;Sin madera quemador para;wood=0;Tick;heatStock no sube;-;Pendiente
+  I01;Integracion;Cadena: madera->quemador->calor->fogata cocina;Todo activo;5 dias;Comida produciendose;-;Pendiente
+  R01;Regresion;Invierno no afecta al quemador;Invierno quemador;Tick;Sigue generando calor;-;Pendiente
+  R02;Regresion;MET-FORJA: forja necesita calor;Forja activa sin calor;Tick;Forja no produce;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_ENV-CALO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_ENV-CALO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M13b -- AMARILLO Calor en casas (invierno) [PENDIENTE]
+### PASO Z - [ENV-INVI] Calor en casas durante el invierno
 
 Archivos: mechanics.csv, gameloop.js, ui-render.js
 
@@ -1543,6 +1940,22 @@ VERIFICAR:
   - Primavera -> penalizacion eliminada
 TEST: test/test_calor_casas_invierno_[timestamp].csv + REGRESION: M12, M13a, eficiencia colonos
 
+PRUEBAS -- [ENV-INVI] -- CSV: test/test_ENV-INVI_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Verano: coldPenaltyActive=false;Verano;Ver eficiencia;Sin penalizacion;-;Pendiente
+  U02;Unit;Invierno con calor suficiente: sin penalizacion;Invierno heatStock OK;Cambio dia;coldPenaltyActive=false;-;Pendiente
+  U03;Unit;Invierno sin calor: -30% eficiencia;Invierno heatStock=0;Cambio dia;Eficiencia *= 0.7;-;Pendiente
+  U04;Unit;Casa aislada consume -50% calor;1 aislada 1 sin aislar;Invierno;heatNeeded reducido;-;Pendiente
+  U05;Unit;Primavera: penalizacion eliminada;Invierno->primavera;Ver estado;coldPenaltyActive=false;-;Pendiente
+  I01;Integracion;Todas casas aisladas + quemador: sin penalizacion;Todo activo;Pasar invierno;Sin badge Frio;-;Pendiente
+  R01;Regresion;ENV-ESTA sigue calculando invierno OK;Sistema estaciones;Transicion;currentSeason=winter;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_ENV-INVI_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_ENV-INVI_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -1555,7 +1968,7 @@ TEST: test/test_calor_casas_invierno_[timestamp].csv + REGRESION: M12, M13a, efi
 
 ---
 
-### M16 -- VERDE Recolector de barro [PENDIENTE]
+### PASO AA - [MAT-BARRO] Recolector de barro (requiere Pala)
 
 Archivos: buildings.csv, timings.csv, production.csv, resources.csv, mechanics.csv, gamestate.js, buildings.js, gameloop.js, ui-render.js, index.html
 
@@ -1576,11 +1989,25 @@ VERIFICAR:
   - Con Pala T1: produce barro en ciclos de 3 dias
 TEST: test/test_recolector_barro_[timestamp].csv
 
+PRUEBAS -- [MAT-BARRO] -- CSV: test/test_MAT-BARRO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Sin Pala mudpit produce 0;Mudpit sin pala;Ver produccion;mud no aumenta;-;Pendiente
+  U02;Unit;Con Pala T1: produce barro en 3 dias;Pala T1 asignada;3 dias;mud+=8;-;Pendiente
+  U03;Unit;Barro en panel de recursos;mud>0;Ver recursos;Card barro visible;-;Pendiente
+  U04;Unit;Pala fabricada en Taller;Taller activo;Producir pala;shovel_t1 en inventario;-;Pendiente
+  R01;Regresion;MET-TALL: durabilidad afecta a la Pala;Pala asignada;N dias;Durabilidad baja;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_MAT-BARRO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_MAT-BARRO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### M18 -- AMARILLO Adobe + aislamiento de casas [PENDIENTE]
+### PASO AB - [MAT-ADOBE] Adobe + aislamiento de casas
 
 Archivos: production.csv, resources.csv, mechanics.csv, gamestate.js, buildings.js, ui-render.js, ui-events.js
 
@@ -1613,6 +2040,24 @@ VERIFICAR:
   - En invierno: casa aislada consume -50% calor
 TEST: test/test_adobe_aislamiento_[timestamp].csv + REGRESION: M13b, M16, M17
 
+PRUEBAS -- [MAT-ADOBE] -- CSV: test/test_MAT-ADOBE_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Granero puede seleccionar receta Adobe;Granero mud>0 straw>0;Ver selector;Opcion Adobe disponible;-;Pendiente
+  U02;Unit;Adobe consume barro (3) y paja (2);mud=3 straw=2;Ciclo Adobe;adobe+=2 mud-=3 straw-=2;-;Pendiente
+  U03;Unit;Boton aislar disabled si adobe=0;adobe=0;Ver boton casa;Boton disabled;-;Pendiente
+  U04;Unit;Aislar casa T1 descuenta 5 adobe;adobe=5;Clic Aislar;adobe=0 insulated=true;-;Pendiente
+  U05;Unit;Badge Aislada visible en casa aislada;insulated=true;Ver UI;Badge visible;-;Pendiente
+  I01;Integracion;Cadena barro+paja->adobe->aislar->invierno sin penalizacion;Todo activo;Pasar invierno;Sin penalizacion;-;Pendiente
+  R01;Regresion;MAT-BARRO sigue produciendo barro;Mudpit activo;Adobe en paralelo;Barro OK;-;Pendiente
+  R02;Regresion;FOOD-GRANO produce paja;Granja activa;Cosechar;paja producida;-;Pendiente
+  R03;Regresion;ENV-INVI calcula calor con casas aisladas;Sistema invierno;Pasar invierno;heatNeeded reducido;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_MAT-ADOBE_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_MAT-ADOBE_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
@@ -1625,7 +2070,7 @@ TEST: test/test_adobe_aislamiento_[timestamp].csv + REGRESION: M13b, M16, M17
 
 ---
 
-### PASO R — 🟡 Panel de métricas de economía ⬜
+### PASO AC - [POL-METR] Panel de metricas de economia
 
 **Archivos:** `src/js/ui-render.js`, `src/js/gameloop.js`
 
@@ -1656,11 +2101,25 @@ Se actualiza en cada updateUI() solo si devModeActive.
 ✅ Verificar: el panel muestra balances de comida coherentes con el estado actual.
 ```
 
+PRUEBAS -- [POL-METR] -- CSV: test/test_POL-METR_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Panel de metricas visible;Juego cargado;Ver UI;Panel visible;-;Pendiente
+  U02;Unit;Ingreso diario de oro correcto;Mercado auto activo;Ver metrica oro;Valor correcto;-;Pendiente
+  U03;Unit;Consumo comida diario correcto;3 colonos;Ver metrica comida;3*consumo_colono;-;Pendiente
+  U04;Unit;Eficiencia colonia visible;Colonos hambrientos;Ver metricas;Porcentaje<100%;-;Pendiente
+  R01;Regresion;Metricas no afectan logica del juego;Panel visible;Ver tasas reales;Produccion sin cambio;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_POL-METR_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_POL-METR_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO T — 🟡 Balance pass: ajuste de CSVs ⬜
+### PASO AD - [POL-BALA] Balance pass: ajuste de parametros en CSVs
 
 **Archivos:** `src/data/timings.csv`, `src/data/production.csv`, `src/data/buildings.csv`, `src/data/prices.csv`
 
@@ -1703,11 +2162,25 @@ Documenta cambios con comentarios (#) en cada CSV.
   un jugador puede sobrevivir sus primeros 10 días.
 ```
 
+PRUEBAS -- [POL-BALA] -- CSV: test/test_POL-BALA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;1 colono + 1 granja: sobrevivir 10 dias;Reset partida;10 dias;Colono vivo;-;Pendiente
+  U02;Unit;Primeros edificios alcanzables en <5 dias;Partida nueva;5 dias recoleccion;Madera+piedra para Choza;-;Pendiente
+  U03;Unit;Vender pan mas rentable que trigo crudo;Mercado activo;Comparar precios;pan>trigo;-;Pendiente
+  U04;Unit;Herramienta T1: vida ~67 dias;Hacha T1 asignada;Modo dev;durability=0 en dia ~67;-;Pendiente
+  U05;Unit;5o colono alcanzable en ~30 dias;Partida normal;30 dias;Rep suficiente para 5o colono;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_POL-BALA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_POL-BALA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ---
 
-### PASO V — 🟡 Tutorial de primera partida ⬜
+### PASO AE - [POL-TUTO] Tutorial de primera partida
 
 **Archivos:** `src/js/gamestate.js`, `src/js/ui-render.js`, `src/js/ui-events.js`, `src/css/styles.css`, `index.html`
 
@@ -1796,6 +2269,21 @@ Llama a checkTutorialProgress() desde updateUI()
   Saltar lo oculta. Partida cargada no muestra tutorial si ya fue completado.
 ```
 
+PRUEBAS -- [POL-TUTO] -- CSV: test/test_POL-TUTO_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Tutorial aparece en partida nueva;Reset partida;Ver UI;Panel tutorial visible;-;Pendiente
+  U02;Unit;Tutorial no aparece si ya completado;tutorialCompleted=true;Cargar;Panel oculto;-;Pendiente
+  U03;Unit;Paso 0 resalta botones de recoleccion;Tutorial paso 0;Ver UI;Clase highlight en botones;-;Pendiente
+  U04;Unit;Avanza al cumplir condicion;Tutorial paso 0;Recolectar wood=10;Avanza paso 1;-;Pendiente
+  U05;Unit;Saltar tutorial oculta panel;Tutorial visible;Clic Saltar;Panel oculto tutorialCompleted=true;-;Pendiente
+  R01;Regresion;Juego funciona con tutorial visible;Tutorial activo;5 dias;Sin errores;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_POL-TUTO_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_POL-TUTO_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ## 📊 Tabla de seguimiento
@@ -1832,7 +2320,7 @@ Llama a checkTutorialProgress() desde updateUI()
 
 ---
 
-### M10 -- AMARILLO Vista 2D del pueblo (baja prioridad) [PENDIENTE]
+### PASO AF - [POL-VISTA] Vista 2D del pueblo (baja prioridad, opcional)
 
 Archivos: src/js/ui-render.js, src/css/styles.css, index.html
 
@@ -1849,6 +2337,19 @@ PROPUESTA SIMPLIFICADA:
 
 TEST: test/test_vista_2d_[timestamp].csv
 
+PRUEBAS -- [POL-VISTA] -- CSV: test/test_POL-VISTA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Edificios aparecen en mapa al construirlos;Construir aserradero;Ver pestana Pueblo;Icono en grid;-;Pendiente
+  U02;Unit;Colono tiene posicion que corresponde a su tarea;Colono en granja;Ver mapa;Punto en celda granja;-;Pendiente
+  U03;Unit;Colono idle en celda central o casa;Colono idle;Ver mapa;Punto en home;-;Pendiente
+  R01;Regresion;Rendimiento no afectado por vista 2D;Grid visible;10 dias;Sin lag notable;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_POL-VISTA_{YYYYMMDD}_{HHMMSS}.csv` (por ejemplo: `test_POL-VISTA_20260629_120000.csv`).
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego (puedes usar el Panel de Desarrollo Ctrl+Shift+D para acelerar o inyectar recursos). Completa la columna `Resultado_Real` con el comportamiento observado y marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en [test/README.md](file:///C:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/README.md).
 ---
 
 ## BACKLOG NX -- Largo plazo (implementar tras M18)

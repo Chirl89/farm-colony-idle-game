@@ -82,5 +82,9 @@ Los estados posibles para cada prueba son: `PASS` | `FAIL` | `SKIP` | `PENDING`.
 | [test_REP-TABL_20260630_101500.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REP-TABL_20260630_101500.csv) | Tablón de pedidos (PASO I) | 2026-06-30 | 7 PASS, 0 FAIL |
 | [test_REF-PARAM_20260630_151320.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REF-PARAM_20260630_151320.csv) | Refactor Parametrizacion y Modularidad | 2026-06-30 | 8 PASS, 0 FAIL |
 | [test_REP-MISI_20260630_160000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REP-MISI_20260630_160000.csv) | Sistema de misiones + especialistas (PASO J) | 2026-06-30 | 9 PASS, 0 FAIL |
+| [test_REC-DESC_20260701_090100.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REC-DESC_20260701_090100.csv) | Descartar recursos en recolección (PASO J.1) | 2026-07-01 | 5 PASS, 0 FAIL |
+| [test_ALM-REFA_20260701_070716.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_ALM-REFA_20260701_070716.csv) | Almacenes de dos tipos únicos (PASO J.2) | 2026-07-01 | 6 PASS, 0 FAIL |
+| [test_COM-TRIP_20260701_140400.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_COM-TRIP_20260701_140400.csv) | Comercio con tres pueblos y caravanas temporales (PASO J.3) | 2026-07-01 | 7 PASS, 0 FAIL |
+
 
 

@@ -1735,7 +1735,49 @@ function updateUI() {
   DOM.resGold.textContent = Math.floor(state.gold);
   if (DOM.resWood) DOM.resWood.textContent = Math.floor(state.wood);
   if (DOM.resStone) DOM.resStone.textContent = Math.floor(state.stone);
-  DOM.resFood.textContent = Math.floor(state.food);
+  
+  const foodOcc = typeof getFoodOccupation === 'function' ? getFoodOccupation() : 0;
+  const foodCap = state.maxFoodCapacity || 100;
+  const foodNutri = Math.floor(state.food);
+  if (DOM.resFood) {
+    DOM.resFood.textContent = `${Math.floor(foodOcc)} / ${foodCap}`;
+    
+    let nutriEl = document.getElementById('res-food-nutrition');
+    if (!nutriEl) {
+      nutriEl = document.createElement('div');
+      nutriEl.id = 'res-food-nutrition';
+      nutriEl.style.fontSize = '0.7rem';
+      nutriEl.style.color = 'var(--color-text-muted)';
+      nutriEl.style.fontWeight = '500';
+      nutriEl.style.marginTop = '0.2rem';
+      DOM.resFood.parentNode.insertBefore(nutriEl, document.getElementById('rate-food'));
+    }
+    nutriEl.textContent = `Nutrición: ${foodNutri}`;
+  }
+  
+  const resourcesCardVal = document.querySelector('#card-resources .resource-value');
+  if (resourcesCardVal) {
+    const resOcc = typeof getResourcesOccupation === 'function' ? getResourcesOccupation() : 0;
+    const resCap = state.maxResourcesCapacity || 100;
+    
+    resourcesCardVal.style.fontSize = '';
+    resourcesCardVal.style.color = '';
+    resourcesCardVal.style.fontWeight = '';
+    resourcesCardVal.style.marginTop = '';
+    resourcesCardVal.textContent = `${Math.round(resOcc)} / ${resCap}`;
+    
+    let subEl = document.getElementById('res-detail-subtitle');
+    if (!subEl) {
+      subEl = document.createElement('div');
+      subEl.id = 'res-detail-subtitle';
+      subEl.style.fontSize = '0.7rem';
+      subEl.style.color = 'var(--color-text-muted)';
+      subEl.style.fontWeight = '500';
+      subEl.style.marginTop = '0.2rem';
+      subEl.textContent = 'Ver detalles';
+      resourcesCardVal.parentNode.appendChild(subEl);
+    }
+  }
   if (DOM.resCooked) DOM.resCooked.textContent = Math.floor(state.cookedFood || 0);
   if (DOM.resWheat) DOM.resWheat.textContent = Math.floor(state.wheat || 0);
   if (DOM.resPotato) DOM.resPotato.textContent = Math.floor(state.potato || 0);
@@ -1829,11 +1871,15 @@ function updateUI() {
   if (DOM.countBasicHouses) DOM.countBasicHouses.textContent = `Construidas: ${state.basicHouses}`;
 
   // Contadores en Construcción
-  document.getElementById('count-lumbermills').innerText = `Construidos: ${state.lumberMills.length}`;
-  document.getElementById('count-quarries').innerText = `Construidas: ${state.quarries.length}`;
-  document.getElementById('count-farms').innerText = `Construidas: ${state.farms ? state.farms.length : 0}`;
+  const countLumbermillsEl = document.getElementById('count-lumbermills');
+  if (countLumbermillsEl) countLumbermillsEl.innerText = `Construidos: ${state.lumberMills.length}`;
+  const countQuarriesEl = document.getElementById('count-quarries');
+  if (countQuarriesEl) countQuarriesEl.innerText = `Construidas: ${state.quarries.length}`;
+  const countFarmsEl = document.getElementById('count-farms');
+  if (countFarmsEl) countFarmsEl.innerText = `Construidas: ${state.farms ? state.farms.length : 0}`;
   if (DOM.countBonfires) DOM.countBonfires.innerText = `Construidas: ${state.bonfires ? state.bonfires.length : 0}`;
-  document.getElementById('count-markets').innerText = `Construidos: ${state.markets ? state.markets.length : 0}`;
+  const countMarketsEl = document.getElementById('count-markets');
+  if (countMarketsEl) countMarketsEl.innerText = `Construidos: ${state.markets ? state.markets.length : 0}`;
   if (DOM.countGranaries) DOM.countGranaries.innerText = `Construidos: ${state.granaries ? state.granaries.length : 0}`;
   const countWellsEl = document.getElementById('count-wells');
   if (countWellsEl) countWellsEl.innerText = `Construidos: ${state.wells ? state.wells.length : 0}`;
@@ -1848,59 +1894,12 @@ function updateUI() {
   const countSeedsW = document.getElementById('count-warehouse-seeds');
   if (countSeedsW) countSeedsW.innerText = `Construidos: ${state.warehouses ? state.warehouses.filter(w => w.type === 'seeds' && !w.isUnderConstruction).length : 0}`;
 
-  // Sincronizar inputs de auto-venta en Comercio y controlar visibilidad
-  const marketLockedMsg = document.getElementById('market-locked-msg');
-  const marketActiveHeader = document.getElementById('market-active-header-card');
-  const marketActiveTables = document.getElementById('market-active-tables');
-  
-  const countMarkets = state.markets ? state.markets.length : 0;
-  const isMarketBuilt = countMarkets > 0 && !state.markets[0].isUnderConstruction;
-  
-  if (isMarketBuilt) {
-    if (marketLockedMsg) marketLockedMsg.style.display = 'none';
-    if (marketActiveHeader) marketActiveHeader.style.display = 'flex';
-    if (marketActiveTables) marketActiveTables.style.display = 'grid';
-    
-    renderAutoSellSettings();
-    renderAutoBuySettings();
-    
-    // Sincronizar indicadores globales del Mercado en Comercio
-    const anyActive = state.markets.some(m => m.workerAssigned > 0);
-    const indicator = document.getElementById('market-indicator');
-    const statusText = document.getElementById('market-status-text');
-    const globalProgressBar = document.getElementById('market-progress');
-    
-    if (indicator) {
-      if (anyActive) indicator.classList.add('active');
-      else indicator.classList.remove('active');
-    }
-    if (statusText) {
-      const runningMarket = state.markets.find(m => m.isRunning);
-      if (runningMarket && !anyActive) {
-        statusText.innerText = 'Pausado: Sin Mercader';
-      } else {
-        statusText.innerText = anyActive ? 'Operando' : 'Sin Mercader';
-      }
-    }
-    if (globalProgressBar) {
-      const runningMarket = state.markets.find(m => m.isRunning);
-      if (runningMarket) {
-        const pct = Math.min(100, (runningMarket.elapsed / runningMarket.targetDuration) * 100);
-        globalProgressBar.style.width = `${pct}%`;
-      } else {
-        globalProgressBar.style.width = anyActive ? '100%' : '0%';
-      }
-    }
-  } else {
-    if (marketLockedMsg) marketLockedMsg.style.display = 'block';
-    if (marketActiveHeader) marketActiveHeader.style.display = 'none';
-    if (marketActiveTables) marketActiveTables.style.display = 'none';
+  // Renderizado de Comercio (Comercio Personal siempre abierto, Caravanas requiere mercado)
+  if (typeof renderTradeTab === 'function') {
+    renderTradeTab();
   }
-
-  // Sincronizar el asignador de mercaderes del Commerce tab
-  const allocMarket = document.getElementById('alloc-market');
-  if (allocMarket) {
-    allocMarket.textContent = state.markets && state.markets[0] ? (state.markets[0].workerAssigned || 0) : 0;
+  if (typeof updatePlayerTravelOverlay === 'function') {
+    updatePlayerTravelOverlay();
   }
 
   // Actualizar estadísticas de colonos y desglose de trabajos
@@ -1916,27 +1915,6 @@ function updateUI() {
   if (DOM.jobStatBonfire) DOM.jobStatBonfire.textContent = state.bonfires ? state.bonfires.reduce((sum, b) => sum + (b.workerAssigned || 0), 0) : 0;
   if (DOM.jobStatMarket) DOM.jobStatMarket.textContent = state.markets ? state.markets.reduce((sum, m) => sum + (m.workerAssigned || 0), 0) : 0;
   if (DOM.jobStatGranary) DOM.jobStatGranary.textContent = state.granaries ? state.granaries.reduce((sum, g) => sum + (g.workerAssigned || 0), 0) : 0;
-
-  // Renderizar o actualizar el dropdown del mercado en Comercio si está operativo
-  const marketDropdownContainer = document.getElementById('market-worker-dropdown-container');
-  if (marketDropdownContainer) {
-    if (isMarketBuilt) {
-      const assignedIds = state.colonists ? state.colonists.filter(c => c.job === 'markets_0').map(c => c.id).join(',') : '';
-      const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-      const currentDropdownKey = `${assignedIds}_free:${freeColonistsStr}`;
-      
-      if (typeof window.lastRenderedMarketDropdownKey === 'undefined') {
-        window.lastRenderedMarketDropdownKey = null;
-      }
-      if (window.lastRenderedMarketDropdownKey !== currentDropdownKey) {
-        window.lastRenderedMarketDropdownKey = currentDropdownKey;
-        marketDropdownContainer.innerHTML = renderBuildingWorkerDropdowns('markets', 0, 1);
-      }
-    } else {
-      window.lastRenderedMarketDropdownKey = null;
-      marketDropdownContainer.innerHTML = '';
-    }
-  }
 
   renderTownHallUI();
   renderHiringCandidates();
@@ -2190,7 +2168,7 @@ function updateButtonStates() {
   const updateBtnState = (btnId, cfg, needsTh = true) => {
     const btn = document.getElementById(btnId);
     if (btn) {
-      btn.disabled = (needsTh && !thBuilt) || !canAffordBuilding(cfg);
+      btn.disabled = (needsTh && !thBuilt) || !canAffordBuilding(cfg) || state.playerOnMission;
       updateCostBadgesAffordability(btnId, cfg);
     }
   };
@@ -2215,16 +2193,60 @@ function updateButtonStates() {
     }
   }
 
-  // Costos almacenes
-  const wWood = CONFIG.Storage?.warehouse_wood || { cost_gold: 20, cost_wood: 10 };
-  const wStone = CONFIG.Storage?.warehouse_stone || { cost_gold: 15, cost_wood: 25 };
-  const wFood = CONFIG.Storage?.warehouse_food || { cost_gold: 25, cost_wood: 15 };
-  const wSeeds = CONFIG.Storage?.warehouse_seeds || { cost_gold: 20, cost_wood: 10 };
+  // Repurpose wood warehouse card to Resource Warehouse
+  const btnWood = document.getElementById('btn-build-warehouse-wood');
+  if (btnWood) {
+    const item = btnWood.closest('.building-item');
+    if (item) {
+      const nameEl = item.querySelector('.building-name');
+      if (nameEl) nameEl.textContent = 'Almacén de Recursos';
+      const descEl = item.querySelector('.building-desc');
+      if (descEl) descEl.textContent = 'Aumenta la capacidad máxima de recursos (Madera, Piedra, Oro, Semillas) en +200.';
+      
+      const countEl = document.getElementById('count-warehouse-wood');
+      if (countEl) {
+        const builtCount = state.warehouses ? state.warehouses.filter(w => w.type === 'resource' && !w.isUnderConstruction).length : 0;
+        countEl.textContent = `Construidos: ${builtCount}`;
+      }
+    }
+  }
 
-  updateBtnState('btn-build-warehouse-wood', wWood);
-  updateBtnState('btn-build-warehouse-stone', wStone);
-  updateBtnState('btn-build-warehouse-food', wFood);
-  updateBtnState('btn-build-warehouse-seeds', wSeeds);
+  // Repurpose food warehouse card to Food Granary
+  const btnFood = document.getElementById('btn-build-warehouse-food');
+  if (btnFood) {
+    const item = btnFood.closest('.building-item');
+    if (item) {
+      const nameEl = item.querySelector('.building-name');
+      if (nameEl) nameEl.textContent = 'Almacén de Comida';
+      const descEl = item.querySelector('.building-desc');
+      if (descEl) descEl.textContent = 'Aumenta la capacidad máxima de alimentos en +200.';
+      
+      const countEl = document.getElementById('count-warehouse-food');
+      if (countEl) {
+        const builtCount = state.warehouses ? state.warehouses.filter(w => w.type === 'food' && !w.isUnderConstruction).length : 0;
+        countEl.textContent = `Construidos: ${builtCount}`;
+      }
+    }
+  }
+
+  // Hide stone and seeds warehouse cards
+  const btnStone = document.getElementById('btn-build-warehouse-stone');
+  if (btnStone) {
+    const item = btnStone.closest('.building-item');
+    if (item) item.style.display = 'none';
+  }
+  const btnSeeds = document.getElementById('btn-build-warehouse-seeds');
+  if (btnSeeds) {
+    const item = btnSeeds.closest('.building-item');
+    if (item) item.style.display = 'none';
+  }
+
+  // Costos almacenes
+  const resWarehouseCfg = CONFIG.Storage?.resource_warehouse || { cost_gold: 20, cost_wood: 10, cost_stone: 10 };
+  const foodGranaryCfg = CONFIG.Storage?.food_granary || { cost_gold: 25, cost_wood: 15, cost_stone: 15 };
+
+  updateBtnState('btn-build-warehouse-wood', resWarehouseCfg);
+  updateBtnState('btn-build-warehouse-food', foodGranaryCfg);
 
   // Botón contratar colono obsoleto (gestionado individualmente por candidato)
   if (DOM.btnHireColonist) {
@@ -2232,48 +2254,23 @@ function updateButtonStates() {
     DOM.btnHireColonist.disabled = !(spaceAvailable && state.gold >= bHire.cost_gold);
   }
 
-  // Marketplace - Ventas manuales unificadas habilitadas según stock
-  if (CONFIG && CONFIG.Sales) {
-    const selectEl = document.getElementById('sell-resource-select');
-    if (selectEl) {
-      const type = selectEl.value;
-      const saleRule = CONFIG.Sales[`sell_${type}_manual`];
-      if (saleRule) {
-        const consumeUnit = saleRule.consume_amount;
-        const currentStock = getResourceStock(type);
-        
-        const btnSell1 = document.getElementById('btn-sell-1');
-        if (btnSell1) btnSell1.disabled = currentStock < (1 * consumeUnit);
-        
-        const btnSell10 = document.getElementById('btn-sell-10');
-        if (btnSell10) btnSell10.disabled = currentStock < (10 * consumeUnit);
-        
-        const btnSell100 = document.getElementById('btn-sell-100');
-        if (btnSell100) btnSell100.disabled = currentStock < (100 * consumeUnit);
-      }
-    }
+  // Descarte manual - Habilitación de botones según stock
+  const selectEl = document.getElementById('sell-resource-select');
+  if (selectEl) {
+    const type = selectEl.value;
+    const currentStock = getResourceStock(type);
+    
+    const btnDiscard10 = document.getElementById('btn-discard-10');
+    if (btnDiscard10) btnDiscard10.disabled = currentStock < 10;
+    
+    const btnDiscard100 = document.getElementById('btn-discard-100');
+    if (btnDiscard100) btnDiscard100.disabled = currentStock < 100;
+    
+    const btnDiscardAll = document.getElementById('btn-discard-all');
+    if (btnDiscardAll) btnDiscardAll.disabled = currentStock <= 0;
   }
 
-  // Marketplace - Compras manuales unificadas habilitadas según oro
-  if (CONFIG && CONFIG.Sales) {
-    const buySelectEl = document.getElementById('buy-resource-select');
-    if (buySelectEl) {
-      const type = buySelectEl.value;
-      const buyRule = CONFIG.Sales[`buy_${type}`];
-      if (buyRule) {
-        const costPerUnit = buyRule.cost_gold || 0;
-        
-        const btnBuy1 = document.getElementById('btn-buy-1');
-        if (btnBuy1) btnBuy1.disabled = state.gold < (1 * costPerUnit);
-        
-        const btnBuy10 = document.getElementById('btn-buy-10');
-        if (btnBuy10) btnBuy10.disabled = state.gold < (10 * costPerUnit);
-        
-        const btnBuy100 = document.getElementById('btn-buy-100');
-        if (btnBuy100) btnBuy100.disabled = state.gold < (100 * costPerUnit);
-      }
-    }
-  }
+
 
   // Ocultar mercado si ya se ha construido uno
   const marketCard = document.getElementById('build-market-card');
@@ -2285,21 +2282,7 @@ function updateButtonStates() {
     }
   }
 
-  // Habilitar/Deshabilitar pestaña de Comercio
-  const hasMarket = state.markets && state.markets.length >= 1;
-  const salesTabBtn = document.getElementById('tab-btn-sales');
-  if (salesTabBtn) {
-    if (!hasMarket) {
-      salesTabBtn.classList.add('tab-btn-locked');
-      salesTabBtn.setAttribute('title', 'Requiere un Puesto de Mercado para comerciar');
-      if (state.currentTab === 'sales') {
-        switchTab('basic');
-      }
-    } else {
-      salesTabBtn.classList.remove('tab-btn-locked');
-      salesTabBtn.removeAttribute('title');
-    }
-  }
+
 
   // Cooldown de Recolección Manual (Global)
   const cooldown = state.gatherCooldown || 0;
@@ -2400,15 +2383,11 @@ function updateStaticTextsFromConfig() {
   }
 
   // Costes de Almacenes dinámicos
-  const wWood = CONFIG.Storage?.warehouse_wood || { cost_gold: 20, cost_wood: 10 };
-  const wStone = CONFIG.Storage?.warehouse_stone || { cost_gold: 15, cost_wood: 25 };
-  const wFood = CONFIG.Storage?.warehouse_food || { cost_gold: 25, cost_wood: 15 };
-  const wSeeds = CONFIG.Storage?.warehouse_seeds || { cost_gold: 20, cost_wood: 10 };
+  const resWarehouseCfg = CONFIG.Storage?.resource_warehouse || { cost_gold: 20, cost_wood: 10, cost_stone: 10 };
+  const foodGranaryCfg = CONFIG.Storage?.food_granary || { cost_gold: 25, cost_wood: 15, cost_stone: 15 };
 
-  updateBuildingCostDisplays('btn-build-warehouse-wood', wWood);
-  updateBuildingCostDisplays('btn-build-warehouse-stone', wStone);
-  updateBuildingCostDisplays('btn-build-warehouse-food', wFood);
-  updateBuildingCostDisplays('btn-build-warehouse-seeds', wSeeds);
+  updateBuildingCostDisplays('btn-build-warehouse-wood', resWarehouseCfg);
+  updateBuildingCostDisplays('btn-build-warehouse-food', foodGranaryCfg);
 
   // Aldeanos
   const bHire = (CONFIG.Building && CONFIG.Building.hire_colonist) || (CONFIG.Sales && CONFIG.Sales.hire_colonist) || { cost_gold: 50 };
@@ -2454,65 +2433,23 @@ function updateStaticTextsFromConfig() {
     wheat_seeds: '🌾🌱', potato_seeds: '🥔🌱', carrot_seeds: '🥕🌱'
   };
 
+  // Descartar Recursos - Inicialización del selector
   const sellSelect = document.getElementById('sell-resource-select');
-  if (sellSelect && CONFIG.Sales) {
+  if (sellSelect) {
     const prevVal = sellSelect.value;
     sellSelect.innerHTML = '';
-    for (let key in CONFIG.Sales) {
-      if (key.startsWith('sell_') && key.endsWith('_manual')) {
-        const type = key.replace('sell_', '').replace('_manual', '');
-        const sale = CONFIG.Sales[key];
-        const price = sale.yield / sale.consume_amount;
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
-        sellSelect.appendChild(opt);
-      }
-    }
+    const discardable = ['wood', 'stone', 'wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat_seeds', 'potato_seeds', 'carrot_seeds'];
+    discardable.forEach(type => {
+      const opt = document.createElement('option');
+      opt.value = type;
+      opt.text = `${icons[type] || ''} ${rawNames[type] || type}`;
+      sellSelect.appendChild(opt);
+    });
     if (prevVal) sellSelect.value = prevVal;
     if (!sellSelect.value && sellSelect.options.length > 0) {
       sellSelect.selectedIndex = 0;
     }
   }
-
-  const buySelect = document.getElementById('buy-resource-select');
-  if (buySelect && CONFIG.Sales) {
-    const prevVal = buySelect.value;
-    buySelect.innerHTML = '';
-    for (let key in CONFIG.Sales) {
-      if (key.startsWith('buy_') && !key.endsWith('_seeds')) {
-        const type = key.replace('buy_', '');
-        const buyRule = CONFIG.Sales[key];
-        const price = buyRule.cost_gold;
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
-        buySelect.appendChild(opt);
-      }
-    }
-    // Añadir también las semillas
-    const seedTypes = ['wheat', 'potato', 'carrot'];
-    seedTypes.forEach(st => {
-      const type = st + '_seeds';
-      const buyRule = CONFIG.Sales[`buy_${type}`];
-      if (buyRule) {
-        const price = buyRule.cost_gold;
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.text = `${icons[type] || ''} ${rawNames[type] || type} (🪙 ${price})`;
-        buySelect.appendChild(opt);
-      }
-    });
-
-    if (prevVal) buySelect.value = prevVal;
-    if (!buySelect.value && buySelect.options.length > 0) {
-      buySelect.selectedIndex = 0;
-    }
-  }
-
-  // Inicializar/actualizar precios en el mercado manual
-  if (typeof updateSellResourcePriceDisplay === 'function') updateSellResourcePriceDisplay();
-  if (typeof updateBuyResourcePriceDisplay === 'function') updateBuyResourcePriceDisplay();
 }
 
 
@@ -2612,15 +2549,9 @@ function renderDetailedFoodInventory() {
     const mult = eqObj ? eqObj.yield : 1;
     const value = qty * mult;
     
-    const cap = state.storageCapacity?.food ?? Infinity;
-    
     const qtyEl = document.getElementById(`res-detail-${key}`);
     if (qtyEl) {
-      if (cap === Infinity) {
-        qtyEl.innerText = qty.toFixed(0);
-      } else {
-        qtyEl.innerText = `${qty.toFixed(0)} / ${cap}`;
-      }
+      qtyEl.innerText = qty.toFixed(0);
     }
     const valEl = document.getElementById(`res-val-${key}`);
     if (valEl) valEl.innerText = `(${value.toFixed(0)})`;
@@ -2653,30 +2584,27 @@ function renderDetailedFoodInventory() {
     const barEl = document.getElementById(`res-cap-bar-${key}`);
     const badgeEl = document.getElementById(`res-badge-${key}`);
     if (barEl) {
-      if (cap === Infinity) {
-        barEl.style.width = '0%';
-        barEl.parentElement.style.display = 'none';
-        if (badgeEl) badgeEl.style.display = 'none';
+      const globalCap = state.maxFoodCapacity || 100;
+      const globalQty = typeof getFoodOccupation === 'function' ? getFoodOccupation() : 0;
+      
+      barEl.parentElement.style.display = 'block';
+      const pct = Math.min(100, (globalQty / globalCap) * 100);
+      barEl.style.width = `${pct}%`;
+      if (pct < 75) {
+        barEl.style.backgroundColor = '#94a3b8';
+      } else if (pct < 90) {
+        barEl.style.backgroundColor = '#eab308';
       } else {
-        barEl.parentElement.style.display = 'block';
-        const pct = Math.min(100, (qty / cap) * 100);
-        barEl.style.width = `${pct}%`;
-        if (pct < 75) {
-          barEl.style.backgroundColor = '#94a3b8';
-        } else if (pct < 90) {
-          barEl.style.backgroundColor = '#eab308';
+        barEl.style.backgroundColor = '#ef4444';
+      }
+      if (badgeEl) {
+        if (pct >= 100) {
+          badgeEl.innerText = 'LLENO';
+          badgeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+          badgeEl.style.color = '#f87171';
+          badgeEl.style.display = 'inline-block';
         } else {
-          barEl.style.backgroundColor = '#ef4444';
-        }
-        if (badgeEl) {
-          if (pct >= 100) {
-            badgeEl.innerText = 'LLENO';
-            badgeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-            badgeEl.style.color = '#f87171';
-            badgeEl.style.display = 'inline-block';
-          } else {
-            badgeEl.style.display = 'none';
-          }
+          badgeEl.style.display = 'none';
         }
       }
     }
@@ -2842,16 +2770,9 @@ function renderDetailedResourcesInventory() {
       qty = state[item.stateKey] || 0;
     }
 
-    let storageType = item.key.endsWith('_seeds') ? 'seeds' : item.key;
-    const cap = state.storageCapacity?.[storageType] ?? Infinity;
-
     const qtyEl = document.getElementById(`res-detail-${item.key}`);
     if (qtyEl) {
-      if (cap === Infinity) {
-        qtyEl.innerText = qty.toFixed(0);
-      } else {
-        qtyEl.innerText = `${qty.toFixed(0)} / ${cap}`;
-      }
+      qtyEl.innerText = qty.toFixed(0);
     }
 
     const rateEl = document.getElementById(`res-rate-${item.key}`);
@@ -2886,30 +2807,27 @@ function renderDetailedResourcesInventory() {
     const barEl = document.getElementById(`res-cap-bar-${item.key}`);
     const badgeEl = document.getElementById(`res-badge-${item.key}`);
     if (barEl) {
-      if (cap === Infinity) {
-        barEl.style.width = '0%';
-        barEl.parentElement.style.display = 'none';
-        if (badgeEl) badgeEl.style.display = 'none';
+      const globalCap = state.maxResourcesCapacity || 100;
+      const globalQty = typeof getResourcesOccupation === 'function' ? getResourcesOccupation() : 0;
+      
+      barEl.parentElement.style.display = 'block';
+      const pct = Math.min(100, (globalQty / globalCap) * 100);
+      barEl.style.width = `${pct}%`;
+      if (pct < 75) {
+        barEl.style.backgroundColor = '#94a3b8';
+      } else if (pct < 90) {
+        barEl.style.backgroundColor = '#eab308';
       } else {
-        barEl.parentElement.style.display = 'block';
-        const pct = Math.min(100, (qty / cap) * 100);
-        barEl.style.width = `${pct}%`;
-        if (pct < 75) {
-          barEl.style.backgroundColor = '#94a3b8';
-        } else if (pct < 90) {
-          barEl.style.backgroundColor = '#eab308';
+        barEl.style.backgroundColor = '#ef4444';
+      }
+      if (badgeEl) {
+        if (pct >= 100) {
+          badgeEl.innerText = 'LLENO';
+          badgeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+          badgeEl.style.color = '#f87171';
+          badgeEl.style.display = 'inline-block';
         } else {
-          barEl.style.backgroundColor = '#ef4444';
-        }
-        if (badgeEl) {
-          if (pct >= 100) {
-            badgeEl.innerText = 'LLENO';
-            badgeEl.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-            badgeEl.style.color = '#f87171';
-            badgeEl.style.display = 'inline-block';
-          } else {
-            badgeEl.style.display = 'none';
-          }
+          badgeEl.style.display = 'none';
         }
       }
     }
@@ -3724,8 +3642,8 @@ function renderWarehouses() {
     }
     let html = '';
     state.warehouses.forEach((warehouse, idx) => {
-      const typeNames = { wood: 'Madera', stone: 'Piedra', food: 'Alimentos', seeds: 'Semillas' };
-      const typeEmojis = { wood: '🪵', stone: '🪨', food: '🌾', seeds: '🌱' };
+      const typeNames = { resource: 'Recursos', food: 'Comida' };
+      const typeEmojis = { resource: '📦', food: '🌾' };
       const name = typeNames[warehouse.type] || warehouse.type;
       const emoji = typeEmojis[warehouse.type] || '📦';
       
@@ -3809,6 +3727,11 @@ window.claimMissionReward = claimMissionReward;
 
 // Dibuja las misiones de la aldea en paralelo y gestiona sus estados
 function renderMissions() {
+  const activeEl = document.activeElement;
+  if (activeEl && activeEl.tagName === 'SELECT' && activeEl.className.includes('mission-colonist-dropdown-')) {
+    return;
+  }
+
   const banner = document.getElementById('missions-refresh-banner');
   const gridContainer = document.getElementById('missions-grid-container');
   if (!gridContainer) return;
@@ -4151,6 +4074,522 @@ function updateMissionProbability(idx) {
   btn.style.cursor = 'pointer';
 }
 window.updateMissionProbability = updateMissionProbability;
+
+function renderTradeTab() {
+  const activeEl = document.activeElement;
+  if (activeEl && activeEl.tagName === 'SELECT') {
+    if (activeEl.id.startsWith('market-slot-') || activeEl.id === 'trade-colonist-select' || activeEl.id === 'trade-route-select' || activeEl.id === 'player-trade-route-select') {
+      return;
+    }
+  }
+
+  if (!window.GAME_VILLAGES) return;
+
+  // ----------------------------------------------------
+  // SUBSECCIÓN 1: COMERCIO PERSONAL
+  // ----------------------------------------------------
+  const playerRouteSelect = document.getElementById('player-trade-route-select');
+  if (playerRouteSelect && playerRouteSelect.options.length === 0) {
+    let optionsHtml = '';
+    window.GAME_VILLAGES.forEach(v => {
+      if (v.sellsResource && v.sellsResource !== 'none') {
+        const rawNames = {
+          wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+        };
+        optionsHtml += `<option value="${v.id}|buy|${v.sellsResource}">🛒 Comprar ${rawNames[v.sellsResource] || v.sellsResource} de ${v.name} (${v.sellsPrice}🪙/u)</option>`;
+      }
+      if (v.buysResource && v.buysResource !== 'none') {
+        const rawNames = {
+          wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+        };
+        optionsHtml += `<option value="${v.id}|sell|${v.buysResource}">💰 Vender ${rawNames[v.buysResource] || v.buysResource} a ${v.name} (${v.buysPrice}🪙/u)</option>`;
+      }
+    });
+    playerRouteSelect.innerHTML = optionsHtml;
+  }
+
+  updatePlayerTradeDetails();
+
+  // ----------------------------------------------------
+  // SUBSECCIÓN 2: MERCADOS (Caravanas de Aldeanos)
+  // ----------------------------------------------------
+  const countMarkets = state.markets ? state.markets.length : 0;
+  const isMarketBuilt = countMarkets > 0 && !state.markets[0].isUnderConstruction;
+
+  const marketLockedMsg = document.getElementById('market-locked-msg');
+  const marketCaravansContainer = document.getElementById('market-caravans-container');
+
+  if (isMarketBuilt) {
+    if (marketLockedMsg) marketLockedMsg.style.display = 'none';
+    if (marketCaravansContainer) marketCaravansContainer.style.display = 'flex';
+
+    // Renderizar los 2 slots de mercaderes
+    for (let slotIdx = 0; slotIdx <= 1; slotIdx++) {
+      const selectEl = document.getElementById(`market-slot-${slotIdx}-select`);
+      const unassignBtn = document.getElementById(`btn-unassign-slot-${slotIdx}`);
+      if (selectEl) {
+        const currentAssigned = state.colonists ? state.colonists.find(c => c.job === 'merchant_slot_' + slotIdx) : null;
+        
+        let html = '';
+        if (currentAssigned) {
+          const statusText = currentAssigned.onMission ? ' (EN VIAJE)' : '';
+          const trLvl = currentAssigned.attributes.trading || 3;
+          html = `<option value="${currentAssigned.id}" selected>${currentAssigned.name} (Comercio Nv.${trLvl})${statusText}</option>`;
+          selectEl.disabled = true;
+          if (unassignBtn) {
+            unassignBtn.disabled = currentAssigned.onMission || state.playerOnMission;
+            unassignBtn.style.opacity = (currentAssigned.onMission || state.playerOnMission) ? '0.5' : '1';
+            unassignBtn.style.cursor = (currentAssigned.onMission || state.playerOnMission) ? 'not-allowed' : 'pointer';
+          }
+        } else {
+          selectEl.disabled = state.playerOnMission;
+          html = '<option value="">-- Slot Vacío (Asigna un aldeano libre) --</option>';
+          const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null && !c.onMission && !c.isStarving) : [];
+          freeColonists.forEach(c => {
+            const trLvl = c.attributes.trading || 3;
+            html += `<option value="${c.id}">${c.name} (Comercio Nv.${trLvl})</option>`;
+          });
+          if (unassignBtn) {
+            unassignBtn.disabled = true;
+            unassignBtn.style.opacity = '0.5';
+            unassignBtn.style.cursor = 'not-allowed';
+          }
+        }
+        selectEl.innerHTML = html;
+      }
+    }
+
+    // Rellenar el selector de mercaderes del formulario de envío de caravana
+    const colonistSelect = document.getElementById('trade-colonist-select');
+    if (colonistSelect) {
+      const prevVal = colonistSelect.value;
+      const assignedMerchants = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('merchant_slot_')) : [];
+      const availableMerchants = assignedMerchants.filter(c => !c.onMission && !c.isStarving);
+
+      if (availableMerchants.length === 0) {
+        colonistSelect.innerHTML = '<option value="">-- No hay mercaderes libres en slots --</option>';
+        colonistSelect.disabled = true;
+      } else {
+        colonistSelect.disabled = false;
+        let html = '';
+        availableMerchants.forEach(c => {
+          const slot = c.job.replace('merchant_slot_', '');
+          html += `<option value="${slot}">Slot ${parseInt(slot) + 1}: ${c.name}</option>`;
+        });
+        colonistSelect.innerHTML = html;
+        if (prevVal && availableMerchants.some(c => c.job === 'merchant_slot_' + prevVal)) {
+          colonistSelect.value = prevVal;
+        }
+      }
+    }
+
+    // Rellenar las rutas en mercados
+    const routeSelect = document.getElementById('trade-route-select');
+    if (routeSelect && routeSelect.options.length === 0) {
+      let optionsHtml = '';
+      window.GAME_VILLAGES.forEach(v => {
+        if (v.sellsResource && v.sellsResource !== 'none') {
+          const rawNames = {
+            wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+            wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+          };
+          optionsHtml += `<option value="${v.id}|buy|${v.sellsResource}">🛒 Comprar ${rawNames[v.sellsResource] || v.sellsResource} de ${v.name} (${v.sellsPrice}🪙/u)</option>`;
+        }
+        if (v.buysResource && v.buysResource !== 'none') {
+          const rawNames = {
+            wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+          };
+          optionsHtml += `<option value="${v.id}|sell|${v.buysResource}">💰 Vender ${rawNames[v.buysResource] || v.buysResource} a ${v.name} (${v.buysPrice}🪙/u)</option>`;
+        }
+      });
+      routeSelect.innerHTML = optionsHtml;
+    }
+
+    updateTradeDetails();
+
+  } else {
+    if (marketLockedMsg) marketLockedMsg.style.display = 'block';
+    if (marketCaravansContainer) marketCaravansContainer.style.display = 'none';
+  }
+
+  // ----------------------------------------------------
+  // DIRECTORIO DE PUEBLOS
+  // ----------------------------------------------------
+  const directoryContainer = document.getElementById('villages-directory-list');
+  if (directoryContainer) {
+    const grouped = {};
+    window.GAME_VILLAGES.forEach(v => {
+      if (!grouped[v.name]) {
+        grouped[v.name] = {
+          name: v.name,
+          distanceDays: v.distanceDays,
+          sells: [],
+          buys: []
+        };
+      }
+      const rawNames = {
+        wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+        wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+      };
+      if (v.sellsResource && v.sellsResource !== 'none') {
+        grouped[v.name].sells.push(`${rawNames[v.sellsResource] || v.sellsResource} (${v.sellsPrice}🪙)`);
+      }
+      if (v.buysResource && v.buysResource !== 'none') {
+        grouped[v.name].buys.push(`${rawNames[v.buysResource] || v.buysResource} (${v.buysPrice}🪙)`);
+      }
+    });
+
+    let directoryHtml = '';
+    for (let name in grouped) {
+      const g = grouped[name];
+      directoryHtml += `
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; font-size: 0.85rem;">
+          <div style="font-weight: 700; color: #a5b4fc; display: flex; justify-content: space-between; align-items: center;">
+            <span>🏡 ${g.name}</span>
+            <span style="font-weight: 500; font-size: 0.75rem; color: var(--color-text-muted);">📍 Distancia: ${g.distanceDays} día(s)</span>
+          </div>
+          <div style="margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.2rem; color: var(--color-text);">
+            <div><span style="color: #34d399; font-weight: 600; font-size: 0.75rem;">🛒 Vende:</span> ${g.sells.join(', ')}</div>
+            <div><span style="color: #f87171; font-weight: 600; font-size: 0.75rem;">💰 Compra:</span> ${g.buys.join(', ')}</div>
+          </div>
+        </div>
+      `;
+    }
+    directoryContainer.innerHTML = directoryHtml;
+  }
+
+  // ----------------------------------------------------
+  // VIAJES ACTIVOS / EN RUTA (Colonos)
+  // ----------------------------------------------------
+  const activeTradesList = document.getElementById('active-trades-list');
+  if (activeTradesList) {
+    if (!state.activeTrades || state.activeTrades.length === 0) {
+      activeTradesList.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: var(--color-text-muted); font-size: 0.9rem; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">
+          No hay caravanas en ruta actualmente.
+        </div>
+      `;
+    } else {
+      let html = '';
+      state.activeTrades.forEach(trade => {
+        const pct = Math.min(100, Math.max(0, (1 - trade.timeLeftDays / trade.durationDays) * 100));
+        const rawNames = {
+          wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+        };
+        const resourceLabel = rawNames[trade.resource] || trade.resource;
+        
+        let timeText = '';
+        if (trade.timeLeftDays > 0.1) {
+          timeText = `${trade.timeLeftDays.toFixed(1)} días`;
+        } else {
+          timeText = `${Math.round(trade.timeLeftDays * 24)}h`;
+        }
+
+        html += `
+          <div style="background: rgba(30, 41, 59, 0.3); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">
+                🚚 Caravana a ${trade.villageName}
+              </div>
+              <div style="font-size: 0.75rem; background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 600;">
+                ${trade.type === 'buy' ? 'Comprar' : 'Vender'} x${trade.amount}
+              </div>
+            </div>
+            
+            <div style="font-size: 0.8rem; color: var(--color-text-muted); display: flex; justify-content: space-between;">
+              <span>Aldeano: <strong style="color: #fff;">${trade.colonistName}</strong></span>
+              <span>Tiempo restante: <strong style="color: #fbbf24;">${timeText}</strong></span>
+            </div>
+
+            <div style="font-size: 0.8rem; color: var(--color-text-muted);">
+              Intercambio: ${trade.type === 'buy' ? `${trade.totalPrice}🪙 por ${resourceLabel}` : `${trade.amount} ${resourceLabel} por ${trade.totalPrice}🪙`}
+            </div>
+
+            <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0 0 0; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div class="progress-bar-fill" style="width: ${pct}%; height: 100%; background: linear-gradient(90deg, #7c3aed 0%, #a5b4fc 100%); transition: width 0.2s ease;"></div>
+            </div>
+          </div>
+        `;
+      });
+      activeTradesList.innerHTML = html;
+    }
+  }
+}
+
+function updateTradeDetails() {
+  const routeSelect = document.getElementById('trade-route-select');
+  const amountInput = document.getElementById('trade-amount-input');
+  const detailsPanel = document.getElementById('trade-details-panel');
+  const btnStart = document.getElementById('btn-start-trade');
+  const colonistSelect = document.getElementById('trade-colonist-select');
+
+  if (!routeSelect || !amountInput || !detailsPanel || !btnStart) return;
+
+  const val = routeSelect.value;
+  const amount = parseInt(amountInput.value) || 0;
+
+  if (!val || amount <= 0) {
+    detailsPanel.innerHTML = '<span style="color: var(--color-text-muted);">Configura la caravana para ver los detalles.</span>';
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    return;
+  }
+
+  const parts = val.split('|');
+  const villageId = parts[0];
+  const type = parts[1];
+  const resource = parts[2];
+
+  const village = window.GAME_VILLAGES ? window.GAME_VILLAGES.find(v => v.id === villageId) : null;
+  if (!village) {
+    detailsPanel.innerHTML = '<span style="color: var(--color-text-muted);">Error al cargar pueblo.</span>';
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    return;
+  }
+
+  let text = '';
+  let isAffordable = true;
+  const rawNames = {
+    wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+  };
+  const resourceLabel = rawNames[resource] || resource;
+
+  if (type === 'buy') {
+    const totalGoldCost = village.sellsPrice * amount;
+    const hasGold = state.gold >= totalGoldCost;
+    isAffordable = hasGold;
+    
+    text = `
+      <div style="display: flex; justify-content: space-between;">
+        <span>Operación:</span>
+        <span style="font-weight: 700; color: #34d399;">🛒 Comprar</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Pagar:</span>
+        <span style="font-weight: 700; color: ${hasGold ? '#fbbf24' : '#ef4444'};">${totalGoldCost} 🪙 ${hasGold ? '' : '(No disponible)'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Recibir al regresar:</span>
+        <span style="font-weight: 700; color: #fff;">x${amount} ${resourceLabel}</span>
+      </div>
+    `;
+  } else {
+    const totalResourceCost = amount;
+    const currentStock = resource.endsWith('_seeds')
+      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+      : (state[resource] || 0);
+    const hasResource = currentStock >= totalResourceCost;
+    isAffordable = hasResource;
+
+    text = `
+      <div style="display: flex; justify-content: space-between;">
+        <span>Operación:</span>
+        <span style="font-weight: 700; color: #fbbf24;">💰 Vender</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Entregar ahora:</span>
+        <span style="font-weight: 700; color: ${hasResource ? '#fff' : '#ef4444'};">${totalResourceCost} de ${resourceLabel} ${hasResource ? '' : '(Stock insuficiente)'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Recibir al regresar:</span>
+        <span style="font-weight: 700; color: #34d399;">+${village.buysPrice * amount} 🪙</span>
+      </div>
+    `;
+  }
+
+  const durationDays = (village.distanceDays || 1) * 2;
+  text += `
+    <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.4rem; margin-top: 0.2rem;">
+      <span>Duración viaje:</span>
+      <span style="font-weight: 700; color: #a5b4fc;">${durationDays} días de juego (ida/vuelta)</span>
+    </div>
+  `;
+
+  detailsPanel.innerHTML = text;
+  
+  const colVal = colonistSelect ? colonistSelect.value : '';
+  const hasColonistSelected = colVal !== '';
+
+  if (isAffordable && hasColonistSelected && !state.playerOnMission) {
+    btnStart.disabled = false;
+    btnStart.style.opacity = '1';
+    btnStart.style.cursor = 'pointer';
+  } else {
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    btnStart.style.cursor = 'not-allowed';
+  }
+}
+
+function updatePlayerTradeDetails() {
+  const routeSelect = document.getElementById('player-trade-route-select');
+  const amountInput = document.getElementById('player-trade-amount-input');
+  const detailsPanel = document.getElementById('player-trade-details-panel');
+  const btnStart = document.getElementById('btn-start-player-trade');
+
+  if (!routeSelect || !amountInput || !detailsPanel || !btnStart) return;
+
+  const val = routeSelect.value;
+  const amount = parseInt(amountInput.value) || 0;
+
+  if (!val || amount <= 0) {
+    detailsPanel.innerHTML = '<span style="color: var(--color-text-muted);">Configura el viaje para ver los detalles.</span>';
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    return;
+  }
+
+  const parts = val.split('|');
+  const villageId = parts[0];
+  const type = parts[1];
+  const resource = parts[2];
+
+  const village = window.GAME_VILLAGES ? window.GAME_VILLAGES.find(v => v.id === villageId) : null;
+  if (!village) {
+    detailsPanel.innerHTML = '<span style="color: var(--color-text-muted);">Error al cargar pueblo.</span>';
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    return;
+  }
+
+  let text = '';
+  let isAffordable = true;
+  const rawNames = {
+    wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+  };
+  const resourceLabel = rawNames[resource] || resource;
+
+  if (type === 'buy') {
+    const totalGoldCost = village.sellsPrice * amount;
+    const hasGold = state.gold >= totalGoldCost;
+    isAffordable = hasGold;
+    
+    text = `
+      <div style="display: flex; justify-content: space-between;">
+        <span>Operación:</span>
+        <span style="font-weight: 700; color: #34d399;">🛒 Comprar</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Pagar:</span>
+        <span style="font-weight: 700; color: ${hasGold ? '#fbbf24' : '#ef4444'};">${totalGoldCost} 🪙 ${hasGold ? '' : '(No disponible)'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Recibir al regresar:</span>
+        <span style="font-weight: 700; color: #fff;">x${amount} ${resourceLabel}</span>
+      </div>
+    `;
+  } else {
+    const totalResourceCost = amount;
+    const currentStock = resource.endsWith('_seeds')
+      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+      : (state[resource] || 0);
+    const hasResource = currentStock >= totalResourceCost;
+    isAffordable = hasResource;
+
+    text = `
+      <div style="display: flex; justify-content: space-between;">
+        <span>Operación:</span>
+        <span style="font-weight: 700; color: #fbbf24;">💰 Vender</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Entregar ahora:</span>
+        <span style="font-weight: 700; color: ${hasResource ? '#fff' : '#ef4444'};">${totalResourceCost} de ${resourceLabel} ${hasResource ? '' : '(Stock insuficiente)'}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span>Recibir al regresar:</span>
+        <span style="font-weight: 700; color: #34d399;">+${village.buysPrice * amount} 🪙</span>
+      </div>
+    `;
+  }
+
+  const durationDays = (village.distanceDays || 1) * 2;
+  text += `
+    <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.4rem; margin-top: 0.2rem;">
+      <span>Duración viaje:</span>
+      <span style="font-weight: 700; color: #a5b4fc;">${durationDays} días de juego (ida/vuelta)</span>
+    </div>
+  `;
+
+  detailsPanel.innerHTML = text;
+  
+  if (isAffordable && !state.playerOnMission) {
+    btnStart.disabled = false;
+    btnStart.style.opacity = '1';
+    btnStart.style.cursor = 'pointer';
+  } else {
+    btnStart.disabled = true;
+    btnStart.style.opacity = '0.5';
+    btnStart.style.cursor = 'not-allowed';
+  }
+}
+
+function updatePlayerTravelOverlay() {
+  const banner = document.getElementById('player-travel-banner');
+  if (!banner) return;
+
+  if (state.playerOnMission && state.playerMission) {
+    banner.style.display = 'flex';
+    
+    const trade = state.playerMission;
+    const descEl = document.getElementById('player-travel-banner-desc');
+    const timeEl = document.getElementById('player-travel-banner-time');
+    const progressFill = document.getElementById('player-travel-banner-progress-bar');
+    
+    const rawNames = {
+      wood: 'Madera', stone: 'Piedra', food: 'Comida',
+      wheat_seeds: 'Semillas Trigo', potato_seeds: 'Semillas Patata', carrot_seeds: 'Semillas Zanahoria'
+    };
+    const actionLabel = trade.type === 'buy' ? 'Comprar' : 'Vender';
+    const resourceLabel = rawNames[trade.resource] || trade.resource;
+    
+    if (descEl) {
+      descEl.textContent = `Viajando a ${trade.villageName} para ${actionLabel.toLowerCase()} x${trade.amount} de ${resourceLabel}`;
+    }
+    
+    if (timeEl) {
+      let timeText = '';
+      if (trade.timeLeftDays > 0.1) {
+        timeText = `${trade.timeLeftDays.toFixed(1)} días`;
+      } else {
+        timeText = `${Math.round(trade.timeLeftDays * 24)}h`;
+      }
+      timeEl.textContent = `Faltan: ${timeText}`;
+    }
+    
+    if (progressFill) {
+      const pct = Math.min(100, Math.max(0, (1 - trade.timeLeftDays / trade.durationDays) * 100));
+      progressFill.style.width = `${pct}%`;
+    }
+  } else {
+    banner.style.display = 'none';
+  }
+
+  // Deshabilitar/Habilitar botones de recolección manual de recursos durante el viaje del jugador
+  const keys = ['wood', 'stone', 'berries'];
+  keys.forEach(k => {
+    const btn = document.getElementById(`btn-gather-${k}`);
+    if (btn) {
+      if (state.playerOnMission) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      } else {
+        // En estado normal, updateButtonStates se encargará del cooldown, pero aseguramos re-habilitar el cursor
+        btn.style.cursor = 'pointer';
+      }
+    }
+  });
+}
+
+window.renderTradeTab = renderTradeTab;
+window.updateTradeDetails = updateTradeDetails;
+window.updatePlayerTradeDetails = updatePlayerTradeDetails;
+window.updatePlayerTravelOverlay = updatePlayerTravelOverlay;
 
 
 

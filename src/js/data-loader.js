@@ -345,7 +345,14 @@ Mission;seeds_carrot;Rastrear Semillas;Jardín abandonado.;6;4;8;2;farming;0.65;
 Mission;headhunt_any;Reclutar Especialista;Localizar a un experto.;8;8;15;3;exploration;0.45;0;0;none;0;random;2;4
 Mission;headhunt_miner;Reclutar Maestro Minero;Un legendario minero.;4;10;15;3;exploration;0.40;0;0;none;0;mining;2;4
 Mission;headhunt_farmer;Reclutar Maestro Agricultor;Un experto en colinas.;4;10;15;3;farming;0.40;0;0;none;0;farming;2;4
-Mission;headhunt_warrior;Reclutar Guerrero;Un veterano busca causa.;4;10;15;3;combat;0.40;0;0;none;0;combat;2;4`
+Mission;headhunt_warrior;Reclutar Guerrero;Un veterano busca causa.;4;10;15;3;combat;0.40;0;0;none;0;combat;2;4`,
+  villages: `Category;ID;Name;DistanceDays;SellsResource;SellsPrice;BuysResource;BuysPrice
+Village;oak_valley;Senda Roble;1;wood;2;food;3
+Village;high_stone;Piedra Alta;1;stone;2;wood;3
+Village;fertile_valley_food;Fértil Valle;1;food;3;stone;2
+Village;fertile_valley_wheat;Fértil Valle;1;wheat_seeds;5;stone;2
+Village;fertile_valley_potato;Fértil Valle;1;potato_seeds;8;stone;2
+Village;fertile_valley_carrot;Fértil Valle;1;carrot_seeds;12;stone;2`
 };
 
 // Parsear el CSV de misiones al array global GAME_MISSIONS
@@ -365,6 +372,7 @@ function parseMissions(csvText) {
     }
   }
   if (!headerLine) return [];
+  headerLine = headerLine.replace(/^\uFEFF/, "");
   const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
   
   const idxCategory = headers.indexOf('category');
@@ -391,8 +399,10 @@ function parseMissions(csvText) {
     if (!line || line.startsWith('#')) continue;
     const cols = line.split(delimiter);
     if (cols.length < 3) continue;
-    if (cols[idxCategory] === 'Category' || cols[idxCategory] === 'category') continue;
-    if (cols[idxCategory].trim().toLowerCase() !== 'mission') continue;
+    
+    const categoryVal = idxCategory !== -1 && cols[idxCategory] ? cols[idxCategory].trim().toLowerCase() : '';
+    if (categoryVal === 'category') continue;
+    if (categoryVal !== 'mission') continue;
     
     missions.push({
       id: cols[idxId] || '',
@@ -414,6 +424,58 @@ function parseMissions(csvText) {
     });
   }
   return missions;
+}
+
+function parseVillages(csvText) {
+  const lines = csvText.split('\n');
+  if (lines.length <= 1) return [];
+  
+  let delimiter = ';';
+  let headerLine = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line && !line.startsWith('#') && /[a-zA-Z0-9]/.test(line)) {
+      if (line.includes(';')) delimiter = ';';
+      else if (line.includes(',')) delimiter = ',';
+      headerLine = line;
+      break;
+    }
+  }
+  if (!headerLine) return [];
+  headerLine = headerLine.replace(/^\uFEFF/, "");
+  const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
+  
+  const idxCategory = headers.indexOf('category');
+  const idxId = headers.indexOf('id');
+  const idxName = headers.indexOf('name');
+  const idxDistanceDays = headers.indexOf('distancedays');
+  const idxSellsResource = headers.indexOf('sellsresource');
+  const idxSellsPrice = headers.indexOf('sellsprice');
+  const idxBuysResource = headers.indexOf('buysresource');
+  const idxBuysPrice = headers.indexOf('buysprice');
+
+  const villages = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('#')) continue;
+    const cols = line.split(delimiter);
+    if (cols.length < 3) continue;
+    
+    const categoryVal = idxCategory !== -1 && cols[idxCategory] ? cols[idxCategory].trim().toLowerCase() : '';
+    if (categoryVal === 'category') continue;
+    if (categoryVal !== 'village') continue;
+    
+    villages.push({
+      id: cols[idxId] || '',
+      name: cols[idxName] || '',
+      distanceDays: parseFloat(cols[idxDistanceDays]) || 1,
+      sellsResource: cols[idxSellsResource] || '',
+      sellsPrice: parseFloat(cols[idxSellsPrice]) || 0,
+      buysResource: cols[idxBuysResource] || '',
+      buysPrice: parseFloat(cols[idxBuysPrice]) || 0
+    });
+  }
+  return villages;
 }
 
 // Variable CONFIG global (se inicializará con fallbacks inmediatamente)
@@ -444,6 +506,7 @@ function parseCSV(csvText, fileName = '') {
   
   if (!headerLine) return parsedConfig;
   
+  headerLine = headerLine.replace(/^\uFEFF/, "");
   const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
   const idxCategory = headers.indexOf('category');
   const idxType = headers.indexOf('type') !== -1 ? headers.indexOf('type')
@@ -719,12 +782,15 @@ function applyTimingsFromConfig() {
 // Inicialización síncrona inmediata con los datos por defecto
 function initDefaultConfig() {
   const testConfig = {};
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages'];
   for (const name of files) {
     const text = DEFAULT_CSV_DATA[name] || '';
     const parsed = parseCSV(text, name);
     if (name === 'missiondata') {
       window.GAME_MISSIONS = parseMissions(text);
+    }
+    if (name === 'villages') {
+      window.GAME_VILLAGES = parseVillages(text);
     }
     for (const category in parsed) {
       if (!testConfig[category]) {
@@ -742,7 +808,7 @@ initDefaultConfig();
 
 // Carga asíncrona de todos los archivos CSV desde el servidor local
 async function loadAllCSVs() {
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages'];
   const results = {};
   for (const name of files) {
     try {
@@ -753,12 +819,18 @@ async function loadAllCSVs() {
       if (name === 'missiondata') {
         window.GAME_MISSIONS = parseMissions(text);
       }
+      if (name === 'villages') {
+        window.GAME_VILLAGES = parseVillages(text);
+      }
     } catch (e) {
       console.warn(`No se pudo cargar ${name}.csv, usando datos por defecto:`, e);
       const text = DEFAULT_CSV_DATA[name] || '';
       results[name] = parseCSV(text, name);
       if (name === 'missiondata') {
         window.GAME_MISSIONS = parseMissions(text);
+      }
+      if (name === 'villages') {
+        window.GAME_VILLAGES = parseVillages(text);
       }
     }
   }

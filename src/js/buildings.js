@@ -679,6 +679,14 @@ function cookManually(idx) {
 
   const recipe = bonfire.selectedRecipe || 'wheat';
   const minFood = manualRec.consume_amount;
+  
+  const currentFood = typeof getFoodOccupation === 'function' ? getFoodOccupation() : 0;
+  const maxFood = state.maxFoodCapacity || 100;
+  if (currentFood >= maxFood) {
+    showToast("⚠️ ¡Almacén de Alimentos lleno! Despeja espacio antes de cocinar.", "warning");
+    return;
+  }
+
   if ((state[recipe] || 0) >= minFood) {
     state[recipe] -= minFood;
     updateGlobalFood();
@@ -1475,7 +1483,17 @@ function buildWarehouse(type) {
     showToast("Debes completar la construcción de la Casa del Jugador primero.", "warning");
     return;
   }
-  const buildingId = `warehouse_${type}`;
+  
+  let mappedType = type;
+  let buildingId = '';
+  if (['wood', 'stone', 'seeds', 'resource'].includes(type)) {
+    buildingId = 'resource_warehouse';
+    mappedType = 'resource';
+  } else if (['food', 'food_granary'].includes(type)) {
+    buildingId = 'food_granary';
+    mappedType = 'food';
+  }
+  
   const cfg = CONFIG.Storage?.[buildingId];
   if (!cfg) return;
   
@@ -1490,7 +1508,7 @@ function buildWarehouse(type) {
     if (!state.warehouses) state.warehouses = [];
     state.warehouses.push({
       id: state.warehouses.length,
-      type: type, // 'wood', 'stone', 'food', 'seeds'
+      type: mappedType,
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
@@ -1500,7 +1518,7 @@ function buildWarehouse(type) {
       isPaused: false
     });
     autoAssignBuilders();
-    showToast(`🏗️ Comenzando construcción de Almacén de ${cfg.name}. ¡Asigna constructores para comenzar!`, "info");
+    showToast(`🏗️ Comenzando construcción de ${cfg.name}. ¡Asigna constructores para comenzar!`, "info");
     recalculateRates();
     updateUI();
   } else {
@@ -1523,18 +1541,19 @@ function upgradeWarehouse(idx) {
   
   const type = warehouse.type;
   let cfg;
+  let buildingBaseId = type === 'resource' ? 'resource_warehouse' : 'food_granary';
   if (tier === 1) {
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Centro Comunitario (Nivel 2) para mejorar el Almacén a Tier 2.", "warning");
       return;
     }
-    cfg = CONFIG.Storage?.[`warehouse_${type}_t2`];
+    cfg = CONFIG.Storage?.[`${buildingBaseId}_t2`];
   } else if (tier === 2) {
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento (Nivel 3) para mejorar el Almacén a Tier 3.", "warning");
       return;
     }
-    cfg = CONFIG.Storage?.[`warehouse_${type}_t3`];
+    cfg = CONFIG.Storage?.[`${buildingBaseId}_t3`];
   }
   
   if (!cfg) return;
@@ -1555,7 +1574,7 @@ function upgradeWarehouse(idx) {
     warehouse.isPaused = false;
     autoAssignBuilders();
     
-    showToast(`🏗️ Comenzando mejora de Almacén de ${cfg.name} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    showToast(`🏗️ Comenzando mejora de ${cfg.name} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
     recalculateRates();
     updateUI();
   } else {
@@ -1570,5 +1589,305 @@ window.launchMission = launchMission;
 window.rotateMissions = rotateMissions;
 window.buildWarehouse = buildWarehouse;
 window.upgradeWarehouse = upgradeWarehouse;
+
+function startPlayerTradeRoute(villageId, type, resource, amount) {
+  if (state.playerOnMission) {
+    showToast("Ya estás en un viaje comercial", "warning");
+    return false;
+  }
+
+  if (!window.GAME_VILLAGES) {
+    showToast("Pueblos no cargados", "warning");
+    return false;
+  }
+
+  const village = window.GAME_VILLAGES.find(v => v.id === villageId);
+  if (!village) {
+    showToast("Pueblo no encontrado", "warning");
+    return false;
+  }
+
+  let goldCost = 0;
+  let resourceCost = 0;
+
+  if (type === 'buy') {
+    goldCost = village.sellsPrice * amount;
+    if (state.gold < goldCost) {
+      showToast(`Oro insuficiente (necesitas ${goldCost}🪙)`, "warning");
+      return false;
+    }
+  } else if (type === 'sell') {
+    resourceCost = amount;
+    const currentStock = resource.endsWith('_seeds')
+      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+      : (state[resource] || 0);
+
+    if (currentStock < resourceCost) {
+      showToast(`Recursos insuficientes (necesitas ${resourceCost} de recurso)`, "warning");
+      return false;
+    }
+  } else {
+    showToast("Tipo de comercio inválido", "warning");
+    return false;
+  }
+
+  // Descontar costes
+  if (type === 'buy') {
+    state.gold -= goldCost;
+  } else if (type === 'sell') {
+    if (resource.endsWith('_seeds')) {
+      state.seeds[resource.replace('_seeds', '')] -= resourceCost;
+    } else {
+      state[resource] -= resourceCost;
+    }
+  }
+
+  const durationDays = (village.distanceDays || 1) * 2;
+
+  state.playerOnMission = true;
+  state.playerMission = {
+    villageId: village.id,
+    villageName: village.name,
+    type: type,
+    resource: resource,
+    amount: amount,
+    totalPrice: type === 'buy' ? goldCost : (village.buysPrice * amount),
+    timeLeftDays: durationDays,
+    durationDays: durationDays
+  };
+
+  showToast(`🐎 ¡Has partido de viaje comercial a ${village.name}!`, "success");
+
+  if (typeof updateGlobalFood === 'function') updateGlobalFood();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+  return true;
+}
+
+function completePlayerTradeRoute() {
+  if (!state.playerOnMission || !state.playerMission) return;
+
+  const trade = state.playerMission;
+  if (trade.type === 'buy') {
+    addResourceStock(trade.resource, trade.amount);
+    showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Traes x${trade.amount} de ${trade.resource}.`, "success");
+  } else if (trade.type === 'sell') {
+    state.gold += trade.totalPrice;
+    showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Vendiste por ${trade.totalPrice}🪙.`, "success");
+  }
+
+  state.playerOnMission = false;
+  state.playerMission = null;
+
+  if (typeof updateGlobalFood === 'function') updateGlobalFood();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+}
+
+function assignColonistToMarket(slotIdx, colonistId) {
+  const countMarkets = state.markets ? state.markets.length : 0;
+  const isMarketBuilt = countMarkets > 0 && !state.markets[0].isUnderConstruction;
+  if (!isMarketBuilt) {
+    showToast("Requiere un Puesto de Mercado construido", "warning");
+    return false;
+  }
+
+  const colonist = state.colonists.find(c => c.id === colonistId);
+  if (!colonist) {
+    showToast("Colono no encontrado", "warning");
+    return false;
+  }
+
+  if (colonist.job !== null || colonist.onMission || colonist.isStarving) {
+    showToast("El colono seleccionado no está disponible", "warning");
+    return false;
+  }
+
+  // Desasignar cualquier colono que estuviera previamente en este slot
+  state.colonists.forEach(c => {
+    if (c.job === 'merchant_slot_' + slotIdx) {
+      c.job = null;
+    }
+  });
+
+  colonist.job = 'merchant_slot_' + slotIdx;
+  
+  if (state.markets && state.markets[0]) {
+    const assignedCount = state.colonists.filter(c => c.job && c.job.startsWith('merchant_slot_')).length;
+    state.markets[0].workerAssigned = assignedCount;
+  }
+
+  showToast(`💼 Colono ${colonist.name} asignado como Mercader Slot ${slotIdx + 1}`, "success");
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+  return true;
+}
+
+function unassignColonistFromMarket(slotIdx) {
+  const colonist = state.colonists.find(c => c.job === 'merchant_slot_' + slotIdx);
+  if (!colonist) return false;
+
+  if (colonist.onMission) {
+    showToast("No puedes desasignar al colono mientras esté en viaje comercial", "warning");
+    return false;
+  }
+
+  colonist.job = null;
+
+  if (state.markets && state.markets[0]) {
+    const assignedCount = state.colonists.filter(c => c.job && c.job.startsWith('merchant_slot_')).length;
+    state.markets[0].workerAssigned = assignedCount;
+  }
+
+  showToast(`💼 Mercader Slot ${slotIdx + 1} desasignado`, "info");
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+  return true;
+}
+
+function startTradeRoute(villageId, type, resource, amount, slotIdx) {
+  if (!window.GAME_VILLAGES) {
+    showToast("Pueblos no cargados", "warning");
+    return false;
+  }
+  const village = window.GAME_VILLAGES.find(v => v.id === villageId);
+  if (!village) {
+    showToast("Pueblo no encontrado", "warning");
+    return false;
+  }
+
+  const colonist = state.colonists.find(c => c.job === 'merchant_slot_' + slotIdx);
+  if (!colonist) {
+    showToast("No hay ningún colono asignado a este slot de mercado", "warning");
+    return false;
+  }
+  if (colonist.onMission || colonist.isStarving) {
+    showToast("El colono mercader no está disponible o está hambriento", "warning");
+    return false;
+  }
+
+  let goldCost = 0;
+  let resourceCost = 0;
+
+  if (type === 'buy') {
+    goldCost = village.sellsPrice * amount;
+    if (state.gold < goldCost) {
+      showToast(`Oro insuficiente (necesitas ${goldCost}🪙)`, "warning");
+      return false;
+    }
+  } else if (type === 'sell') {
+    resourceCost = amount;
+    const currentStock = resource.endsWith('_seeds')
+      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+      : (state[resource] || 0);
+
+    if (currentStock < resourceCost) {
+      showToast(`Recursos insuficientes (necesitas ${resourceCost} de recurso)`, "warning");
+      return false;
+    }
+  } else {
+    showToast("Tipo de comercio inválido", "warning");
+    return false;
+  }
+
+  const tradeId = "trade_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+  
+  if (type === 'buy') {
+    state.gold -= goldCost;
+  } else if (type === 'sell') {
+    if (resource.endsWith('_seeds')) {
+      state.seeds[resource.replace('_seeds', '')] -= resourceCost;
+    } else {
+      state[resource] -= resourceCost;
+    }
+  }
+
+  colonist.onMission = true;
+  colonist.missionId = tradeId;
+
+  const durationDays = (village.distanceDays || 1) * 2;
+  
+  const newTrade = {
+    id: tradeId,
+    villageId: village.id,
+    villageName: village.name,
+    type: type,
+    resource: resource,
+    amount: amount,
+    totalPrice: type === 'buy' ? goldCost : (village.buysPrice * amount),
+    timeLeftDays: durationDays,
+    durationDays: durationDays,
+    colonistId: colonist.id,
+    colonistName: colonist.name,
+    slotIdx: slotIdx
+  };
+
+  if (!state.activeTrades) {
+    state.activeTrades = [];
+  }
+  state.activeTrades.push(newTrade);
+
+  showToast(`🚚 Caravana enviada a ${village.name} con ${colonist.name}!`, "success");
+
+  if (typeof updateGlobalFood === 'function') updateGlobalFood();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+  return true;
+}
+
+function completeTradeRoute(trade) {
+  if (trade.type === 'buy') {
+    addResourceStock(trade.resource, trade.amount);
+    showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Comprado x${trade.amount} de ${trade.resource}.`, "success");
+  } else if (trade.type === 'sell') {
+    state.gold += trade.totalPrice;
+    showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Vendido por ${trade.totalPrice}🪙.`, "success");
+  }
+
+  const colonist = state.colonists.find(c => c.id === trade.colonistId);
+  if (colonist) {
+    colonist.onMission = false;
+    colonist.missionId = null;
+  }
+
+  if (typeof updateGlobalFood === 'function') updateGlobalFood();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+}
+
+window.startPlayerTradeRoute = startPlayerTradeRoute;
+window.completePlayerTradeRoute = completePlayerTradeRoute;
+window.assignColonistToMarket = assignColonistToMarket;
+window.unassignColonistFromMarket = unassignColonistFromMarket;
+window.startTradeRoute = startTradeRoute;
+window.completeTradeRoute = completeTradeRoute;
+
+function discardResource(resourceId, amount) {
+  const currentStock = getResourceStock(resourceId);
+  if (currentStock <= 0) {
+    showToast("No hay stock para descartar", "warning");
+    return;
+  }
+  
+  const toDiscard = amount === 'all' ? currentStock : Math.min(amount, currentStock);
+  if (toDiscard <= 0) return;
+  
+  deductResourceStock(resourceId, toDiscard);
+  updateGlobalFood();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  updateUI();
+  
+  const rawNames = {
+    wood: 'Madera', stone: 'Piedra',
+    wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
+    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zan. Asada', cooked_berries: 'Mermelada',
+    wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+  };
+  
+  showToast(`Se han descartado ${toDiscard.toFixed(0)} de ${rawNames[resourceId] || resourceId}`, "info");
+}
+
+window.discardResource = discardResource;
+
 
 

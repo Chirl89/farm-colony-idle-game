@@ -50,6 +50,9 @@
 | ✅ PASO H | Aleatoriedad en producción (rango min-max) (`[PROD-RAND]`) | 2026-06-30 |
 | ✅ PASO I | Tablón de pedidos (reputación sin misiones) (`[REP-TABL]`) | 2026-06-30 |
 | ✅ PASO J | Sistema completo de misiones con especialistas (`[REP-MISI]`) | 2026-07-01 |
+| ✅ PASO J.1 | Descartar recursos en recolección (`[REC-DESC]`) | 2026-07-01 |
+| ✅ PASO J.2 | Almacenes de dos tipos únicos (`[ALM-REFA]`) | 2026-07-01 |
+| ✅ PASO J.3 | Comercio con tres pueblos y caravanas temporales (`[COM-TRIP]`) | 2026-07-01 |
 
 ---
 

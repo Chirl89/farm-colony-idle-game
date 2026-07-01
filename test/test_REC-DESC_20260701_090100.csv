@@ -1,0 +1,6 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Botones Descartar visibles en recolección;Pestaña Recolección activa;Ver interfaz;Aparecen botones Descartar/Papelera al lado de cada recurso;Aparecen los botones Tirar 10, Tirar 100 y Tirar Todo debajo de los botones de vender;PASS;Los botones se inyectaron dinámicamente de forma limpia
+U02;Unit;Descartar 10 reduce stock en 10;Stock de madera = 50;Clic Descartar 10;wood = 40;La madera se redujo a 40 y se mostró toast informativo;PASS;
+U03;Unit;Descartar Todo vacía stock del recurso;Stock de piedra = 50;Clic Descartar Todo;stone = 0;La piedra se redujo a 0 y los botones de descarte se deshabilitaron;PASS;
+U04;Unit;Botón Descartar se deshabilita con stock 0;Stock = 0;Verificar botón;El botón de descartar correspondiente está disabled;Los botones se desactivaron inmediatamente al bajar a 0;PASS;
+R01;Regresion;Mercado y producción siguen funcionando;Venta manual e in-game activa;Verificar flujos;Venta manual y autogeneración no se ven afectadas;La venta en el mercado y la autogeneración funcionan normalmente sin interferencias;PASS;

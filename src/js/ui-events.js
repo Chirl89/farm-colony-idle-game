@@ -8,6 +8,7 @@ window.stopPlayerConstruction = function() {
 
 // ACCIONES DE RECOLECCIÓN MANUAL
 function gatherWood() {
+  if (state.playerOnMission) { showToast("No puedes recolectar mientras estás de viaje comercial.", "warning"); return; }
   if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
@@ -20,6 +21,7 @@ function gatherWood() {
 }
 
 function gatherStone() {
+  if (state.playerOnMission) { showToast("No puedes recolectar mientras estás de viaje comercial.", "warning"); return; }
   if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
@@ -32,6 +34,7 @@ function gatherStone() {
 }
 
 function gatherBerries() {
+  if (state.playerOnMission) { showToast("No puedes recolectar mientras estás de viaje comercial.", "warning"); return; }
   if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
@@ -128,140 +131,12 @@ function hireColonist(candidateIdx) {
   }
 }
 
-// MERCADO
-function sellFoodSelected(type, amount = 10) {
-  const saleRule = CONFIG.Sales[`sell_${type}_manual`];
-  if (!saleRule) {
-    showToast("Receta de venta no válida", "warning");
-    return;
-  }
-  const stock = getResourceStock(type);
-  if (stock >= amount) {
-    deductResourceStock(type, amount);
-    updateGlobalFood();
-    
-    const yieldPerUnit = saleRule.yield / saleRule.consume_amount;
-    const totalYield = amount * yieldPerUnit;
-    
-    state.gold += totalYield;
-    resourcesGeneratedThisSecond.gold += totalYield;
-    
-    const rawNames = {
-      wood: 'Madera', stone: 'Piedra',
-      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
-      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
-      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
-    };
-    showToast(`¡Vendidas ${amount} unidades de ${rawNames[type] || type} por ${totalYield}🪙!`, "success");
-    updateUI();
-  } else {
-    const rawNames = {
-      wood: 'Madera', stone: 'Piedra',
-      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
-      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
-      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
-    };
-    showToast(`No tienes suficiente cantidad de ${rawNames[type] || type} (Mín. ${amount})`, "warning");
-  }
-}
-
-function updateSellResourcePriceDisplay() {
-  const select = document.getElementById('sell-resource-select');
-  const priceText = document.getElementById('sell-resource-price-text');
-  if (!select || !priceText) return;
-  const type = select.value;
-  const saleRule = CONFIG.Sales && CONFIG.Sales[`sell_${type}_manual`];
-  if (saleRule) {
-    const price = saleRule.yield / saleRule.consume_amount;
-    priceText.innerText = `${price} 🪙`;
-  } else {
-    priceText.innerText = '0 🪙';
-  }
-}
-
-function sellResourceManual(amount) {
+// MERCADO Y DESCARTE
+function discardResourceManual(amount) {
   const select = document.getElementById('sell-resource-select');
   if (!select) return;
   const type = select.value;
-  sellFoodSelected(type, amount);
-}
-
-// COMPRA MANUAL
-function buyResourceSelected(type, amount = 1) {
-  const buyRule = CONFIG.Sales[`buy_${type}`];
-  if (!buyRule) {
-    showToast("Fórmula de compra no encontrada", "warning");
-    return;
-  }
-
-  // Calcular espacio disponible
-  let storageType = null;
-  let currentVal = 0;
-  if (type === 'wood') {
-    storageType = 'wood';
-    currentVal = state.wood || 0;
-  } else if (type === 'stone') {
-    storageType = 'stone';
-    currentVal = state.stone || 0;
-  } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'].includes(type)) {
-    storageType = 'food';
-    currentVal = state[type] || 0;
-  } else if (type.endsWith('_seeds')) {
-    storageType = 'seeds';
-    const seedType = type.replace('_seeds', '');
-    currentVal = state.seeds ? (state.seeds[seedType] || 0) : 0;
-  }
-
-  let finalAmount = amount;
-  if (storageType && state.storageCapacity && state.storageCapacity[storageType] !== undefined) {
-    const cap = state.storageCapacity[storageType];
-    const space = Math.max(0, cap - currentVal);
-    if (space <= 0) {
-      showToast(`⚠️ Almacén de ${storageType === 'food' ? 'Alimentos' : (storageType === 'seeds' ? 'Semillas' : (storageType === 'wood' ? 'Madera' : 'Piedra'))} lleno. ¡No puedes comprar más!`, "warning");
-      return;
-    }
-    finalAmount = Math.min(amount, space);
-  }
-
-  const cost = (buyRule.cost_gold || 0) * finalAmount;
-  if (state.gold >= cost) {
-    state.gold -= cost;
-    addResourceStock(type, finalAmount);
-    updateGlobalFood();
-    
-    const rawNames = {
-      wood: 'Madera', stone: 'Piedra',
-      wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
-      cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
-      wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
-    };
-    
-    showToast(`¡Compradas ${finalAmount} unidades de ${rawNames[type] || type} por ${cost}🪙!`, "success");
-    recalculateRates();
-    updateUI();
-  } else {
-    showToast(`Oro insuficiente (necesitas ${cost}🪙)`, "warning");
-  }
-}
-
-function updateBuyResourcePriceDisplay() {
-  const select = document.getElementById('buy-resource-select');
-  const priceText = document.getElementById('buy-resource-price-text');
-  if (!select || !priceText) return;
-  const type = select.value;
-  const buyRule = CONFIG.Sales && CONFIG.Sales[`buy_${type}`];
-  if (buyRule) {
-    priceText.innerText = `${buyRule.cost_gold} 🪙`;
-  } else {
-    priceText.innerText = '0 🪙';
-  }
-}
-
-function buyResourceManual(amount) {
-  const select = document.getElementById('buy-resource-select');
-  if (!select) return;
-  const type = select.value;
-  buyResourceSelected(type, amount);
+  discardResource(type, amount);
 }
 
 
@@ -352,10 +227,6 @@ function moveFoodPriority(idx, dir) {
 
 // GESTIÓN DE PESTAÑAS (TABS)
 function switchTab(tabId) {
-  if (tabId === 'sales' && (!state.markets || state.markets.length === 0)) {
-    showToast("Debes construir un Puesto de Mercado para desbloquear el comercio", "warning");
-    return;
-  }
   const contents = document.querySelectorAll('.tab-content');
   contents.forEach(c => c.classList.remove('active-content'));
   
@@ -557,6 +428,10 @@ function initEventHandlers() {
   // Delegación de eventos para lanzar misiones
   document.addEventListener('click', e => {
     if (e.target && e.target.classList.contains('btn-launch-mission')) {
+      if (state.playerOnMission) {
+        showToast("No puedes enviar misiones mientras estás de viaje comercial.", "warning");
+        return;
+      }
       const idx = parseInt(e.target.getAttribute('data-idx'));
       const dropdowns = document.querySelectorAll(`.mission-colonist-dropdown-${idx}`);
       const colonistIds = Array.from(dropdowns)
@@ -581,29 +456,205 @@ function initEventHandlers() {
 
 
 
-  // Botones de ventas manuales unificadas
+  // Descartar Recursos - Listeners (Paso J.1 & J.3)
   const sellResourceSelect = document.getElementById('sell-resource-select');
   if (sellResourceSelect) {
-    sellResourceSelect.addEventListener('change', updateSellResourcePriceDisplay);
+    sellResourceSelect.addEventListener('change', () => {
+      if (typeof updateButtonStates === 'function') {
+        updateButtonStates();
+      }
+    });
   }
-  const btnSell1 = document.getElementById('btn-sell-1');
-  if (btnSell1) btnSell1.addEventListener('click', () => sellResourceManual(1));
-  const btnSell10 = document.getElementById('btn-sell-10');
-  if (btnSell10) btnSell10.addEventListener('click', () => sellResourceManual(10));
-  const btnSell100 = document.getElementById('btn-sell-100');
-  if (btnSell100) btnSell100.addEventListener('click', () => sellResourceManual(100));
+  const btnDiscard10 = document.getElementById('btn-discard-10');
+  if (btnDiscard10) btnDiscard10.addEventListener('click', () => discardResourceManual(10));
+  const btnDiscard100 = document.getElementById('btn-discard-100');
+  if (btnDiscard100) btnDiscard100.addEventListener('click', () => discardResourceManual(100));
+  const btnDiscardAll = document.getElementById('btn-discard-all');
+  if (btnDiscardAll) btnDiscardAll.addEventListener('click', () => discardResourceManual('all'));
 
-  // Botones de compras manuales unificadas
-  const buyResourceSelect = document.getElementById('buy-resource-select');
-  if (buyResourceSelect) {
-    buyResourceSelect.addEventListener('change', updateBuyResourcePriceDisplay);
+  // Comercio por Caravanas - Listeners (PASO J.3 - COM-TRIP)
+  
+  // ----------------------------------------------------
+  // EVENTOS DE COMERCIO PERSONAL
+  // ----------------------------------------------------
+  const playerRouteSelect = document.getElementById('player-trade-route-select');
+  if (playerRouteSelect) {
+    playerRouteSelect.addEventListener('change', () => {
+      if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+    });
   }
-  const btnBuy1 = document.getElementById('btn-buy-1');
-  if (btnBuy1) btnBuy1.addEventListener('click', () => buyResourceManual(1));
-  const btnBuy10 = document.getElementById('btn-buy-10');
-  if (btnBuy10) btnBuy10.addEventListener('click', () => buyResourceManual(10));
-  const btnBuy100 = document.getElementById('btn-buy-100');
-  if (btnBuy100) btnBuy100.addEventListener('click', () => buyResourceManual(100));
+  const playerAmountInput = document.getElementById('player-trade-amount-input');
+  if (playerAmountInput) {
+    playerAmountInput.addEventListener('input', () => {
+      if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+    });
+    playerAmountInput.addEventListener('change', () => {
+      if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+    });
+  }
+
+  const btnPlayerAmount10 = document.getElementById('btn-player-amount-10');
+  if (btnPlayerAmount10) {
+    btnPlayerAmount10.addEventListener('click', () => {
+      if (playerAmountInput) {
+        playerAmountInput.value = 10;
+        if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+      }
+    });
+  }
+  const btnPlayerAmount50 = document.getElementById('btn-player-amount-50');
+  if (btnPlayerAmount50) {
+    btnPlayerAmount50.addEventListener('click', () => {
+      if (playerAmountInput) {
+        playerAmountInput.value = 50;
+        if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+      }
+    });
+  }
+  const btnPlayerAmount100 = document.getElementById('btn-player-amount-100');
+  if (btnPlayerAmount100) {
+    btnPlayerAmount100.addEventListener('click', () => {
+      if (playerAmountInput) {
+        playerAmountInput.value = 100;
+        if (typeof updatePlayerTradeDetails === 'function') updatePlayerTradeDetails();
+      }
+    });
+  }
+
+  const btnStartPlayerTrade = document.getElementById('btn-start-player-trade');
+  if (btnStartPlayerTrade) {
+    btnStartPlayerTrade.addEventListener('click', () => {
+      const routeVal = playerRouteSelect ? playerRouteSelect.value : '';
+      const amount = parseInt(playerAmountInput ? playerAmountInput.value : 0) || 0;
+
+      if (!routeVal || amount <= 0) return;
+
+      const parts = routeVal.split('|');
+      const villageId = parts[0];
+      const type = parts[1];
+      const resource = parts[2];
+
+      if (typeof startPlayerTradeRoute === 'function') {
+        startPlayerTradeRoute(villageId, type, resource, amount);
+      }
+    });
+  }
+
+  // ----------------------------------------------------
+  // EVENTOS DE ASIGNACIÓN DE COLONOS A MERCADOS
+  // ----------------------------------------------------
+  const marketSlot0Select = document.getElementById('market-slot-0-select');
+  if (marketSlot0Select) {
+    marketSlot0Select.addEventListener('change', () => {
+      const val = marketSlot0Select.value;
+      if (val && typeof assignColonistToMarket === 'function') {
+        assignColonistToMarket(0, parseInt(val));
+      }
+    });
+  }
+  const marketSlot1Select = document.getElementById('market-slot-1-select');
+  if (marketSlot1Select) {
+    marketSlot1Select.addEventListener('change', () => {
+      const val = marketSlot1Select.value;
+      if (val && typeof assignColonistToMarket === 'function') {
+        assignColonistToMarket(1, parseInt(val));
+      }
+    });
+  }
+
+  const btnUnassignSlot0 = document.getElementById('btn-unassign-slot-0');
+  if (btnUnassignSlot0) {
+    btnUnassignSlot0.addEventListener('click', () => {
+      if (typeof unassignColonistFromMarket === 'function') {
+        unassignColonistFromMarket(0);
+      }
+    });
+  }
+  const btnUnassignSlot1 = document.getElementById('btn-unassign-slot-1');
+  if (btnUnassignSlot1) {
+    btnUnassignSlot1.addEventListener('click', () => {
+      if (typeof unassignColonistFromMarket === 'function') {
+        unassignColonistFromMarket(1);
+      }
+    });
+  }
+
+  // ----------------------------------------------------
+  // EVENTOS DE CARAVANAS DE COLONOS
+  // ----------------------------------------------------
+  const tradeRouteSelect = document.getElementById('trade-route-select');
+  if (tradeRouteSelect) {
+    tradeRouteSelect.addEventListener('change', () => {
+      if (typeof updateTradeDetails === 'function') updateTradeDetails();
+    });
+  }
+  const tradeColonistSelect = document.getElementById('trade-colonist-select');
+  if (tradeColonistSelect) {
+    tradeColonistSelect.addEventListener('change', () => {
+      if (typeof updateTradeDetails === 'function') updateTradeDetails();
+    });
+  }
+  const tradeAmountInput = document.getElementById('trade-amount-input');
+  if (tradeAmountInput) {
+    tradeAmountInput.addEventListener('input', () => {
+      if (typeof updateTradeDetails === 'function') updateTradeDetails();
+    });
+    tradeAmountInput.addEventListener('change', () => {
+      if (typeof updateTradeDetails === 'function') updateTradeDetails();
+    });
+  }
+  
+  const btnAmount10 = document.getElementById('btn-amount-10');
+  if (btnAmount10) {
+    btnAmount10.addEventListener('click', () => {
+      if (tradeAmountInput) {
+        tradeAmountInput.value = 10;
+        if (typeof updateTradeDetails === 'function') updateTradeDetails();
+      }
+    });
+  }
+  const btnAmount50 = document.getElementById('btn-amount-50');
+  if (btnAmount50) {
+    btnAmount50.addEventListener('click', () => {
+      if (tradeAmountInput) {
+        tradeAmountInput.value = 50;
+        if (typeof updateTradeDetails === 'function') updateTradeDetails();
+      }
+    });
+  }
+  const btnAmount100 = document.getElementById('btn-amount-100');
+  if (btnAmount100) {
+    btnAmount100.addEventListener('click', () => {
+      if (tradeAmountInput) {
+        tradeAmountInput.value = 100;
+        if (typeof updateTradeDetails === 'function') updateTradeDetails();
+      }
+    });
+  }
+
+  const btnStartTrade = document.getElementById('btn-start-trade');
+  if (btnStartTrade) {
+    btnStartTrade.addEventListener('click', () => {
+      const routeVal = tradeRouteSelect ? tradeRouteSelect.value : '';
+      const colVal = tradeColonistSelect ? tradeColonistSelect.value : '';
+      const amount = parseInt(tradeAmountInput ? tradeAmountInput.value : 0) || 0;
+
+      if (!routeVal || colVal === '' || amount <= 0) return;
+
+      const parts = routeVal.split('|');
+      const villageId = parts[0];
+      const type = parts[1];
+      const resource = parts[2];
+      const slotIdx = parseInt(colVal);
+
+      if (typeof startTradeRoute === 'function') {
+        const success = startTradeRoute(villageId, type, resource, amount, slotIdx);
+        if (success) {
+          if (typeof updateTradeDetails === 'function') updateTradeDetails();
+        }
+      }
+    });
+  }
 
 
   // Botón desplegable del inventario de comida al pulsar en la tarjeta global
@@ -678,14 +729,16 @@ function initEventHandlers() {
   const btnResetAssignments = document.getElementById('btn-reset-assignments');
   if (btnResetAssignments) btnResetAssignments.addEventListener('click', resetAllAssignments);
 
-  // Inicializar la visualización de precios en el mercado manual
-  if (typeof updateSellResourcePriceDisplay === 'function') updateSellResourcePriceDisplay();
-  if (typeof updateBuyResourcePriceDisplay === 'function') updateBuyResourcePriceDisplay();
+
 
   // Delegación de eventos para el tablón de pedidos (PASO I - REP-TABL) - Global
   document.addEventListener('click', (e) => {
     const button = e.target.closest('.btn-fulfill-order');
     if (button) {
+      if (state.playerOnMission) {
+        showToast("No puedes entregar pedidos mientras estás de viaje comercial.", "warning");
+        return;
+      }
       const orderId = button.getAttribute('data-order-id');
       if (orderId && typeof fulfillOrder === 'function') {
         fulfillOrder(orderId);

@@ -105,6 +105,27 @@ TAREA: Implementar PASO J - [REP-MISI]: sistema completo de misiones con especia
 Es la mecanica de mayor alcance del bloque 2. Crear missiondata.csv.
 Al terminar: verifica los 9 casos de prueba y genera test/test_REP-MISI_[YYYYMMDD]_[HHMMSS].csv
 
+=== PROMPT PASO J.1 - [REC-DESC] Descartar recursos ===
+Lee .agents/CONTEXT.md y docs/plan.md para contexto.
+TAREA: Implementar PASO J.1 - [REC-DESC]: posibilidad de descartar recursos en la pestaña de recolección (se tirarán sin vender).
+Añade botones de descarte (papelera o botones directos) deshabilitados si stock es 0, que llamen a una función discardResource() restando la cantidad y actualizando la UI.
+Archivos: src/js/ui-render.js, src/js/ui-events.js, src/js/buildings.js
+Al terminar: verifica los 5 casos de prueba [REC-DESC] y genera test/test_REC-DESC_[YYYYMMDD]_[HHMMSS].csv
+
+=== PROMPT PASO J.2 - [ALM-REFA] Almacenes de dos tipos ===
+Lee .agents/CONTEXT.md y docs/plan.md para contexto.
+TAREA: Implementar PASO J.2 - [ALM-REFA]: almacenes de dos tipos únicos (Recursos y Alimentos) con capacidades máximas globales y visualización sin fracciones en recursos individuales.
+Define resource_warehouse y food_granary en buildings.csv, calcula límites dinámicos, controla que la recolección/producción se bloquee si se excede el límite de su categoría y cambia el contador superior para mostrar ocupación/capacidad máxima (y valor nutricional en comida).
+Archivos: src/data/buildings.csv, src/js/gamestate.js, src/js/buildings.js, src/js/gameloop.js, src/js/ui-render.js
+Al terminar: verifica los 6 casos de prueba [ALM-REFA] y genera test/test_ALM-REFA_[YYYYMMDD]_[HHMMSS].csv
+
+=== PROMPT PASO J.3 - [COM-TRIP] Comercio con tres pueblos ===
+Lee .agents/CONTEXT.md y docs/plan.md para contexto.
+TAREA: Implementar PASO J.3 - [COM-TRIP]: comercio con tres pueblos vecinos parametrizados mediante caravanas que tardan 2 días de juego en ida y vuelta y bloquean al colono.
+Elimina la compra/venta instantánea anterior. Crea src/data/villages.csv con los 3 pueblos (Senda Roble, Piedra Alta y Fértil Valle). Diseña la lógica de viajes activos en el gameTick y el bloqueo correspondiente del colono. Crea la pestaña dedicada a Comercio en la UI.
+Archivos: src/data/villages.csv (nuevo), src/js/data-loader.js, src/js/gamestate.js, src/js/buildings.js, src/js/gameloop.js, src/js/ui-render.js, src/js/ui-events.js, index.html
+Al terminar: verifica los 6 casos de prueba [COM-TRIP] y genera test/test_COM-TRIP_[YYYYMMDD]_[HHMMSS].csv
+
 ---
 
 ## BLOQUE 3 -- Arbol de tecnologia

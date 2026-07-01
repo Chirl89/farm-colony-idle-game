@@ -71,15 +71,9 @@ Building;armory;Armería;1;3;0;60;40;20;0;combat;0
 Building;well;Pozo;1;1;0;20;15;0;0;construction;0
 Upgrade;well_t2;Mejorar Pozo T2;2;2;50;50;40;0;0;construction;0
 # --- ALMACENAMIENTO (Paso G) ---;;;;;;;;;;;
-Storage;warehouse_wood;Almacen de Madera;1;1;20;10;0;0;0;none;0
-Storage;warehouse_wood_t2;Mejorar Almacen Madera T2;2;2;40;20;0;0;0;none;0
-Storage;warehouse_wood_t3;Mejorar Almacen Madera T3;3;3;80;40;0;0;0;none;0
-Storage;warehouse_stone;Almacen de Piedra;1;1;15;25;0;0;0;none;0
-Storage;warehouse_stone_t2;Mejorar Almacen Piedra T2;2;2;30;50;0;0;0;none;0
-Storage;warehouse_stone_t3;Mejorar Almacen Piedra T3;3;3;60;100;0;0;0;none;0
-Storage;warehouse_food;Almacen de Alimentos;1;1;25;15;0;0;0;none;0
-Storage;warehouse_food_t2;Mejorar Almacen Alimentos T2;2;2;50;30;0;0;0;none;0
-Storage;warehouse_food_t3;Mejorar Almacen Alimentos T3;3;3;100;60;0;0;0;none;0
-Storage;warehouse_seeds;Almacen de Semillas;1;1;20;10;0;0;0;none;0
-Storage;warehouse_seeds_t2;Mejorar Almacen Semillas T2;2;2;40;20;0;0;0;none;0
-Storage;warehouse_seeds_t3;Mejorar Almacen Semillas T3;3;3;80;40;0;0;0;none;0
+Storage;resource_warehouse;Almacen de Recursos;1;1;20;10;0;0;0;none;0
+Storage;resource_warehouse_t2;Mejorar Almacen Recursos T2;2;2;40;20;0;0;0;none;0
+Storage;resource_warehouse_t3;Mejorar Almacen Recursos T3;3;3;80;40;0;0;0;none;0
+Storage;food_granary;Almacen de Comida;1;1;25;15;0;0;0;none;0
+Storage;food_granary_t2;Mejorar Almacen Comida T2;2;2;50;30;0;0;0;none;0
+Storage;food_granary_t3;Mejorar Almacen Comida T3;3;3;100;60;0;0;0;none;0

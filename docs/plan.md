@@ -54,8 +54,13 @@
 | **BLOQUE 2 -- Produccion y reputacion** ||||||
 | 8 | **PASO H** - `[PROD-RAND]` | Verde | Aleatoriedad en produccion (rango min-max) | production.csv, gameloop.js | Completado (2026-06-30) |
 | 9 | **PASO I** - `[REP-TABL]` | Amarillo | Tablon de pedidos (reputacion sin misiones) | 6 archivos | Completado (2026-06-30) |
-| 10 | **PASO J** - `[REP-MISI]` | Rojo | Sistema de misiones + especialistas (missiondata.csv) | missiondata.csv + 8 archivos | Pendiente |
-| 10.B | BACKUP | - | Backup vBloque2 | - | Pendiente |
+| 10 | **PASO J** - `[REP-MISI]` | Rojo | Sistema de misiones + especialistas (missiondata.csv) | missiondata.csv + 8 archivos | Completado (2026-07-01) |
+| 10.B | BACKUP | - | Backup vBloque2 | - | Completado (2026-07-01) |
+| **BLOQUE ASAP -- Mejoras Urgentes (ASAP)** ||||||
+| 10.1 | **PASO J.1** - `[REC-DESC]` | Verde | Descartar recursos en recolección (tirarlos sin vender) | index.html, ui-render.js, ui-events.js | Completado (2026-07-01) |
+| 10.2 | **PASO J.2** - `[ALM-REFA]` | Rojo | Almacenes de dos tipos (recursos y comida) y refactorización | buildings.csv + 5 archivos | Completado (2026-07-01) |
+| 10.3 | **PASO J.3** - `[COM-TRIP]` | Rojo | Comercio con tres pueblos y caravanas temporales | villages.csv + 7 archivos | Completado (2026-07-01) |
+| 10.C | BACKUP | - | Backup vBloqueASAP | - | Pendiente |
 | **BLOQUE 3 -- Arbol de tecnologia** ||||||
 | 11 | **PASO K** - `[TEC-ARBOL]` | Rojo | Arbol de tecnologia (desbloqueo de edificios) | tech.csv + 6 archivos | Pendiente |
 | 11.B | BACKUP | - | Backup vBloque3 | - | Pendiente |
@@ -840,7 +845,172 @@ Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_R
 
 
 > BACKUP: aetheria_bkp_vBloque2.zip
+
 ---
+
+## BLOQUE ASAP -- Mejoras Urgentes (ASAP)
+
+---
+
+### PASO J.1 - [REC-DESC] Posibilidad de descartar recursos en la pestaña de recolección
+
+**Archivos:** `src/js/ui-render.js`, `src/js/ui-events.js`, `src/js/buildings.js`
+
+```
+OBJETIVO: Permitir al jugador descartar cualquier recurso de su inventario directamente desde la pestaña de recolección (tirándolos sin generar oro), útil para liberar espacio cuando los almacenes estén llenos.
+
+Lógica de Negocio:
+1. En src/js/buildings.js (o un archivo auxiliar adecuado):
+   - Crear la función global `discardResource(resourceId, amount)` que reduzca `state[resourceId]` en la cantidad especificada.
+   - Para alimentos estructurados y semillas, asegurar que se reste del campo correspondiente.
+   - La cantidad no puede bajar de 0.
+   - Tras el descarte, llamar a `updateGlobalFood()`, `recalculateRates()` y `updateUI()`.
+   - Mostrar un toast informativo al usuario: "Se han descartado [amount] de [recurso]".
+
+Interfaz de Usuario:
+2. En src/js/ui-render.js:
+   - En la sección de recursos (donde se muestra la recolección manual y el mercado manual), añadir junto a cada botón de Vender un botón "Descartar" o el icono de papelera (🗑️).
+   - Alternativamente, permitir opciones de descarte: Tirar 10, Tirar 100, Tirar Todo.
+   - El botón de Descartar debe estar deshabilitado si el stock del recurso correspondiente es 0.
+```
+
+PRUEBAS -- [REC-DESC] -- CSV: test/test_REC-DESC_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Botones Descartar visibles en recolección;Pestaña Recolección activa;Ver interfaz;Aparecen botones Descartar/Papelera al lado de cada recurso;-;Pendiente
+  U02;Unit;Descartar 10 reduce stock en 10;Stock de madera = 50;Clic Descartar 10;wood = 40;-;Pendiente
+  U03;Unit;Descartar Todo vacía stock del recurso;Stock de piedra = 50;Clic Descartar Todo;stone = 0;-;Pendiente
+  U04;Unit;Botón Descartar se deshabilita con stock 0;Stock = 0;Verificar botón;El botón de descartar correspondiente está disabled;-;Pendiente
+  R01;Regresion;Mercado y producción siguen funcionando;Venta manual e in-game activa;Verificar flujos;Venta manual y autogeneración no se ven afectadas;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_REC-DESC_{YYYYMMDD}_{HHMMSS}.csv`.
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV con el formato: `ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas`.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego. Marca la columna `Estado` como `PASS` o `FAIL`.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en test/README.md.
+
+---
+
+### PASO J.2 - [ALM-REFA] Almacenes de dos tipos únicos (recursos y comida)
+
+**Archivos:** `src/data/buildings.csv`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`
+
+```
+OBJETIVO: Simplificar el sistema de almacenamiento. En lugar de capacidades individuales por recurso, el inventario se gestionará en dos únicas capacidades globales: Recursos y Alimentos.
+
+Lógica de Negocio:
+1. En src/data/buildings.csv:
+   - Modificar/eliminar los almacenes individuales de recursos (aserradero/almacén madera, cantera/almacén piedra).
+   - Definir dos tipos únicos de almacén en Buildings:
+     - `resource_warehouse` (Almacén de Recursos).
+     - `food_granary` (Almacén de Comida).
+   - Ajustar sus costes y definir su capacidad de almacenamiento (Yield_Pop u otra columna parametrizada).
+
+2. En src/js/gamestate.js:
+   - En DEFAULT_STATE, definir capacidades máximas globales:
+     - `state.maxResourcesCapacity = 100` (inicial Ayuntamiento T1)
+     - `state.maxFoodCapacity = 100` (inicial Ayuntamiento T1)
+   - En loadGame(), migrar los datos añadiendo estas capacidades e inicializándolas. Si la partida tiene almacenes antiguos, convertirlos o inicializar los límites según corresponda.
+
+3. En src/js/gameloop.js -> recalculateRates():
+   - Calcular la capacidad total sumando la capacidad base del Ayuntamiento (según su Tier en buildings.csv/mechanics.csv) y el rendimiento acumulado de todos los `resource_warehouse` y `food_granary` construidos.
+   - Definir ocupación actual de Recursos: suma de `wood + stone + iron + gold + seeds.wheat + seeds.potato + seeds.carrot` (y cualquier recurso de construcción/semilla).
+   - Definir ocupación actual de Alimentos: suma de `wheat + potato + carrot + berries + cooked_wheat + cooked_potato + cooked_carrot + cooked_berries`.
+   - Limitar la ganancia de recursos/comida: si una acción o gameTick añadiría recursos por encima de la capacidad de su categoría, el excedente no se añade y se muestra un aviso visual (Toast o alerta visual) de Almacén Lleno.
+
+Interfaz de Usuario:
+4. En la barra superior / lateral (src/js/ui-render.js):
+   - Mostrar la ocupación y capacidad máxima de Recursos: "Recursos: [Ocupado]/[Máximo]" (ej. "Recursos: 120/500").
+   - Mostrar la ocupación y capacidad máxima de Comida junto al Valor Nutricional Total: "Comida: [Ocupado]/[Máximo] (Nutrición: [state.food])".
+   - En la lista de recursos individuales (Madera, Piedra, Oro, Trigo, etc.), eliminar el indicador de capacidad individual (ej. mostrar "50" en lugar de "50/100").
+```
+
+PRUEBAS -- [ALM-REFA] -- CSV: test/test_ALM-REFA_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;Ocupación global Recursos e inventario sin fracción;Colonia iniciada;Ver cabecera y lista;Cabecera muestra Recursos: X/Y y los recursos individuales no muestran capacidad individual (ej. 50 en lugar de 50/100);-;Pendiente
+  U02;Unit;Ocupación global Comida con valor nutricional;Colonia iniciada;Ver cabecera;Muestra Comida: A/B (Nutrición: C);-;Pendiente
+  U03;Unit;Límite de recursos detiene recolección manual;Ocupación recursos al máximo;Clic en recolectar madera;No se añade madera, aparece aviso "Almacenes llenos";-;Pendiente
+  U04;Unit;Límite de comida detiene producción;Ocupación comida al máximo;Fogata activa cocinando;La comida producida se descarta o no se produce por falta de espacio;-;Pendiente
+  I01;Integracion;Construir Almacén de Recursos aumenta capacidad;Capacidad base;Construir resource_warehouse;La capacidad máxima de recursos se incrementa en el valor parametrizado;-;Pendiente
+  I02;Integracion;Construir Almacén de Comida aumenta capacidad;Capacidad base;Construir food_granary;La capacidad máxima de comida se incrementa en el valor parametrizado;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_ALM-REFA_{YYYYMMDD}_{HHMMSS}.csv`.
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego y marca como PASS o FAIL.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en test/README.md.
+
+---
+
+### PASO J.3 - [COM-TRIP] Comercio con tres pueblos y caravanas temporales
+
+**Archivos:** `src/data/villages.csv` (nuevo), `src/js/data-loader.js`, `src/js/gamestate.js`, `src/js/buildings.js`, `src/js/gameloop.js`, `src/js/ui-render.js`, `src/js/ui-events.js`, `index.html`
+
+```
+OBJETIVO: Eliminar la compra y venta instantánea de recursos. El comercio ahora se realiza enviando caravanas comerciales a 3 pueblos específicos. Cada transacción tarda 2 días de juego en completarse (1 día de ida, 1 día de vuelta) y bloquea temporalmente al colono enviado y la transacción.
+
+Lógica de Negocio:
+1. En src/data/villages.csv:
+   - Crear el archivo CSV para definir los tres pueblos vecinos:
+     - Pueblo A (Senda Roble): Vende madera y compra comida. Distancia = 1 día.
+     - Pueblo B (Piedra Alta): Vende piedra y compra madera. Distancia = 1 día.
+     - Pueblo C (Fértil Valle): Vende comida y semillas, y compra piedra. Distancia = 1 día.
+   - Columnas: `ID;Name;DistanceDays;SellsResource;SellsPrice;BuysResource;BuysPrice`
+
+2. En src/js/gamestate.js:
+   - En DEFAULT_STATE, añadir `activeTrades: []`.
+   - Cada comercio activo tendrá la estructura:
+     `{ id, villageId, type: 'buy'|'sell', resource, amount, totalPrice, timeLeftDays, colonistId }`.
+   - En loadGame(), migrar el estado inicializando `activeTrades` como array vacío.
+
+3. En src/js/gameloop.js -> gameTick():
+   - Para cada viaje comercial activo en `state.activeTrades`, restar el tiempo transcurrido en días de juego:
+     `trade.timeLeftDays -= effectiveDelta / dayDuration` (donde dayDuration es la duración en segundos de un día).
+   - Al iniciar el viaje, se descuentan los recursos a vender (o el oro a pagar en caso de compra).
+   - Cuando `timeLeftDays <= 0`, el comercio se completa:
+     - Si es compra: se añaden los recursos comprados.
+     - Si es venta: se añade el oro obtenido.
+     - El colono con `colonistId` vuelve a estar libre (`colonist.job = null`, `onMission = false`).
+     - Se muestra un Toast: "✅ ¡La caravana de [Nombre Pueblo] ha regresado! Intercambio completado.".
+     - Remover el trade del array `state.activeTrades`.
+     - Llamar a `updateUI()`.
+
+4. En src/js/ui-events.js and src/js/buildings.js:
+   - Crear la función `startTradeRoute(villageId, type, resource, amount, colonistId)`:
+     - Verifica si el jugador tiene los recursos/oro necesarios.
+     - Verifica si el colono especificado está libre (no tiene trabajo asignado, no está onMission y no está hambriento).
+     - Asigna al colono al viaje comercial (`colonist.job = 'merchant_' + tradeId`, `onMission = true`).
+     - Añade el comercio a `state.activeTrades` con `timeLeftDays = village.DistanceDays * 2` (ida y vuelta).
+     - Descuenta los costes iniciales.
+   - Esta será la única forma de comprar y vender. Se deben deshabilitar y remover los botones del mercado instantáneo de la pestaña de recolección.
+
+Interfaz de Usuario:
+5. En index.html y src/js/ui-render.js:
+   - Crear una pestaña dedicada "Comercio" (o rediseñar el mercado automático/manual existente).
+   - Listar los 3 pueblos parametrizados con su distancia, lo que compran, lo que venden y sus precios.
+   - Permitir al jugador elegir un colono libre, seleccionar recurso/cantidad a comerciar y un botón de "Iniciar Viaje Comercial".
+   - Renderizar la sección "Viajes Comerciales en Curso" que muestre el progreso de cada caravana en días/horas restantes y una barra de progreso visual, además del nombre del colono asignado.
+```
+
+PRUEBAS -- [COM-TRIP] -- CSV: test/test_COM-TRIP_YYYYMMDD_HHMMSS.csv
+Columnas: ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+  U01;Unit;UI de comercio muestra los 3 pueblos parametrizados;CSV de villages cargado;Ver pestaña Comercio;Se renderizan Senda Roble, Piedra Alta y Fértil Valle con precios y distancias correctas;-;Pendiente
+  U02;Unit;Iniciar viaje descuenta recursos/oro de inmediato;Stock suficiente;Iniciar venta en caravana;Se descuenta el recurso vendido inmediatamente;-;Pendiente
+  U03;Unit;Colono asignado queda bloqueado en misión;Colono libre seleccionado;Iniciar caravana;El colono tiene job = merchant_* y onMission = true;-;Pendiente
+  U04;Unit;Caravana tarda la distancia de ida y vuelta;Distancia = 1 día;Transcurre tiempo;El viaje dura exactamente 2 días de juego en total antes de completarse;-;Pendiente
+  U05;Unit;Al completarse el viaje se recibe la recompensa;Viaje finaliza;Transcurren 2 días;Se añade el oro o recurso comprado y el colono es liberado;-;Pendiente
+  I01;Integracion;Mercado instantáneo anterior eliminado;Ver recolección;Buscar botones viejos;Los botones de compra/venta instantánea ya no existen en la UI;-;Pendiente
+
+
+#### 🧪 Instrucciones para la Creación y Ejecución de Pruebas:
+1. **Crear el archivo CSV**: Tras implementar esta mecánica, crea un archivo CSV en el directorio `test/` con el nombre exacto `test_COM-TRIP_{YYYYMMDD}_{HHMMSS}.csv`.
+2. **Copiar las pruebas**: Copia las filas de prueba listadas arriba en el nuevo archivo CSV.
+3. **Ejecutar y registrar**: Realiza las pruebas en el juego y marca como PASS o FAIL.
+4. **Registrar en el índice**: Añade la nueva entrada del archivo CSV a la tabla de índice en test/README.md.
+
+---
+
 
 ## BLOQUE 3 -- Arbol de tecnologia
 

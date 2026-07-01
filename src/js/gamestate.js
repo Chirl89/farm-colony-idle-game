@@ -134,11 +134,15 @@ const DEFAULT_STATE = {
   nextActivationId: 1,
   warehouses: [],
   storageCapacity: {},
+  maxResourcesCapacity: 100,
+  maxFoodCapacity: 100,
   missions: [],
   availableMissions: [],
   missionHistory: [],
   currentMissionsSubTab: 'orders',
-  missionsRefreshDay: 1
+  activeTrades: [],
+  playerOnMission: false,
+  playerMission: null
 };
 
 const COLONIST_NAMES = [
@@ -284,6 +288,38 @@ function loadGame() {
         } else {
           state[key] = parsed[key];
         }
+      }
+      
+      // Migración para Paso J.2 [ALM-REFA]: Convertir almacenes viejos a nuevos tipos
+      if (typeof state.maxResourcesCapacity === 'undefined') state.maxResourcesCapacity = 100;
+      if (typeof state.maxFoodCapacity === 'undefined') state.maxFoodCapacity = 100;
+      if (typeof state.activeTrades === 'undefined' || !Array.isArray(state.activeTrades)) state.activeTrades = [];
+      if (typeof state.playerOnMission === 'undefined') state.playerOnMission = false;
+      if (typeof state.playerMission === 'undefined') state.playerMission = null;
+      if (Array.isArray(state.warehouses)) {
+        state.warehouses.forEach(w => {
+          if (['wood', 'stone', 'seeds'].includes(w.type)) {
+            w.type = 'resource';
+          }
+        });
+      }
+      
+      // Limpiar mercaderes del mercado viejo en partidas guardadas
+      if (Array.isArray(state.colonists)) {
+        state.colonists.forEach(c => {
+          if (c.job && c.job.startsWith('markets_')) {
+            c.job = null;
+            c.onMission = false;
+            c.missionId = null;
+          }
+        });
+      }
+      if (Array.isArray(state.markets)) {
+        state.markets.forEach(m => {
+          m.workerAssigned = 0;
+          m.isRunning = false;
+          m.elapsed = 0;
+        });
       }
       
       // Migración de colonos numéricos a arreglo de objetos
@@ -901,32 +937,43 @@ function initializeHousingAssignments() {
 }
 
 // Recalcular la capacidad de almacenamiento de recursos según el ayuntamiento y almacenes completados
+function getSeedsOccupation() {
+  return state.seeds ? (
+    (state.seeds.wheat || 0) + 
+    (state.seeds.potato || 0) + 
+    (state.seeds.carrot || 0)
+  ) : 0;
+}
+
+function getResourcesOccupation() {
+  return (state.wood || 0) + 
+         (state.stone || 0) + 
+         (state.iron || 0) + 
+         getSeedsOccupation();
+}
+
+function getFoodOccupation() {
+  const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  return foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
+}
+
+window.getSeedsOccupation = getSeedsOccupation;
+window.getResourcesOccupation = getResourcesOccupation;
+window.getFoodOccupation = getFoodOccupation;
+
+// Recalcular la capacidad de almacenamiento de recursos según el ayuntamiento y almacenes completados
 function recalculateStorageCapacity() {
   const thTier = (state.townHall && state.townHall.tier) || 1;
   
   // Capacidad base según Ayuntamiento y mechanics.csv
-  let baseWood = 100, baseStone = 100, baseFood = 100, baseSeeds = 100;
+  let baseCap = thTier === 1 ? 100 : (thTier === 2 ? 200 : 500);
   if (typeof CONFIG !== 'undefined' && CONFIG.Storage) {
-    baseWood = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
-    baseStone = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
-    baseFood = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
-    baseSeeds = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
-  } else {
-    // Fallback hardcodeado si CONFIG no está cargado
-    const caps = { 1: 100, 2: 200, 3: 500 };
-    const c = caps[thTier] || 100;
-    baseWood = c; baseStone = c; baseFood = c; baseSeeds = c;
+    baseCap = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? baseCap;
   }
-
-  // Inicializar storageCapacity
-  state.storageCapacity = {
-    wood: baseWood,
-    stone: baseStone,
-    food: baseFood,
-    seeds: baseSeeds
-  };
-
-  // Sumar bonus de los almacenes completados
+  
+  let resourcesBonus = 0;
+  let foodBonus = 0;
+  
   if (Array.isArray(state.warehouses)) {
     state.warehouses.forEach(w => {
       if (w.isUnderConstruction) return; // solo almacenes construidos
@@ -936,54 +983,61 @@ function recalculateStorageCapacity() {
         const bonusKey = `warehouse_t${tier}_bonus`;
         bonus = CONFIG.Storage[bonusKey]?.value ?? bonus;
       }
-      if (state.storageCapacity[w.type] !== undefined) {
-        state.storageCapacity[w.type] += bonus;
+      
+      if (w.type === 'resource') {
+        resourcesBonus += bonus;
+      } else if (w.type === 'food') {
+        foodBonus += bonus;
       }
     });
   }
 
-  // Forzar capping de recursos actuales para no exceder la capacidad calculada
-  if (state.storageCapacity) {
-    if (state.wood > state.storageCapacity.wood) state.wood = state.storageCapacity.wood;
-    if (state.stone > state.storageCapacity.stone) state.stone = state.storageCapacity.stone;
-    
-    // Alimentos y procesados de alimentos (capacidad grupal total)
-    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
-    let totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
-    if (totalFood > state.storageCapacity.food) {
-      let excess = totalFood - state.storageCapacity.food;
-      // Reducir de forma secuencial empezando por alimentos básicos y luego cocinados
-      for (let i = 0; i < foodKeys.length; i++) {
-        const k = foodKeys[i];
-        const val = state[k] || 0;
-        if (val > 0) {
-          const toDeduct = Math.min(val, excess);
-          state[k] = val - toDeduct;
-          excess -= toDeduct;
-          if (excess <= 0) break;
-        }
-      }
-      updateGlobalFood();
-    }
+  state.maxResourcesCapacity = baseCap + resourcesBonus;
+  state.maxFoodCapacity = baseCap + foodBonus;
 
-    // Semillas (capacidad grupal total)
-    if (state.seeds) {
-      const seedKeys = ['wheat', 'potato', 'carrot'];
-      let totalSeeds = seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0);
-      if (totalSeeds > state.storageCapacity.seeds) {
-        let excess = totalSeeds - state.storageCapacity.seeds;
-        for (let i = 0; i < seedKeys.length; i++) {
-          const k = seedKeys[i];
-          const val = state.seeds[k] || 0;
-          if (val > 0) {
-            const toDeduct = Math.min(val, excess);
-            state.seeds[k] = val - toDeduct;
-            excess -= toDeduct;
-            if (excess <= 0) break;
-          }
-        }
+  // Truco matemático para emular capacidades individuales sin tocar ui-events.js ni utils.js
+  const resOcc = getResourcesOccupation();
+  state.storageCapacity = {
+    wood: state.maxResourcesCapacity - resOcc + (state.wood || 0),
+    stone: state.maxResourcesCapacity - resOcc + (state.stone || 0),
+    seeds: state.maxResourcesCapacity - resOcc + getSeedsOccupation(),
+    food: state.maxFoodCapacity,
+    resource: state.maxResourcesCapacity
+  };
+
+  // Forzar capping de recursos actuales para no exceder la capacidad calculada
+  const currentResOccupied = getResourcesOccupation();
+  if (currentResOccupied > state.maxResourcesCapacity) {
+    let excess = currentResOccupied - state.maxResourcesCapacity;
+    // Reducir excedente empezando por semillas, luego piedra, luego madera
+    const keysToDeduct = ['carrot_seeds', 'potato_seeds', 'wheat_seeds', 'stone', 'wood'];
+    for (let i = 0; i < keysToDeduct.length; i++) {
+      const k = keysToDeduct[i];
+      const stock = getResourceStock(k);
+      if (stock > 0) {
+        const toDeduct = Math.min(stock, excess);
+        deductResourceStock(k, toDeduct);
+        excess -= toDeduct;
+        if (excess <= 0) break;
       }
     }
+  }
+
+  const currentFoodOccupied = getFoodOccupation();
+  if (currentFoodOccupied > state.maxFoodCapacity) {
+    let excess = currentFoodOccupied - state.maxFoodCapacity;
+    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+    for (let i = 0; i < foodKeys.length; i++) {
+      const k = foodKeys[i];
+      const stock = state[k] || 0;
+      if (stock > 0) {
+        const toDeduct = Math.min(stock, excess);
+        state[k] = stock - toDeduct;
+        excess -= toDeduct;
+        if (excess <= 0) break;
+      }
+    }
+    updateGlobalFood();
   }
 }
 

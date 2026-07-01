@@ -1,0 +1,7 @@
+Category;ID;Name;DistanceDays;SellsResource;SellsPrice;BuysResource;BuysPrice
+Village;oak_valley;Senda Roble;1;wood;2;food;3
+Village;high_stone;Piedra Alta;1;stone;2;wood;3
+Village;fertile_valley_food;Fértil Valle;1;food;3;stone;2
+Village;fertile_valley_wheat;Fértil Valle;1;wheat_seeds;5;stone;2
+Village;fertile_valley_potato;Fértil Valle;1;potato_seeds;8;stone;2
+Village;fertile_valley_carrot;Fértil Valle;1;carrot_seeds;12;stone;2

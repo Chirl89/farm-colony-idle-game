@@ -719,6 +719,30 @@ function gameTick() {
     });
   }
   
+  // Avanzar viajes comerciales activos (PASO J.3 - COM-TRIP)
+  if (Array.isArray(state.activeTrades)) {
+    for (let i = state.activeTrades.length - 1; i >= 0; i--) {
+      const trade = state.activeTrades[i];
+      trade.timeLeftDays -= effectiveDelta / dayDuration;
+      if (trade.timeLeftDays <= 0) {
+        if (typeof completeTradeRoute === 'function') {
+          completeTradeRoute(trade);
+        }
+        state.activeTrades.splice(i, 1);
+      }
+    }
+  }
+
+  // Avanzar viaje comercial personal del jugador (PASO J.3 - COM-TRIP)
+  if (state.playerOnMission && state.playerMission) {
+    state.playerMission.timeLeftDays -= effectiveDelta / dayDuration;
+    if (state.playerMission.timeLeftDays <= 0) {
+      if (typeof completePlayerTradeRoute === 'function') {
+        completePlayerTradeRoute();
+      }
+    }
+  }
+  
   // Rotación automática de candidatos (candidate_rotation de timings.csv)
   if (typeof state.candidateRotationElapsed === 'undefined') state.candidateRotationElapsed = 0;
   state.candidateRotationElapsed += effectiveDelta;
@@ -1178,98 +1202,6 @@ function gameTick() {
             
             granary.activeCrop = null;
             granary.mode = 'none';
-            recalculateRates();
-            if (typeof updateUI === 'function') updateUI();
-          }
-        }
-      });
-    }
-
-    // 4. Automatización de Compras y Ventas en Mercados
-    if (Array.isArray(state.markets) && CONFIG.Sales) {
-      state.markets.forEach((market, idx) => {
-        const hasWorker = market.workerAssigned > 0;
-        
-        if (!market.isUnderConstruction && !market.isRunning && hasWorker) {
-          let transactionStarted = false;
-
-          const resourcesList = [
-            'wood', 'stone',
-            'wheat', 'potato', 'carrot', 'berries',
-            'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries',
-            'wheat_seeds', 'potato_seeds', 'carrot_seeds'
-          ];
-
-          // 1. CHEQUEAR AUTO-COMPRA
-          for (let type of resourcesList) {
-            const isChecked = state.autoBuy && state.autoBuy[type];
-            const maxVal = state.autoBuyMax ? (parseInt(state.autoBuyMax[type]) || 0) : 0;
-            const currentStock = getResourceStock(type);
-            const bRule = CONFIG.Sales[`buy_${type}`];
-            
-            if (bRule && isChecked && currentStock < maxVal) {
-              const cost = bRule.cost_gold || 0;
-              if (state.gold >= cost) {
-                state.gold -= cost;
-                
-                market.transactionType = 'buy';
-                market.boughtResource = type;
-                market.revenue = bRule.yield_amount || bRule.yield || 1; 
-                market.targetDuration = bRule.duration || 0.1;
-                market.elapsed = 0;
-                market.isRunning = true;
-                transactionStarted = true;
-                break;
-              }
-            }
-          }
-
-          // 2. CHEQUEAR AUTO-VENTA (solo si no se inició auto-compra)
-          if (!transactionStarted) {
-            for (let type of resourcesList) {
-              const isChecked = state.autoSell && state.autoSell[type];
-              const minVal = state.autoSellMin ? (parseInt(state.autoSellMin[type]) || 0) : 0;
-              const currentStock = getResourceStock(type);
-              
-              const mRule = CONFIG.Sales[`market_${type}`];
-              if (mRule && isChecked && currentStock >= minVal + mRule.consume_amount) {
-                deductResourceStock(type, mRule.consume_amount);
-                updateGlobalFood();
-                
-                market.transactionType = 'sell';
-                market.soldResource = mRule.name;
-                market.revenue = mRule.yield;
-                market.targetDuration = mRule.duration || 0.1;
-                market.elapsed = 0;
-                market.isRunning = true;
-                transactionStarted = true;
-                break;
-              }
-            }
-          }
-        }
-        
-        if (!market.isUnderConstruction && market.isRunning) {
-          const workers = state.colonists ? state.colonists.filter(c => c.job === `markets_${idx}`) : [];
-          let mult = 0;
-          workers.forEach(c => {
-            const lvl = c.attributes.trading || 3;
-            mult += getAttributeMult(lvl) * getColonistEfficiency(c);
-          });
-          market.elapsed += effectiveDelta * mult;
-          const duration = market.targetDuration || 0.1;
-          if (market.elapsed >= duration) {
-            market.isRunning = false;
-            market.elapsed = 0;
-            if (market.transactionType === 'buy') {
-              addResourceStock(market.boughtResource, market.revenue);
-              updateGlobalFood();
-            } else {
-              // es de tipo 'sell' (o fallback antiguo)
-              state.gold += market.revenue;
-              resourcesGeneratedThisSecond.gold += market.revenue;
-            }
-            market.transactionType = null;
             recalculateRates();
             if (typeof updateUI === 'function') updateUI();
           }

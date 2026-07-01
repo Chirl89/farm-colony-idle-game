@@ -1,0 +1,6 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;T1 muestra Casa del Jugador;Ayto T1;Ver header;Texto correcto;Muestra "Casa del Jugador (Nivel 1)" y "🏛️ Casa del Jugador" en el título;PASS;Verificado en UI
+U02;Unit;T2 muestra Centro Comunitario;Ayto T2;Ver header;Texto correcto;Muestra "Centro Comunitario (Nivel 2)" y "🏛️ Centro Comunitario" en el título;PASS;Verificado tras mejora
+U03;Unit;T3 muestra Ayuntamiento;Ayto T3;Ver header;Texto correcto;Muestra "Ayuntamiento (Nivel 3)" y "🏛️ Ayuntamiento" en el título;PASS;Verificado tras mejora a T3
+U04;Unit;Toast de mejora muestra nombre nuevo;Mejorar T1->T2;Ver toast;Nombre actualizado;Muestra "🏗️ Comenzando mejora a Centro Comunitario";PASS;Verificado al presionar el botón de mejora
+R01;Regresion;Gate de construcciones no afectado;Ayto T1;Intentar edificio T2;Sigue bloqueado;Bloquea la mejora a Cabaña mostrando "Se requiere Centro Comunitario (Nivel 2)";PASS;La lógica del gate de nivel se mantiene funcional e intacta

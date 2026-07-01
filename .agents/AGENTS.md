@@ -40,7 +40,7 @@ Siempre que el usuario diga "paso X completado", mueve ese paso al backlog.
 
 ## 📋 Plan activo
 Ver: `docs/plan.md` (en la raíz del proyecto, en git)
-Próximo paso: **PASO A** — Tablón de pedidos
+Próximo paso: **PASO K** — [TEC-ARBOL] Arbol de tecnologia (desbloqueo de edificios)
 
 Backlog completado: `docs/backlog.md`
 Prompts para nuevas conversaciones: `docs/prompts.md`

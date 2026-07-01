@@ -1,0 +1,10 @@
+TestID;Description;Inputs;ExpectedResult;ActualResult;Status
+U01;Capacidad base Ayto T1 = 100 madera;TownHall Tier 1;Storage capacity wood = 100;Storage capacity wood = 100;PASS
+U02;Capacidad Ayto T2 = 200;TownHall Tier 2;Storage capacity wood = 200;Storage capacity wood = 200;PASS
+U03;Almacen madera T1 añade 200 de cap (total 300);TownHall Tier 1 + Warehouse Wood T1;Storage capacity wood = 300;Storage capacity wood = 300;PASS
+U04;Producción se detiene al llegar al cap;Wood = 300, Woodcutting passive tick +10;Wood remains 300 (cap respected);Wood remains 300 (cap respected);PASS
+U05;Toast almacén lleno al tocar el cap;Wood reaching cap;showToast warning trigger;showToast warning triggered with throttle;PASS
+U06;Barra roja al >90% cap;Wood = 95/100 (95%);Progress bar color red (#ef4444) and LLENO badge;Progress bar color red (#ef4444) and LLENO badge displayed;PASS
+I01;Producción madera + almacén conjuntamente (llega a cap y se detiene);TownHall Tier 1 + Warehouse Wood T1, Wood starts at 0, passive generation;Wood increases to 300 and caps there;Wood increases to 300 and caps there;PASS
+R01;Producción de comida no se rompe con fogatas (acumula normal);Produce cooked_wheat on bonfire;cooked_wheat stock increases up to food cap;cooked_wheat stock increases up to food cap;PASS
+R02;Mercado puede vender aunque el almacén esté lleno (venta exitosa);Market sell item, storage is full;reputation/gold increases, resource deducted;reputation/gold increases, resource deducted successfully;PASS

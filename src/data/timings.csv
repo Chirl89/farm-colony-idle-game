@@ -1,106 +1,121 @@
-# ============================================================
-# TIMINGS.csv — Todos los tiempos del juego (en días de juego)
-# ============================================================
-# Columnas:
-#   Category : Cycle | Construction | Crop | Gather | System
-#   ID       : identificador único en código (igual que buildings.csv cuando aplique)
-#   Name     : descripción legible
-#   Duration : duración en días de juego (excepto Cycle que usa segundos reales)
-# ============================================================
-
+# ============================================================;;;
+# TIMINGS.csv — Todos los tiempos del juego (en días de juego);;;
+# ============================================================;;;
+# Columnas:;;;
+#   Category : Cycle | Construction | Crop | Gather | System;;;
+#   ID       : identificador único en código (igual que buildings.csv cuando aplique);;;
+#   Name     : descripción legible;;;
+#   Duration : duración en días de juego (excepto Cycle que usa segundos reales);;;
+# ============================================================;;;
+;;;
 Category;ID;Name;Duration
+;;;
+# --- CICLO DÍA/NOCHE (segundos reales, no días de juego) ---;;;
+Cycle;day_duration;Duración del Día (segundos reales);900
+Cycle;night_duration;Duración de la Noche (segundos reales);300
+Cycle;gather_cooldown;Cooldown Recolección Manual (días de juego);10
+Cycle;candidate_rotation;Rotación Automática de Candidatos (días);6300
+;;;
+# --- CONSTRUCCIÓN DE EDIFICIOS ---;;;
+Construction;townhall;Construcción Ayuntamiento T1;840
+Construction;townhall_t2;Mejora Ayuntamiento T2;1680
+Construction;townhall_t3;Mejora Ayuntamiento T3;3360
+Construction;basic_house;Construcción Choza;840
+Construction;upgraded_house;Mejora Choza → Cabaña;1680
+Construction;luxury_house;Mejora Cabaña → Casa Grande;3360
+Construction;lumbermill;Construcción Aserradero;1680
+Construction;lumbermill_t2;Mejora Aserradero T2;3360
+Construction;lumbermill_t3;Mejora Aserradero T3;6720
+Construction;quarry;Construcción Cantera;1680
+Construction;quarry_t2;Mejora Cantera T2;3360
+Construction;quarry_t3;Mejora Cantera T3;6720
+Construction;farm;Construcción Granja;1680
+Construction;farm_t2;Mejora Granja T2;3360
+Construction;farm_t3;Mejora Granja T3;6720
+Construction;granary;Construcción Granero;5040
+Construction;granary_t2;Mejora Granero T2;10080
+Construction;granary_t3;Mejora Granero T3;20160
+Construction;bonfire;Construcción Fogata;840
+Construction;bonfire_t2;Mejora Fogata → Caldero;1680
+Construction;bonfire_t3;Mejora Caldero → Cocina;3360
+Construction;market;Construcción Mercado;10080
+Construction;market_t2;Mejora Mercado T2;20160
+Construction;market_t3;Mejora Mercado T3;40320
+Construction;smithy;Construcción Taller del Herrero;5040
+Construction;smithy_t2;Mejora Taller T2;10080
+Construction;forge;Construcción Forja;5040
+Construction;forge_t2;Mejora Forja T2;10080
+Construction;mill;Construcción Molino;10080
+Construction;mill_t2;Mejora Molino T2;20160
+Construction;armory;Construcción Armería;20160
+Construction;well;Construcción Pozo T1;5
+Construction;well_t2;Mejora Pozo T2;10
+Construction;warehouse_wood;Construcción Almacén Madera;20
+Construction;warehouse_wood_t2;Mejora Almacén Madera T2;40
+Construction;warehouse_wood_t3;Mejora Almacén Madera T3;80
+Construction;warehouse_stone;Construcción Almacén Piedra;20
+Construction;warehouse_stone_t2;Mejora Almacén Piedra T2;40
+Construction;warehouse_stone_t3;Mejora Almacén Piedra T3;80
+Construction;warehouse_food;Construcción Almacén Alimentos;20
+Construction;warehouse_food_t2;Mejora Almacén Alimentos T2;40
+Construction;warehouse_food_t3;Mejora Almacén Alimentos T3;80
+Construction;warehouse_seeds;Construcción Almacén Semillas;20
+Construction;warehouse_seeds_t2;Mejora Almacén Semillas T2;40
+Construction;warehouse_seeds_t3;Mejora Almacén Semillas T3;80
 
-# --- CICLO DÍA/NOCHE (segundos reales, no días de juego) ---
-Cycle;day_duration;Duración del Día (segundos reales);100
-Cycle;night_duration;Duración de la Noche (segundos reales);5
-Cycle;gather_cooldown;Cooldown Recolección Manual (días de juego);0.5
-Cycle;candidate_rotation;Rotación Automática de Candidatos (días);210
-
-# --- CONSTRUCCIÓN DE EDIFICIOS ---
-Construction;townhall;Construcción Ayuntamiento T1;1
-Construction;townhall_t2;Mejora Ayuntamiento T2;25
-Construction;townhall_t3;Mejora Ayuntamiento T3;40
-Construction;basic_house;Construcción Choza;10
-Construction;upgraded_house;Mejora Choza → Cabaña;20
-Construction;luxury_house;Mejora Cabaña → Casa Grande;30
-Construction;lumbermill;Construcción Aserradero;15
-Construction;lumbermill_t2;Mejora Aserradero T2;20
-Construction;lumbermill_t3;Mejora Aserradero T3;30
-Construction;quarry;Construcción Cantera;15
-Construction;quarry_t2;Mejora Cantera T2;20
-Construction;quarry_t3;Mejora Cantera T3;30
-Construction;farm;Construcción Granja;1
-Construction;farm_t2;Mejora Granja T2;15
-Construction;farm_t3;Mejora Granja T3;25
-Construction;granary;Construcción Granero;15
-Construction;granary_t2;Mejora Granero T2;25
-Construction;granary_t3;Mejora Granero T3;40
-Construction;bonfire;Construcción Fogata;15
-Construction;bonfire_t2;Mejora Fogata → Caldero;20
-Construction;bonfire_t3;Mejora Caldero → Cocina;30
-Construction;market;Construcción Mercado;3
-Construction;market_t2;Mejora Mercado T2;20
-Construction;market_t3;Mejora Mercado T3;30
-Construction;smithy;Construcción Taller del Herrero;15
-Construction;smithy_t2;Mejora Taller T2;25
-Construction;forge;Construcción Forja;20
-Construction;forge_t2;Mejora Forja T2;30
-Construction;mill;Construcción Molino;15
-Construction;mill_t2;Mejora Molino T2;25
-Construction;armory;Construcción Armería;25
-
-# --- CICLOS DE PRODUCCIÓN DE EDIFICIOS ---
-# Aserraderos
-Production;lumbermill_t1;Ciclo Producción Aserradero T1;20
-Production;lumbermill_t2;Ciclo Producción Aserradero T2;15
-Production;lumbermill_t3;Ciclo Producción Aserradero T3;10
-
-# Canteras
-Production;quarry_t1;Ciclo Producción Cantera T1;1
-Production;quarry_t2;Ciclo Producción Cantera T2;0.8
-Production;quarry_t3;Ciclo Producción Cantera T3;0.6
-
-# Fogatas / Cocinas
-Production;bonfire_t1_auto;Ciclo Cocinado Automático Fogata;5
-Production;bonfire_t1_manual;Ciclo Cocinado Manual Fogata;20
-Production;bonfire_t2_auto;Ciclo Cocinado Automático Caldero;10
-Production;bonfire_t2_manual;Ciclo Cocinado Manual Caldero;2
-Production;bonfire_t3_auto;Ciclo Cocinado Automático Cocina;3
-Production;bonfire_t3_manual;Ciclo Cocinado Manual Cocina;1.5
-
-# Graneros (producción de semillas por tipo y tier)
-Production;granary_wheat_t1;Ciclo Semillas Trigo T1;3
-Production;granary_wheat_t2;Ciclo Semillas Trigo T2;2
-Production;granary_wheat_t3;Ciclo Semillas Trigo T3;3
-Production;granary_potato_t1;Ciclo Semillas Patata T1;5
-Production;granary_potato_t2;Ciclo Semillas Patata T2;3
-Production;granary_potato_t3;Ciclo Semillas Patata T3;5
-Production;granary_carrot_t1;Ciclo Semillas Zanahoria T1;10
-Production;granary_carrot_t2;Ciclo Semillas Zanahoria T2;7
-Production;granary_carrot_t3;Ciclo Semillas Zanahoria T3;10
-
-# Mercados (ciclo auto compra/venta)
+;;;
+# --- CICLOS DE PRODUCCIÓN DE EDIFICIOS ---;;;
+# Aserraderos;;;
+Production;lumbermill_t1;Ciclo Producción Aserradero T1;90
+Production;lumbermill_t2;Ciclo Producción Aserradero T2;90
+Production;lumbermill_t3;Ciclo Producción Aserradero T3;90
+;;;
+# Canteras;;;
+Production;quarry_t1;Ciclo Producción Cantera T1;90
+Production;quarry_t2;Ciclo Producción Cantera T2;90
+Production;quarry_t3;Ciclo Producción Cantera T3;90
+;;;
+# Fogatas / Cocinas;;;
+Production;bonfire_t1_auto;Ciclo Cocinado Automático Fogata;300
+Production;bonfire_t1_manual;Ciclo Cocinado Manual Fogata;300
+Production;bonfire_t2_auto;Ciclo Cocinado Automático Caldero;250
+Production;bonfire_t2_manual;Ciclo Cocinado Manual Caldero;250
+Production;bonfire_t3_auto;Ciclo Cocinado Automático Cocina;150
+Production;bonfire_t3_manual;Ciclo Cocinado Manual Cocina;150
+;;;
+# Graneros (producción de semillas por tipo y tier);;;
+Production;granary_wheat_t1;Ciclo Semillas Trigo T1;20
+Production;granary_wheat_t2;Ciclo Semillas Trigo T2;6300
+Production;granary_wheat_t3;Ciclo Semillas Trigo T3;6300
+Production;granary_potato_t1;Ciclo Semillas Patata T1;12600
+Production;granary_potato_t2;Ciclo Semillas Patata T2;12600
+Production;granary_potato_t3;Ciclo Semillas Patata T3;12600
+Production;granary_carrot_t1;Ciclo Semillas Zanahoria T1;18900
+Production;granary_carrot_t2;Ciclo Semillas Zanahoria T2;18900
+Production;granary_carrot_t3;Ciclo Semillas Zanahoria T3;18900
+;;;
+# Mercados (ciclo auto compra/venta);;;
 Production;market_t1;Ciclo Mercado T1;3
 Production;market_t2;Ciclo Mercado T2;2
 Production;market_t3;Ciclo Mercado T3;1
-
-# Recolección manual con asignados (ciclo por colono)
-Production;wood_auto;Ciclo Leñador Manual Asignado;1
-Production;stone_auto;Ciclo Cantero Manual Asignado;1
-Production;berries_auto;Ciclo Recolector Frutos Asignado;100
-
-# --- ETAPAS DE CULTIVO (para granjas) ---
-Crop;farm_plow;Arar el Campo;3
-Crop;farm_sow;Sembrar el Campo;3
-Crop;farm_water;Riego Inicial;2
-Crop;farm_water_daily;Riego Diario (por ciclo de crecimiento);1.5
-
-# Duración de crecimiento por cultivo (desde sow hasta cosecha)
-Crop;wheat;Crecimiento Trigo;30
-Crop;potato;Crecimiento Patata;50
-Crop;carrot;Crecimiento Zanahoria;100
-
-# --- CRAFTEO (Paso E/G/K — futuro) ---
+;;;
+# Recolección manual con asignados (ciclo por colono);;;
+Production;wood_auto;Ciclo Leñador Manual Asignado;90
+Production;stone_auto;Ciclo Cantero Manual Asignado;90
+Production;berries_auto;Ciclo Recolector Frutos Asignado;90
+;;;
+# --- ETAPAS DE CULTIVO (para granjas) ---;;;
+Timing;farm_plow;Arar el Campo;450
+Timing;farm_sow;Sembrar el Campo;450
+Timing;farm_water;Riego Inicial;200
+Timing;farm_water_daily;Riego Diario (por ciclo de crecimiento);150
+;;;
+# Duración de crecimiento por cultivo (desde sow hasta cosecha);;;
+Timing;wheat;Crecimiento Trigo;50
+Timing;potato;Crecimiento Patata;1800
+Timing;carrot;Crecimiento Zanahoria;18900
+;;;
+# --- CRAFTEO (Paso E/G/K — futuro) ---;;;
 Production;smithy_pickaxe_t1;Producir Pico Madera T1;5
 Production;smithy_axe_t1;Producir Hacha Madera T1;4
 Production;smithy_hoe_t1;Producir Azada Madera T1;3

@@ -1,0 +1,9 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Carga de pedidos CSV;CONFIG cargado;Verificar CONFIG.Order;orders.csv cargado en CONFIG con todos sus atributos;orders.csv cargado con req_resource, req_min, req_max y recompensas;PASS;
+U02;Unit;Contratacion parametrica;2 colonos, rep=0, mechanics: base=2 per_colonist=5;Verificar getColonistHiringRepCost();Retorna 0;Retorna 0;PASS;
+U03;Unit;Contratación paramétrica con coste;3 colonos, rep=0, mechanics: base=2 per_colonist=5;Verificar getColonistHiringRepCost();Retorna 5;Retorna 5;PASS;
+U04;Unit;Generacion de pedidos desde CSV;Nuevo dia;Verificar state.orders;Pedidos generados basados en orders.csv, no hardcodeados;Pedidos generados con recursos y cantidades de orders.csv;PASS;
+U05;Unit;Entrega de pedidos con recompensas multiples;Pedido completado con oro y reputacion;fulfillOrder();Descuenta recurso, otorga reputacion Y oro;Descuenta recurso, otorga reputacion y oro;PASS;
+U06;Unit;Validacion de asequibilidad dinamica;Choza con coste de oro 10 en CSV, oro=0;Verificar canAffordBuilding();Retorna false;Retorna false;PASS;
+U07;Unit;Inyeccion dinamica de costes UI;Choza con oro 10 y madera 5 en CSV;Verificar HTML costs-list;Pinta badges de Oro y Madera;Pinta badges de Oro y Madera;PASS;
+R01;Regresion;Edificios legacy se construyen con normalidad;Recursos suficientes;Construir Choza;Descuenta recursos y comienza obra;Descuenta recursos y comienza obra;PASS;

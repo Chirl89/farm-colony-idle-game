@@ -9,6 +9,79 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
+  <script>
+    function showGlobalError(title, content) {
+      let errorDiv = document.getElementById('global-error-banner');
+      if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'global-error-banner';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '1rem';
+        errorDiv.style.right = '1rem';
+        errorDiv.style.maxWidth = '480px';
+        errorDiv.style.background = 'rgba(239, 68, 68, 0.98)';
+        errorDiv.style.backdropFilter = 'blur(12px)';
+        errorDiv.style.color = '#fff';
+        errorDiv.style.padding = '1.25rem';
+        errorDiv.style.borderRadius = '12px';
+        errorDiv.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)';
+        errorDiv.style.border = '1px solid rgba(248, 113, 113, 0.4)';
+        errorDiv.style.zIndex = '999999';
+        errorDiv.style.fontFamily = "'Outfit', system-ui, -apple-system, sans-serif";
+        errorDiv.style.fontSize = '0.85rem';
+        errorDiv.style.lineHeight = '1.4';
+        errorDiv.style.display = 'flex';
+        errorDiv.style.flexDirection = 'column';
+        errorDiv.style.gap = '0.75rem';
+        document.body.appendChild(errorDiv);
+      }
+      
+      const textToCopy = `${title}\n${content}`;
+      
+      errorDiv.innerHTML = `
+        <div style="display: flex; align-items: flex-start; gap: 0.6rem;">
+          <span style="font-size: 1.5rem; line-height: 1;">⚠️</span>
+          <div style="flex: 1; min-width: 0;">
+            <strong style="font-weight: 700; font-size: 0.95rem; color: #fee2e2; display: block; margin-bottom: 0.25rem;">${title}</strong>
+            <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.75rem; background: rgba(0,0,0,0.35); padding: 0.6rem; border-radius: 6px; color: #fecaca; max-height: 250px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05);">${content}</pre>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 0.75rem;">
+          <button id="btn-copy-error" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            📋 Copiar error
+          </button>
+          <button style="background: transparent; border: none; color: rgba(255,255,255,0.7); padding: 0.4rem 0.6rem; cursor: pointer; font-size: 0.75rem; font-weight: 500;" onclick="document.getElementById('global-error-banner').remove()">
+            Descartar
+          </button>
+        </div>
+      `;
+      
+      const copyBtn = errorDiv.querySelector('#btn-copy-error');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            copyBtn.innerHTML = '✅ ¡Copiado!';
+            setTimeout(() => { copyBtn.innerHTML = '📋 Copiar error'; }, 2000);
+          }).catch(err => {
+            console.error('Error al copiar al portapapeles: ', err);
+          });
+        });
+      }
+    }
+
+    window.onerror = function(message, source, lineno, colno, error) {
+      const cleanSource = source ? source.split('/').pop() : 'desconocido';
+      const detail = `Mensaje: ${message}\nArchivo: ${cleanSource}\nLínea: ${lineno} (Columna: ${colno})\nPila de llamadas (Stack):\n${error && error.stack ? error.stack : 'No disponible'}`;
+      showGlobalError('Error de ejecución en JavaScript', detail);
+      return false;
+    };
+    
+    window.onunhandledrejection = function(event) {
+      const reason = event.reason;
+      const detail = reason && reason.stack ? reason.stack : String(reason);
+      showGlobalError('Excepción de Promesa No Controlada (Promise Rejection)', detail);
+    };
+  </script>
   <link rel="stylesheet" href="src/css/styles.css">
   <script src="src/js/lib/jszip.min.js"></script>
   <script src="src/js/utils.js"></script>
@@ -112,6 +185,28 @@
         </div>
         <div class="resource-icon">👥</div>
       </div>
+
+      <!-- Agua Diaria (Visible si waterMax > 0) -->
+      <div class="resource-card" id="card-water" style="--res-color: #38bdf8; --res-color-alpha: rgba(56, 189, 248, 0.3); --res-color-glow: rgba(56, 189, 248, 0.1); display: none;">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>💧 Agua Diaria</span>
+          </div>
+          <div class="resource-value" id="res-water">0 / 0</div>
+        </div>
+        <div class="resource-icon">💧</div>
+      </div>
+
+      <!-- Reputación -->
+      <div class="resource-card" id="card-reputation" style="--res-color: #a78bfa; --res-color-alpha: rgba(167, 139, 250, 0.3); --res-color-glow: rgba(167, 139, 250, 0.1);">
+        <div class="resource-info">
+          <div class="resource-label">
+            <span>🏆 Reputación</span>
+          </div>
+          <div class="resource-value" id="res-reputation">0</div>
+        </div>
+        <div class="resource-icon">🏆</div>
+      </div>
     </section>
 
     <!-- DETALLE DE ALIMENTOS (DESPLEGABLE) -->
@@ -134,7 +229,7 @@
         🛠️ Recolección
       </button>
       <button id="tab-btn-production" class="tab-btn">
-        🏭 Edificios de Prod.
+        🏭 Construcciones
       </button>
       <button id="tab-btn-construction" class="tab-btn">
         🏗️ Construcción
@@ -145,6 +240,9 @@
       <button id="tab-btn-colonists" class="tab-btn">
         👥 Aldeanos
       </button>
+      <button id="tab-btn-missions" class="tab-btn">
+        📋 Pedidos/Misiones
+      </button>
     </div>
 
     <!-- DASHBOARD PRINCIPAL (CONTENEDORES DE CONTENIDO DE PESTAÑAS) -->
@@ -152,6 +250,8 @@
       
       <!-- PESTAÑA: RECOLECCIÓN BÁSICA -->
       <div id="tab-basic" class="tab-content active-content">
+        <!-- Banner de construcción del jugador -->
+        <div id="player-construction-banner" style="display: none; margin-bottom: 1rem;"></div>
         <section class="module-card">
           <div class="module-title">
             <span>🛠️ Recolección Manual & Asignación</span>
@@ -261,10 +361,9 @@
                 <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem;" id="btn-sell-1">Vender x1</button>
                 <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem;" id="btn-sell-10">Vender x10</button>
                 <button class="btn btn-secondary" style="flex: 1; padding: 0.5rem;" id="btn-sell-100">Vender x100</button>
-              </div>
-            </div>
           </div>
         </section>
+
       </div>
 
       <!-- PESTAÑA: EDIFICIOS DE PRODUCCIÓN -->
@@ -282,6 +381,9 @@
           </button>
           <button id="subtab-btn-recursos" class="subtab-btn">
             🪵 Recursos Básicos
+          </button>
+          <button id="subtab-btn-almacenamiento" class="subtab-btn">
+            📦 Almacenamiento
           </button>
         </div>
 
@@ -357,7 +459,29 @@
                 <!-- Cajas dinámicas -->
               </div>
             </section>
+
+            <!-- Pozos de Agua -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>💧 Pozos de Agua Activos</span>
+              </div>
+              <div id="active-wells-list" class="building-boxes-container">
+                <!-- Cajas dinámicas -->
+              </div>
+            </section>
           </div>
+        </div>
+
+        <!-- Subtab Content: Almacenamiento -->
+        <div id="subtab-almacenamiento" class="subtab-content">
+          <section class="module-card">
+            <div class="module-title">
+              <span>📦 Almacenes Activos</span>
+            </div>
+            <div id="active-warehouses-list" class="building-boxes-container">
+              <!-- Cajas dinámicas de almacenes -->
+            </div>
+          </section>
         </div>
       </div>
 
@@ -367,7 +491,7 @@
         <!-- Ayuntamiento UI Module Card -->
         <section class="module-card" id="townhall-module-card" style="margin-bottom: 1.5rem;">
           <div class="module-title">
-            <span>🏛️ Ayuntamiento</span>
+            <span id="townhall-module-title-text">🏛️ Casa del Jugador</span>
           </div>
           <div id="townhall-ui-container">
             <!-- Dynamically populated via updateUI() -->
@@ -500,7 +624,95 @@
               </div>
             </div>
 
+            <!-- Pozo de Agua -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Pozo de Agua (Well)</span>
+                <span class="building-desc">Provee agua para el riego diario y consumo.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-well-wood">🪵 20 Madera</span>
+                  <span class="cost-badge" id="cost-well-stone">🪨 15 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-wells">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-well">
+                  Construir
+                </button>
+              </div>
+            </div>
 
+            <!-- Almacén de Madera -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Almacén de Madera</span>
+                <span class="building-desc">Aumenta la capacidad máxima de Madera en +200.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-warehouse-wood-gold">🪙 20 Oro</span>
+                  <span class="cost-badge" id="cost-warehouse-wood-wood">🪵 10 Madera</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-warehouse-wood">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-warehouse-wood">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Almacén de Piedra -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Almacén de Piedra</span>
+                <span class="building-desc">Aumenta la capacidad máxima de Piedra en +200.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-warehouse-stone-gold">🪙 15 Oro</span>
+                  <span class="cost-badge" id="cost-warehouse-stone-wood">🪵 25 Madera</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-warehouse-stone">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-warehouse-stone">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Almacén de Alimentos -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Almacén de Alimentos</span>
+                <span class="building-desc">Aumenta la capacidad máxima de alimentos en +200.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-warehouse-food-gold">🪙 25 Oro</span>
+                  <span class="cost-badge" id="cost-warehouse-food-wood">🪵 15 Madera</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-warehouse-food">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-warehouse-food">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Almacén de Semillas -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">Almacén de Semillas</span>
+                <span class="building-desc">Aumenta la capacidad máxima de semillas en +200.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-warehouse-seeds-gold">🪙 20 Oro</span>
+                  <span class="cost-badge" id="cost-warehouse-seeds-wood">🪵 10 Madera</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-warehouse-seeds">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-warehouse-seeds">
+                  Construir
+                </button>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -681,6 +893,44 @@
         </div>
       </div>
 
+      <!-- PESTAÑA: PEDIDOS/MISIONES -->
+      <div id="tab-missions" class="tab-content">
+        <!-- Navegación de Subpestañas para Pedidos/Misiones -->
+        <div class="subtab-container" style="margin-bottom: 1.5rem;">
+          <button id="subtab-btn-missions-orders" class="subtab-btn active">
+            📋 Pedidos de la Aldea
+          </button>
+          <button id="subtab-btn-missions-expeditions" class="subtab-btn">
+            🗺️ Misiones y Expediciones
+          </button>
+        </div>
+
+        <!-- Contenido de Subpestaña: Pedidos -->
+        <div id="subtab-missions-orders" class="subtab-content active-subcontent">
+          <section class="module-card" id="orders-section">
+            <div class="module-title">
+              <span>📋 Tablón de Pedidos</span>
+            </div>
+            <div id="active-orders-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+              <!-- Dinámico -->
+            </div>
+          </section>
+        </div>
+
+        <!-- Contenido de Subpestaña: Expediciones -->
+        <div id="subtab-missions-expeditions" class="subtab-content">
+          <section class="module-card">
+            <div class="module-title"><span>🗺️ Expediciones de la Aldea</span></div>
+            <div id="missions-refresh-banner" style="font-size: 0.85rem; color: #ffd700; background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); padding: 0.6rem 0.8rem; border-radius: 8px; margin-top: 0.75rem; margin-bottom: 1rem; text-align: center; font-weight: 600; width: 100%;">
+              <!-- Dinámico -->
+            </div>
+            <div id="missions-grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+              <!-- Las misiones se renderizarán en paralelo aquí -->
+            </div>
+          </section>
+        </div>
+      </div>
+
     </main>
 
     <!-- FOOTER -->
@@ -688,6 +938,77 @@
       Aetheria Farm & Colony Management System • Antigravity MVP Prototype v1.0.0
     </footer>
 
+  </div>
+
+  <!-- DEV PANEL -->
+  <div id="dev-panel" style="display:none; position:fixed; bottom:1rem; right:1rem;
+       background:rgba(0,0,0,0.9); border:1px solid rgba(99,102,241,0.5);
+       padding:1rem; border-radius:0.75rem; z-index:9999; min-width:320px; max-width:380px;">
+    <div style="font-size:0.7rem; color:#a5b4fc; text-transform:uppercase;
+         font-weight:700; margin-bottom:0.75rem;">⚙️ Panel Dev (Ctrl+Shift+D)</div>
+    
+    <!-- Velocidad -->
+    <div style="margin-bottom:0.75rem;">
+      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.35rem;">⏱️ Velocidad:</div>
+      <div style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+        <button onclick="window.devSpeedMultiplier=1" class="btn btn-secondary" style="flex:1;min-width:35px;padding:0.25rem;font-size:0.7rem;">x1</button>
+        <button onclick="window.devSpeedMultiplier=5" class="btn btn-secondary" style="flex:1;min-width:35px;padding:0.25rem;font-size:0.7rem;">x5</button>
+        <button onclick="window.devSpeedMultiplier=10" class="btn btn-secondary" style="flex:1;min-width:35px;padding:0.25rem;font-size:0.7rem;">x10</button>
+        <button onclick="window.devSpeedMultiplier=50" class="btn btn-secondary" style="flex:1;min-width:35px;padding:0.25rem;font-size:0.7rem;">x50</button>
+        <button onclick="window.devSpeedMultiplier=100" class="btn btn-secondary" style="flex:1;min-width:35px;padding:0.25rem;font-size:0.7rem;">x100</button>
+        <button onclick="window.devSpeedMultiplier=1000" class="btn btn-secondary" style="flex:1;min-width:45px;padding:0.25rem;font-size:0.7rem;">x1000</button>
+      </div>
+    </div>
+    
+    <!-- Inyectar recursos -->
+    <div style="margin-bottom:0.75rem;">
+      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.35rem;">💰 Inyectar +500:</div>
+      
+      <!-- Fila de Básicos y Reputación -->
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.35rem; margin-bottom:0.35rem;">
+        <button onclick="state.gold+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;">🪙 Oro</button>
+        <button onclick="state.wood+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;">🪵 Madera</button>
+        <button onclick="state.stone+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;">🪨 Piedra</button>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr; gap:0.35rem; margin-bottom:0.35rem;">
+        <button onclick="state.reputation=(state.reputation||0)+100;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;">🏆 +100 Reputación</button>
+      </div>
+
+      <!-- Fila de Alimentos Crudos -->
+      <div style="font-size:0.65rem; color:#64748b; margin-top:0.5rem; margin-bottom:0.2rem;">🌾 Alimentos Crudos:</div>
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.35rem; margin-bottom:0.35rem;">
+        <button onclick="state.wheat+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🌾 Trigo</button>
+        <button onclick="state.potato+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥔 Patata</button>
+        <button onclick="state.carrot+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥕 Zanah.</button>
+        <button onclick="state.berries+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🍓 Frutos</button>
+      </div>
+
+      <!-- Fila de Alimentos Cocinados -->
+      <div style="font-size:0.65rem; color:#64748b; margin-top:0.5rem; margin-bottom:0.2rem;">🍞 Alimentos Cocinados:</div>
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.35rem; margin-bottom:0.35rem;">
+        <button onclick="state.cooked_wheat+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🍞 Pan</button>
+        <button onclick="state.cooked_potato+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥔 P.Asada</button>
+        <button onclick="state.cooked_carrot+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥕 Z.Asada</button>
+        <button onclick="state.cooked_berries+=500;updateGlobalFood();updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🍯 Merm.</button>
+      </div>
+
+      <!-- Fila de Semillas -->
+      <div style="font-size:0.65rem; color:#64748b; margin-top:0.5rem; margin-bottom:0.2rem;">🌱 Semillas:</div>
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.35rem;">
+        <button onclick="state.seeds.wheat+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🌾🌱 Sem.Trigo</button>
+        <button onclick="state.seeds.potato+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥔🌱 Sem.Pat.</button>
+        <button onclick="state.seeds.carrot+=500;updateUI()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.65rem;white-space:nowrap;">🥕🌱 Sem.Zan.</button>
+      </div>
+    </div>
+    
+    <!-- Ciclo -->
+    <div>
+      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.35rem;">☀️ Ciclo rápido:</div>
+      <div style="display:flex; gap:0.35rem;">
+        <button onclick="state.timePhase='day';state.phaseElapsed=0;updateUI()" class="btn btn-secondary" style="flex:1;padding:0.25rem;font-size:0.7rem;">🌅 Amanecer</button>
+        <button onclick="state.timePhase='night';state.phaseElapsed=0;updateUI()" class="btn btn-secondary" style="flex:1;padding:0.25rem;font-size:0.7rem;">🌙 Noche</button>
+      </div>
+    </div>
   </div>
 
   <!-- TOAST CONTAINER -->

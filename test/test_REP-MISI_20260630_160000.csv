@@ -1,0 +1,10 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;3 misiones disponibles al inicio;Juego cargado;Ver pestaña Misiones;3 tarjetas de misiones disponibles son visibles en la interfaz;3 tarjetas visibles;PASS;
+U02;Unit;Colono en mision: badge En mision;1 colono libre;Enviar a misión;El colono enviado muestra el badge "En misión" en la pestaña de aldeanos;Badge "En misión" visible;PASS;
+U03;Unit;Colono en mision no asignable a edificio;En mision;Intentar asignar;El desplegable de asignación de trabajo para el colono en misión aparece deshabilitado;Controles deshabilitados;PASS;
+U04;Unit;Mision exitosa: recompensas aplicadas;Mision activa;Esperar duracion;Los recursos (oro, reputacion o semillas) correspondientes a la recompensa aumentan tras completarse;Recompensas de oro, reputación o semillas otorgadas;PASS;
+U05;Unit;Mision fallida: XP parcial (50%) para colonos;Mision activa;Esperar duracion con fallo;Los colonos asignados ganan 50% de la XP base esperada en el atributo clave;Otorgada XP al 50%;PASS;
+U06;Unit;headhunt exitoso anade especialista dorado;Mision headhunt activa;Completar mision;El colono especialista se añade a la colonia con borde dorado y badge de especialista;Colono especialista con borde dorado y badge visible;PASS;
+I01;Integracion;Rep misiones + pedidos se acumula;Ambos sistemas activos;Completar pedidos y misiones;La reputación total de la colonia es la suma correcta obtenida por ambos métodos;Reputación acumulada correctamente;PASS;
+I02;Integracion;Especialista tiene atributo >= 8 en especialidad;headhunt completado;Ver estadísticas del colono especialista;El colono especialista tiene un valor de entre 8 y 10 en su atributo principal;Atributo principal entre 8 y 10;PASS;
+R01;Regresion;REP-TABL no afectado;Pedidos activos;Tener misiones activas;Los pedidos diarios siguen generándose y completándose de forma independiente a las misiones;Los pedidos funcionan independientemente;PASS;

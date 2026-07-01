@@ -40,6 +40,16 @@
 | ✅ 1 | Corrección cooldown: reloj in-game (30 minutos de juego) | 2026-06-18 |
 | ✅ FR-1..13 | Refactorización multi-fichero completa (estructura `src/js/`, `src/css/`, `src/data/`) | 2026-06-24 |
 | ✅ CSV-R | Reorganización completa de CSVs — nuevos schemas y 2 ficheros nuevos | 2026-06-25 |
+| ✅ PASO A | Panel de desarrollo Ctrl+Shift+D (`[DEV]`) | 2026-06-29 |
+| ✅ PASO B | Mostrar tasas de producción en días de juego en la UI (`[UI-DIAS]`) | 2026-06-29 |
+| ✅ PASO C | Ayuntamiento renombrado por tiers (`[UI-AYTO]`) | 2026-06-29 |
+| ✅ PASO D | Hambre reactiva (colonos comen al instante) (`[COL-HAMBRE]`) | 2026-06-29 |
+| ✅ PASO E | Jugador bloqueado durante construcción (`[CON-OBRA]`) | 2026-06-29 |
+| ✅ PASO F | Pozo de agua (recurso diario limitado) (`[INF-POZO]`) | 2026-06-30 |
+| ✅ PASO G | Almacenes y capacidad máxima de recursos (`[INF-ALMA]`) | 2026-06-30 |
+| ✅ PASO H | Aleatoriedad en producción (rango min-max) (`[PROD-RAND]`) | 2026-06-30 |
+| ✅ PASO I | Tablón de pedidos (reputación sin misiones) (`[REP-TABL]`) | 2026-06-30 |
+| ✅ PASO J | Sistema completo de misiones con especialistas (`[REP-MISI]`) | 2026-07-01 |
 
 ---
 

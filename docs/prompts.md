@@ -1,4 +1,4 @@
-﻿# Prompts de implementacion - Aetheria: Granja & Colonia
+# Prompts de implementacion - Aetheria: Granja & Colonia
 ## Como usar estos prompts
 
 1. Copia el prompt del paso que vas a implementar.
@@ -15,6 +15,8 @@ PREAMBLE COMUN (incluido en todos los prompts -- el agente lo leera automaticame
   - grep_search antes de view_file en archivos grandes (ui-render.js ~170KB)
   - NO modificar archivos no listados en "Archivos a modificar"
   - Hacer backup ZIP antes de pasos de riesgo alto
+  - **CERO HARDCODING:** No se permite hardcodear costes, ratios de producción, multiplicadores, duraciones o fórmulas en el código JS. Todo debe ser parametrizable y leerse de CONFIG.
+  - **MODULARIDAD Y FUNCIONES COMPACTAS:** Si una función JS supera las 45 líneas, refactorízala extrayendo la lógica secundaria a subfunciones auxiliares dedicadas.
 
 ---
 

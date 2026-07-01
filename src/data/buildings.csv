@@ -1,67 +1,85 @@
-# ============================================================
-# BUILDINGS.csv — Definición de edificios y mejoras
-# ============================================================
-# Columnas:
-#   Category  : Building | Upgrade
-#   ID        : identificador único en código
-#   Name      : nombre mostrado en UI
-#   Tier      : tier resultante tras construir/mejorar (1/2/3)
-#   Req_TH    : tier mínimo del Ayuntamiento necesario
-#   Cost_Gold : coste en oro
-#   Cost_Wood : coste en madera
-#   Cost_Stone: coste en piedra
-#   Cost_Iron : coste en lingotes de hierro (futuro)
-#   Yield_Pop : capacidad de población que añade (+N por casa)
-#   Attribute : atributo del colono relevante para este edificio
-# ============================================================
-
-Category;ID;Name;Tier;Req_TH;Cost_Gold;Cost_Wood;Cost_Stone;Cost_Iron;Yield_Pop;Attribute
-
-# --- AYUNTAMIENTO ---
-Building;townhall;Ayuntamiento T1;1;0;0;10;5;0;0;construction
-Upgrade;townhall_t2;Mejorar Ayuntamiento T2;2;1;0;60;80;0;0;construction
-Upgrade;townhall_t3;Mejorar Ayuntamiento T3;3;2;200;120;150;0;0;construction
-
-# --- VIVIENDAS ---
-Building;basic_house;Choza;1;1;0;5;3;0;1;construction
-Upgrade;upgraded_house;Mejorar a Cabaña;2;1;0;40;30;0;1;construction
-Upgrade;luxury_house;Mejorar a Casa Grande;3;2;50;80;60;0;2;construction
-
-# --- RECOLECCIÓN DE RECURSOS ---
-Building;lumbermill;Aserradero;1;1;80;0;40;0;0;woodcutting
-Upgrade;lumbermill_t2;Mejorar Aserradero T2;2;2;100;80;50;0;0;woodcutting
-Upgrade;lumbermill_t3;Mejorar Aserradero T3;3;3;200;150;100;0;0;woodcutting
-
-Building;quarry;Cantera;1;1;100;40;0;0;0;mining
-Upgrade;quarry_t2;Mejorar Cantera T2;2;2;120;60;80;0;0;mining
-Upgrade;quarry_t3;Mejorar Cantera T3;3;3;240;120;150;0;0;mining
-
-# --- ALIMENTACIÓN ---
-Building;farm;Granja;1;1;0;30;20;0;0;farming
-Upgrade;farm_t2;Mejorar Granja T2;2;2;60;50;30;0;0;farming
-Upgrade;farm_t3;Mejorar Granja T3;3;3;120;100;60;0;0;farming
-
-Building;granary;Granero;1;1;0;50;30;0;0;farming
-Upgrade;granary_t2;Mejorar Granero T2;2;2;80;80;50;0;0;farming
-Upgrade;granary_t3;Mejorar Granero T3;3;3;150;120;80;0;0;farming
-
-Building;bonfire;Fogata;1;1;0;40;20;0;0;cooking
-Upgrade;bonfire_t2;Mejorar a Caldero;2;1;50;0;30;0;0;cooking
-Upgrade;bonfire_t3;Mejorar a Cocina de Taberna;3;2;100;50;0;0;0;cooking
-
-# --- COMERCIO ---
-Building;market;Puesto de Mercado;1;1;0;60;50;0;0;trading
-Upgrade;market_t2;Mejorar Mercado T2;2;2;80;80;60;0;0;trading
-Upgrade;market_t3;Mejorar Mercado T3;3;3;150;120;100;0;0;trading
-
-# --- CRAFTEO (FUTURO — Paso E) ---
-Building;smithy;Taller del Herrero;1;2;0;30;20;0;0;woodcutting
-Upgrade;smithy_t2;Mejorar Taller T2;2;3;60;60;40;0;0;woodcutting
-
-Building;forge;Forja;1;2;0;40;60;0;0;mining
-Upgrade;forge_t2;Mejorar Forja T2;2;3;100;80;100;0;0;mining
-
-Building;mill;Molino;1;2;0;40;30;0;0;farming
-Upgrade;mill_t2;Mejorar Molino T2;2;3;80;60;50;0;0;farming
-
-Building;armory;Armería;1;3;0;60;40;20;0;combat
+# ============================================================;;;;;;;;;;;
+# BUILDINGS.csv — Definición de edificios y mejoras;;;;;;;;;;;
+# ============================================================;;;;;;;;;;;
+# Columnas:;;;;;;;;;;;
+#   Category  : Building | Upgrade;;;;;;;;;;;
+#   ID        : identificador único en código;;;;;;;;;;;
+#   Name      : nombre mostrado en UI;;;;;;;;;;;
+#   Tier      : tier resultante tras construir/mejorar (1/2/3);;;;;;;;;;;
+#   Req_TH    : tier mínimo del Ayuntamiento necesario;;;;;;;;;;;
+#   Cost_Gold : coste en oro;;;;;;;;;;;
+#   Cost_Wood : coste en madera;;;;;;;;;;;
+#   Cost_Stone: coste en piedra;;;;;;;;;;;
+#   Cost_Iron : coste en lingotes de hierro (futuro);;;;;;;;;;;
+#   Yield_Pop : capacidad de población que añade (+N por casa);;;;;;;;;;;
+#   Attribute : atributo del colono relevante para este edificio;;;;;;;;;;;
+#   Cost_Reputation: coste en reputación (opcional);;;;;;;;;;;
+# ============================================================;;;;;;;;;;;
+;;;;;;;;;;;
+Category;ID;Name;Tier;Req_TH;Cost_Gold;Cost_Wood;Cost_Stone;Cost_Iron;Yield_Pop;Attribute;Cost_Reputation
+;;;;;;;;;;;
+# --- AYUNTAMIENTO ---;;;;;;;;;;;
+Building;townhall;Casa del Jugador;1;0;0;10;5;0;0;construction;0
+Upgrade;townhall_t2;Mejorar Centro Comunitario;2;1;0;60;80;0;0;construction;0
+Upgrade;townhall_t3;Mejorar Ayuntamiento;3;2;200;120;150;0;0;construction;0
+;;;;;;;;;;;
+# --- VIVIENDAS ---;;;;;;;;;;;
+Building;basic_house;Choza;1;1;0;5;3;0;2;construction;0
+Upgrade;upgraded_house;Mejorar a Cabaña;2;2;0;40;30;0;2;construction;0
+Upgrade;luxury_house;Mejorar a Casa Grande;3;3;50;80;60;0;4;construction;0
+;;;;;;;;;;;
+# --- RECOLECCIÓN DE RECURSOS ---;;;;;;;;;;;
+Building;lumbermill;Aserradero;1;1;80;0;40;0;0;woodcutting;0
+Upgrade;lumbermill_t2;Mejorar Aserradero T2;2;2;100;80;50;0;0;woodcutting;0
+Upgrade;lumbermill_t3;Mejorar Aserradero T3;3;3;200;150;100;0;0;woodcutting;0
+;;;;;;;;;;;
+Building;quarry;Cantera;1;1;100;40;0;0;0;mining;0
+Upgrade;quarry_t2;Mejorar Cantera T2;2;2;120;60;80;0;0;mining;0
+Upgrade;quarry_t3;Mejorar Cantera T3;3;3;240;120;150;0;0;mining;0
+;;;;;;;;;;;
+# --- ALIMENTACIÓN ---;;;;;;;;;;;
+Building;farm;Granja;1;1;0;30;20;0;0;farming;0
+Upgrade;farm_t2;Mejorar Granja T2;2;2;60;50;30;0;0;farming;0
+Upgrade;farm_t3;Mejorar Granja T3;3;3;120;100;60;0;0;farming;0
+;;;;;;;;;;;
+Building;granary;Granero;1;1;0;50;30;0;0;farming;0
+Upgrade;granary_t2;Mejorar Granero T2;2;2;80;80;50;0;0;farming;0
+Upgrade;granary_t3;Mejorar Granero T3;3;3;150;120;80;0;0;farming;0
+;;;;;;;;;;;
+Building;bonfire;Fogata;1;1;0;40;20;0;0;cooking;0
+Upgrade;bonfire_t2;Mejorar a Caldero;2;1;50;0;30;0;0;cooking;0
+Upgrade;bonfire_t3;Mejorar a Cocina de Taberna;3;2;100;50;0;0;0;cooking;0
+;;;;;;;;;;;
+# --- COMERCIO ---;;;;;;;;;;;
+Building;market;Puesto de Mercado;1;1;0;60;50;0;0;trading;0
+Upgrade;market_t2;Mejorar Mercado T2;2;2;80;80;60;0;0;trading;0
+Upgrade;market_t3;Mejorar Mercado T3;3;3;150;120;100;0;0;trading;0
+;;;;;;;;;;;
+# --- CRAFTEO (FUTURO — Paso E) ---;;;;;;;;;;;
+Building;smithy;Taller del Herrero;1;2;0;30;20;0;0;woodcutting;0
+Upgrade;smithy_t2;Mejorar Taller T2;2;3;60;60;40;0;0;woodcutting;0
+;;;;;;;;;;;
+Building;forge;Forja;1;2;0;40;60;0;0;mining;0
+Upgrade;forge_t2;Mejorar Forja T2;2;3;100;80;100;0;0;mining;0
+;;;;;;;;;;;
+Building;mill;Molino;1;2;0;40;30;0;0;farming;0
+Upgrade;mill_t2;Mejorar Molino T2;2;3;80;60;50;0;0;farming;0
+;;;;;;;;;;;
+Building;armory;Armería;1;3;0;60;40;20;0;combat;0
+;;;;;;;;;;;
+# --- INFRAESTRUCTURA DE AGUA ---;;;;;;;;;;;
+Building;well;Pozo;1;1;0;20;15;0;0;construction;0
+Upgrade;well_t2;Mejorar Pozo T2;2;2;50;50;40;0;0;construction;0
+# --- ALMACENAMIENTO (Paso G) ---;;;;;;;;;;;
+Storage;warehouse_wood;Almacen de Madera;1;1;20;10;0;0;0;none;0
+Storage;warehouse_wood_t2;Mejorar Almacen Madera T2;2;2;40;20;0;0;0;none;0
+Storage;warehouse_wood_t3;Mejorar Almacen Madera T3;3;3;80;40;0;0;0;none;0
+Storage;warehouse_stone;Almacen de Piedra;1;1;15;25;0;0;0;none;0
+Storage;warehouse_stone_t2;Mejorar Almacen Piedra T2;2;2;30;50;0;0;0;none;0
+Storage;warehouse_stone_t3;Mejorar Almacen Piedra T3;3;3;60;100;0;0;0;none;0
+Storage;warehouse_food;Almacen de Alimentos;1;1;25;15;0;0;0;none;0
+Storage;warehouse_food_t2;Mejorar Almacen Alimentos T2;2;2;50;30;0;0;0;none;0
+Storage;warehouse_food_t3;Mejorar Almacen Alimentos T3;3;3;100;60;0;0;0;none;0
+Storage;warehouse_seeds;Almacen de Semillas;1;1;20;10;0;0;0;none;0
+Storage;warehouse_seeds_t2;Mejorar Almacen Semillas T2;2;2;40;20;0;0;0;none;0
+Storage;warehouse_seeds_t3;Mejorar Almacen Semillas T3;3;3;80;40;0;0;0;none;0

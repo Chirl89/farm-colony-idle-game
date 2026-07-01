@@ -1,44 +1,44 @@
-﻿Category;ID;Name;Output;Output_Amt;Input;Input_Amt;Attr;Notes
-Gathering;wood_manual;Recoleccion Manual Madera;wood;1;none;0;woodcutting;Escala atributo colono
-Gathering;stone_manual;Recoleccion Manual Piedra;stone;1;none;0;mining;
-Gathering;berries_manual;Recoleccion Manual Frutos;berries;100;none;0;none;Sin escala
-Gathering;wood_auto;Lenador Asignado;wood;5;none;0;woodcutting;Por colono por ciclo
-Gathering;stone_auto;Cantero Asignado;stone;5;none;0;mining;
-Gathering;berries_auto;Recolector Asignado;berries;8;none;0;none;
-Building;lumbermill_t1;Aserradero T1;wood;15;none;0;woodcutting;
-Building;lumbermill_t2;Aserradero T2;wood;22;none;0;woodcutting;
-Building;lumbermill_t3;Aserradero T3;wood;30;none;0;woodcutting;
-Building;quarry_t1;Cantera T1;stone;5;none;0;mining;
-Building;quarry_t2;Cantera T2;stone;7;none;0;mining;
-Building;quarry_t3;Cantera T3;stone;10;none;0;mining;
-Crop;wheat;Cosecha Trigo;wheat;60;wheat_seeds;1;farming;Consume 1 semilla al sembrar
-Crop;potato;Cosecha Patata;potato;100;potato_seeds;1;farming;
-Crop;carrot;Cosecha Zanahoria;carrot;300;carrot_seeds;1;farming;
-Processing;bonfire_t1;Fogata T1 cocinar;cooked_selected;1;raw_selected;1;cooking;Receta segun seleccion
-Processing;bonfire_t2;Caldero T2 cocinar;cooked_selected;1;raw_selected;1;cooking;
-Processing;bonfire_t3;Cocina T3 cocinar;cooked_selected;1;raw_selected;1;cooking;
-Processing;granary_wheat_t1;Granero T1 Semillas Trigo;wheat_seeds;1;wheat;5;farming;
-Processing;granary_wheat_t2;Granero T2 Semillas Trigo;wheat_seeds;1;wheat;5;farming;
-Processing;granary_wheat_t3;Granero T3 Semillas Trigo;wheat_seeds;2;wheat;10;farming;
-Processing;granary_potato_t1;Granero T1 Semillas Patata;potato_seeds;1;potato;5;farming;
-Processing;granary_potato_t2;Granero T2 Semillas Patata;potato_seeds;1;potato;5;farming;
-Processing;granary_potato_t3;Granero T3 Semillas Patata;potato_seeds;2;potato;10;farming;
-Processing;granary_carrot_t1;Granero T1 Semillas Zanahoria;carrot_seeds;1;carrot;5;farming;
-Processing;granary_carrot_t2;Granero T2 Semillas Zanahoria;carrot_seeds;1;carrot;5;farming;
-Processing;granary_carrot_t3;Granero T3 Semillas Zanahoria;carrot_seeds;2;carrot;10;farming;
-Crafting;smithy_pickaxe_t1;Taller Pico Madera T1;pickaxe_t1;1;wood;5;none;
-Crafting;smithy_axe_t1;Taller Hacha Madera T1;axe_t1;1;wood;4;none;
-Crafting;smithy_hoe_t1;Taller Azada Madera T1;hoe_t1;1;wood;3;none;
-Crafting;smithy_weapon_t1;Taller Arma Basica T1;weapon_t1;1;wood;6;none;
-Crafting;smithy_pickaxe_t2;Taller Pico Hierro T2;pickaxe_t2;1;iron_bar;2;none;Requiere smithy T2
-Crafting;smithy_axe_t2;Taller Hacha Hierro T2;axe_t2;1;iron_bar;2;none;
-Crafting;smithy_hoe_t2;Taller Azada Hierro T2;hoe_t2;1;iron_bar;1;none;
-Crafting;smithy_weapon_t2;Taller Arma Hierro T2;weapon_t2;1;iron_bar;3;none;
-Crafting;forge_iron_t1;Forja T1 Fundir Lingotes;iron_bar;1;iron;5;mining;
-Crafting;forge_iron_t2;Forja T2 Fundir Lingotes;iron_bar;1;iron;4;mining;
-Crafting;mill_flour_t1;Molino T1 Moler Harina;flour;1;wheat;5;farming;
-Crafting;mill_flour_t2;Molino T2 Moler Harina;flour;2;wheat;5;farming;
-Processing;recipe_bread;Receta Pan;bread;1;flour;2;cooking;Fogata T2+
-Processing;recipe_stew;Receta Guiso;stew;2;potato;1;cooking;Tambien consume carrot:1
-Crafting;armory_leather;Armeria Armadura Cuero;armor_leather;1;skins;2;combat;
-Crafting;armory_iron;Armeria Armadura Hierro;armor_iron;1;iron_bar;3;combat;Tambien consume armor_leather:1
+Category;ID;Name;Output;Output_Amt;Output_Min;Output_Max;Input;Input_Amt;Attr;Notes
+Gathering;wood_manual;Recoleccion Manual Madera;wood;1;0;3;none;0;woodcutting;Escala atributo colono
+Gathering;stone_manual;Recoleccion Manual Piedra;stone;1;0;3;none;0;mining;
+Gathering;berries_manual;Recoleccion Manual Frutos;berries;1;0;3;none;0;none;Sin escala
+Gathering;wood_auto;Lenador Asignado;wood;1;1;2;none;0;woodcutting;Por colono por ciclo
+Gathering;stone_auto;Cantero Asignado;stone;1;1;2;none;0;mining;
+Gathering;berries_auto;Recolector Asignado;berries;1;1;2;none;0;none;
+Building;lumbermill_t1;Aserradero T1;wood;15;10;20;none;0;woodcutting;
+Building;lumbermill_t2;Aserradero T2;wood;30;20;40;none;0;woodcutting;
+Building;lumbermill_t3;Aserradero T3;wood;45;30;60;none;0;woodcutting;
+Building;quarry_t1;Cantera T1;stone;15;10;20;none;0;mining;
+Building;quarry_t2;Cantera T2;stone;21;15;27;none;0;mining;
+Building;quarry_t3;Cantera T3;stone;30;21;39;none;0;mining;
+Crop;wheat;Cosecha Trigo;wheat;60;40;80;wheat_seeds;1;farming;Consume 1 semilla al sembrar
+Crop;potato;Cosecha Patata;potato;100;70;130;potato_seeds;1;farming;
+Crop;carrot;Cosecha Zanahoria;carrot;300;200;400;carrot_seeds;1;farming;
+Processing;bonfire_t1;Fogata T1 cocinar;cooked_selected;1;1;1;raw_selected;1;cooking;Receta segun seleccion
+Processing;bonfire_t2;Caldero T2 cocinar;cooked_selected;1;1;1;raw_selected;1;cooking;
+Processing;bonfire_t3;Cocina T3 cocinar;cooked_selected;1;1;1;raw_selected;1;cooking;
+Processing;granary_wheat_t1;Granero T1 Semillas Trigo;wheat_seeds;1;1;1;wheat;5;farming;
+Processing;granary_wheat_t2;Granero T2 Semillas Trigo;wheat_seeds;1;1;1;wheat;5;farming;
+Processing;granary_wheat_t3;Granero T3 Semillas Trigo;wheat_seeds;2;2;2;wheat;10;farming;
+Processing;granary_potato_t1;Granero T1 Semillas Patata;potato_seeds;1;1;1;potato;5;farming;
+Processing;granary_potato_t2;Granero T2 Semillas Patata;potato_seeds;1;1;1;potato;5;farming;
+Processing;granary_potato_t3;Granero T3 Semillas Patata;potato_seeds;2;2;2;potato;10;farming;
+Processing;granary_carrot_t1;Granero T1 Semillas Zanahoria;carrot_seeds;1;1;1;carrot;5;farming;
+Processing;granary_carrot_t2;Granero T2 Semillas Zanahoria;carrot_seeds;1;1;1;carrot;5;farming;
+Processing;granary_carrot_t3;Granero T3 Semillas Zanahoria;carrot_seeds;2;2;2;carrot;10;farming;
+Crafting;smithy_pickaxe_t1;Taller Pico Madera T1;pickaxe_t1;1;1;1;wood;5;none;
+Crafting;smithy_axe_t1;Taller Hacha Madera T1;axe_t1;1;1;1;wood;4;none;
+Crafting;smithy_hoe_t1;Taller Azada Madera T1;hoe_t1;1;1;1;wood;3;none;
+Crafting;smithy_weapon_t1;Taller Arma Basica T1;weapon_t1;1;1;1;wood;6;none;
+Crafting;smithy_pickaxe_t2;Taller Pico Hierro T2;pickaxe_t2;1;1;1;iron_bar;2;none;Requiere smithy T2
+Crafting;smithy_axe_t2;Taller Hacha Hierro T2;axe_t2;1;1;1;iron_bar;2;none;
+Crafting;smithy_hoe_t2;Taller Azada Hierro T2;hoe_t2;1;1;1;iron_bar;1;none;
+Crafting;smithy_weapon_t2;Taller Arma Hierro T2;weapon_t2;1;1;1;iron_bar;3;none;
+Crafting;forge_iron_t1;Forja T1 Fundir Lingotes;iron_bar;1;1;1;iron;5;mining;
+Crafting;forge_iron_t2;Forja T2 Fundir Lingotes;iron_bar;1;1;1;iron;4;mining;
+Crafting;mill_flour_t1;Molino T1 Moler Harina;flour;1;1;1;wheat;5;farming;
+Crafting;mill_flour_t2;Molino T2 Moler Harina;flour;2;2;2;wheat;5;farming;
+Processing;recipe_bread;Receta Pan;bread;1;1;1;flour;2;cooking;Fogata T2+
+Processing;recipe_stew;Receta Guiso;stew;2;2;2;potato;1;cooking;Tambien consume carrot:1
+Crafting;armory_leather;Armeria Armadura Cuero;armor_leather;1;1;1;skins;2;combat;
+Crafting;armory_iron;Armeria Armadura Hierro;armor_iron;1;1;1;iron_bar;3;combat;Tambien consume armor_leather:1

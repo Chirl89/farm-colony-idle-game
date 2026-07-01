@@ -67,8 +67,12 @@ Processing;pot_auto;Cocinar Automático Caldero;0;0;0;1;cookedFood;Consumes:1:fo
 Processing;pot_manual;Cocinar Manual Caldero;0;0;0;1;cookedFood;Consumes:1:food;
 Processing;kitchen_auto;Cocinar Automático Cocina de Taberna;0;0;0;1;cookedFood;Consumes:1:food;
 Processing;kitchen_manual;Cocinar Manual Cocina de Taberna;0;0;0;1;cookedFood;Consumes:1:food;
-ProductionRate;lumbermill_prod;Producción Cabaña de Leñador;0;0;0;5;wood;;
-ProductionRate;quarry_prod;Producción Foso de Piedra;0;0;0;5;stone;;
+ProductionRate;lumbermill_t1;Producción Cabaña de Leñador T1;0;0;0;5;wood;;
+ProductionRate;lumbermill_t2;Producción Aserradero T2;0;0;0;10;wood;;
+ProductionRate;lumbermill_t3;Producción Gremio de Leñadores T3;0;0;0;15;wood;;
+ProductionRate;quarry_t1;Producción Foso de Piedra T1;0;0;0;5;stone;;
+ProductionRate;quarry_t2;Producción Cantera T2;0;0;0;10;stone;;
+ProductionRate;quarry_t3;Producción Gran Mina T3;0;0;0;15;stone;;
 Processing;granary_wheat_t1;Producir Semillas de Trigo T1;0;0;0;1;wheat_seeds;Consumes:5:wheat
 Processing;granary_wheat_t2;Producir Semillas de Trigo T2;0;0;0;1;wheat_seeds;Consumes:5:wheat
 Processing;granary_wheat_t3;Producir Semillas de Trigo T3;0;0;0;2;wheat_seeds;Consumes:10:wheat
@@ -97,8 +101,12 @@ Timing;townhall_t3;Mejora Ayuntamiento T3;40;
 Timing;wood_auto;Tiempo Leñador;1;
 Timing;stone_auto;Tiempo Cantero;1;
 Timing;berries_auto;Tiempo Recolector de Frutos;1;
-Timing;lumbermill_prod;Producción Cabaña de Leñador;1;
-Timing;quarry_prod;Producción Foso de Piedra;1;
+Timing;lumbermill_t1;Tiempo Producción Cabaña T1;1;
+Timing;lumbermill_t2;Tiempo Producción Aserradero T2;1;
+Timing;lumbermill_t3;Tiempo Producción Gremio T3;1;
+Timing;quarry_t1;Tiempo Producción Foso T1;1;
+Timing;quarry_t2;Tiempo Producción Cantera T2;1;
+Timing;quarry_t3;Tiempo Producción Gran Mina T3;1;
 Timing;wheat;Tiempo Crecimiento Trigo;30;
 Timing;potato;Tiempo Crecimiento Patata;50;
 Timing;carrot;Tiempo Crecimiento Zanahoria;100;
@@ -269,15 +277,30 @@ TierMult;farm_t2;Mult Granja T2;1.5;
 TierMult;farm_t3;Mult Granja T3;2.5;
 Economy;demolish_refund;Reembolso al demoler;0.5;
 Economy;rotation_cost_gold;Coste rotar candidatos;15;
+Economy;hire_rep_base_colonists;Colonos libres de coste rep;2;
 Economy;hire_rep_per_colonist;Reputacion extra por colono;5;
+Economy;orders_refresh_interval;Frecuencia de renovacion de pedidos;2;
 Raid;base_prob_per_day;Prob base raid por dia;0.003;
 Raid;scaling_per_day;Incremento prob por dia;0.0001;
 Raid;base_strength;Fuerza base raid;5;
 Raid;resource_loss_pct;Recursos perdidos al fallar;0.2;
+Raid;success_scaling_factor;Factor exito misiones;0.4;
+Raid;max_attribute_cap;Cap maximo atributo formula exito;10;
+Raid;missions_refresh_interval;Frecuencia de renovacion de misiones;30;
 Tool;durability_max;Durabilidad maxima herramienta;100;
 Tool;durability_loss_t1;Perdida durabilidad dia T1;1.5;
 Tool;durability_loss_t2;Perdida durabilidad dia T2;0.8;
-Tool;production_penalty_no_tool;Multiplicador sin herramienta;0.0;`,
+Tool;production_penalty_no_tool;Multiplicador sin herramienta;0.0;
+Colonist;specialist_min;Nivel minimo especialidad;8;
+Colonist;specialist_max;Nivel maximo especialidad;10;
+SpecialistTitle;woodcutting;Maestro Leñador,Talabosques,Veterano Maderero;0;
+SpecialistTitle;mining;Maestro Minero,Excavador Experto,Veterano de la Fosa;0;
+SpecialistTitle;farming;Maestro Agricultor,Cultivador Experto,Veterano del Arado;0;
+SpecialistTitle;cooking;Maestro Cocinero,Chef de la Colonia,Veterano del Fogón;0;
+SpecialistTitle;trading;Maestro Mercader,Negociante Experto,Caravanero Veterano;0;
+SpecialistTitle;exploration;Maestro Explorador,Rastreador Experto,Veterano del Sendero;0;
+SpecialistTitle;combat;Maestro de Armas,Guerrero Experto,Veterano de Guardia;0;
+SpecialistTitle;construction;Maestro Constructor,Edificador Experto,Veterano de la Obra;0;`,
   resources: `Category;ID;Name;Emoji;Food_Value;Sellable;AutoSell_Def;AutoBuy_Def;Min_Stock_Def;Max_Stock_Def
 Currency;gold;Oro;🪙;0;false;false;false;0;0
 Material;wood;Madera;🪵;0;true;false;false;100;100
@@ -293,8 +316,105 @@ Cooked;cooked_berries;Mermelada;🪼;5;true;false;false;0;10
 Seed;wheat_seeds;Semillas Trigo;🌱;0;true;false;false;0;10
 Seed;potato_seeds;Semillas Patata;🌱;0;true;false;false;0;10
 Seed;carrot_seeds;Semillas Zanahoria;🌱;0;true;false;false;0;10
-Currency;reputation;Reputacion;🏆;0;false;false;false;0;0`
+Currency;reputation;Reputacion;🏆;0;false;false;false;0;0`,
+  orders: `Category;ID;Name;Req_Resource;Req_Min;Req_Max;Reward_1_Type;Reward_1_Min;Reward_1_Max;Reward_2_Type;Reward_2_Min;Reward_2_Max;Reward_3_Type;Reward_3_Min;Reward_3_Max;Weight
+Order;order_wood;Pedido de Madera;wood;20;100;reputation;4;12;gold;5;15;none;0;0;20
+Order;order_stone;Pedido de Piedra;stone;20;100;reputation;4;12;gold;5;15;none;0;0;20
+Order;order_wheat;Pedido de Trigo;wheat;20;80;reputation;2;8;gold;2;8;none;0;0;15
+Order;order_potato;Pedido de Patata;potato;20;80;reputation;2;8;gold;2;8;none;0;0;15
+Order;order_carrot;Pedido de Zanahoria;carrot;20;80;reputation;2;8;gold;2;8;none;0;0;15
+Order;order_berries;Pedido de Bayas;berries;15;60;reputation;2;6;gold;1;5;none;0;0;15
+Order;order_cooked_wheat;Pedido de Trigo Cocinado;cooked_wheat;10;30;reputation;6;16;gold;10;25;wheat_seeds;1;3;10
+Order;order_cooked_potato;Pedido de Patata Cocinada;cooked_potato;10;30;reputation;6;16;gold;10;25;potato_seeds;1;3;10
+Order;order_cooked_carrot;Pedido de Zanahoria Cocinada;cooked_carrot;10;30;reputation;6;16;gold;10;25;carrot_seeds;1;3;10
+Order;order_wheat_seeds;Pedido de Semillas de Trigo;wheat_seeds;15;50;reputation;4;10;gold;5;15;none;0;0;5
+Order;order_potato_seeds;Pedido de Semillas de Patata;potato_seeds;15;50;reputation;4;10;gold;5;15;none;0;0;5
+Order;order_carrot_seeds;Pedido de Semillas de Zanahoria;carrot_seeds;15;50;reputation;4;10;gold;5;15;none;0;0;5`,
+  missiondata: `Category;ID;Name;Description;Weight;MinDays;MaxDays;Difficulty;Attribute;BaseSuccessRate;RewardRep;RewardGold;RewardSeedsType;RewardSeedsAmt;RewardSpecialist;ColMin;ColMax
+Mission;gather_wood;Buscar Madera;La aldea necesita madera urgentemente.;20;2;5;1;woodcutting;0.75;8;0;none;0;none;1;3
+Mission;gather_stone;Extraer Piedra;Las canteras necesitan refuerzo.;20;2;5;1;mining;0.75;8;0;none;0;none;1;3
+Mission;gather_food;Buscar Provisiones;Los almacenes se agotan.;20;2;5;1;farming;0.80;10;0;none;0;none;1;3
+Mission;explore_ruins;Explorar Ruinas;Ruinas avistadas al norte.;12;4;8;2;exploration;0.60;15;5;none;0;none;1;2
+Mission;explore_deep;Expedición Profunda;Tierras desconocidas.;5;8;14;3;exploration;0.40;30;20;none;0;none;2;4
+Mission;trade_convoy;Escoltar Caravana;Una caravana necesita protección.;12;3;7;2;trading;0.65;12;20;none;0;none;2;3
+Mission;gold_delivery;Entrega Especial;Un mercader paga bien.;6;4;8;2;trading;0.70;5;100;none;0;none;1;2
+Mission;defend_village;Defender Aldea;Una aldea pide ayuda.;10;3;6;2;combat;0.55;20;10;none;0;none;2;4
+Mission;seeds_rare;Buscar Semillas Raras;Plantas únicas en el bosque.;10;5;10;2;farming;0.60;5;0;wheat;2;none;1;3
+Mission;seeds_potato;Conseguir Tubérculos;Semillas de un agricultor.;6;4;8;2;farming;0.65;5;0;potato;2;none;1;2
+Mission;seeds_carrot;Rastrear Semillas;Jardín abandonado.;6;4;8;2;farming;0.65;5;0;carrot;2;none;1;2
+Mission;headhunt_any;Reclutar Especialista;Localizar a un experto.;8;8;15;3;exploration;0.45;0;0;none;0;random;2;4
+Mission;headhunt_miner;Reclutar Maestro Minero;Un legendario minero.;4;10;15;3;exploration;0.40;0;0;none;0;mining;2;4
+Mission;headhunt_farmer;Reclutar Maestro Agricultor;Un experto en colinas.;4;10;15;3;farming;0.40;0;0;none;0;farming;2;4
+Mission;headhunt_warrior;Reclutar Guerrero;Un veterano busca causa.;4;10;15;3;combat;0.40;0;0;none;0;combat;2;4`
 };
+
+// Parsear el CSV de misiones al array global GAME_MISSIONS
+function parseMissions(csvText) {
+  const lines = csvText.split('\n');
+  if (lines.length <= 1) return [];
+  
+  let delimiter = ';';
+  let headerLine = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line && !line.startsWith('#') && /[a-zA-Z0-9]/.test(line)) {
+      if (line.includes(';')) delimiter = ';';
+      else if (line.includes(',')) delimiter = ',';
+      headerLine = line;
+      break;
+    }
+  }
+  if (!headerLine) return [];
+  const headers = headerLine.split(delimiter).map(h => h.trim().toLowerCase());
+  
+  const idxCategory = headers.indexOf('category');
+  const idxId = headers.indexOf('id');
+  const idxName = headers.indexOf('name');
+  const idxDescription = headers.indexOf('description');
+  const idxWeight = headers.indexOf('weight');
+  const idxMinDays = headers.indexOf('mindays');
+  const idxMaxDays = headers.indexOf('maxdays');
+  const idxDifficulty = headers.indexOf('difficulty');
+  const idxAttribute = headers.indexOf('attribute');
+  const idxBaseSuccessRate = headers.indexOf('basesuccessrate');
+  const idxRewardRep = headers.indexOf('rewardrep');
+  const idxRewardGold = headers.indexOf('rewardgold');
+  const idxRewardSeedsType = headers.indexOf('rewardseedstype');
+  const idxRewardSeedsAmt = headers.indexOf('rewardseedsamt');
+  const idxRewardSpecialist = headers.indexOf('rewardspecialist');
+  const idxColMin = headers.indexOf('colmin');
+  const idxColMax = headers.indexOf('colmax');
+
+  const missions = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('#')) continue;
+    const cols = line.split(delimiter);
+    if (cols.length < 3) continue;
+    if (cols[idxCategory] === 'Category' || cols[idxCategory] === 'category') continue;
+    if (cols[idxCategory].trim().toLowerCase() !== 'mission') continue;
+    
+    missions.push({
+      id: cols[idxId] || '',
+      name: cols[idxName] || '',
+      description: cols[idxDescription] || '',
+      weight: parseFloat(cols[idxWeight]) || 0,
+      minDays: parseInt(cols[idxMinDays]) || 1,
+      maxDays: parseInt(cols[idxMaxDays]) || 1,
+      difficulty: parseInt(cols[idxDifficulty]) || 1,
+      attribute: cols[idxAttribute] || 'exploration',
+      baseSuccessRate: parseFloat(cols[idxBaseSuccessRate]) || 0.5,
+      rewardRep: parseInt(cols[idxRewardRep]) || 0,
+      rewardGold: parseInt(cols[idxRewardGold]) || 0,
+      rewardSeedsType: cols[idxRewardSeedsType] || 'none',
+      rewardSeedsAmt: parseInt(cols[idxRewardSeedsAmt]) || 0,
+      rewardSpecialist: cols[idxRewardSpecialist] || 'none',
+      colonistsMin: parseInt(cols[idxColMin]) || 1,
+      colonistsMax: parseInt(cols[idxColMax]) || 1
+    });
+  }
+  return missions;
+}
 
 // Variable CONFIG global (se inicializará con fallbacks inmediatamente)
 var CONFIG = {};
@@ -306,12 +426,12 @@ function parseCSV(csvText, fileName = '') {
   
   if (lines.length === 0) return parsedConfig;
   
-  // Auto-detectar delimitador en base a la primera línea no vacía que no sea un comentario
+  // Auto-detectar delimitador en base a la primera línea no vacía que no sea un comentario y tenga caracteres alfanuméricos
   let delimiter = ';';
   let headerLine = '';
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line && !line.startsWith('#')) {
+    if (line && !line.startsWith('#') && /[a-zA-Z0-9]/.test(line)) {
       if (line.includes(';')) {
         delimiter = ';';
       } else if (line.includes(',')) {
@@ -358,10 +478,26 @@ function parseCSV(csvText, fileName = '') {
   const idxReqTH = headers.indexOf('req_th');
   const idxCostIron = headers.indexOf('cost_iron');
   const idxYieldPop = headers.indexOf('yield_pop');
+  const idxOutputMin = headers.indexOf('output_min');
+  const idxOutputMax = headers.indexOf('output_max');
+  const idxCostReputation = headers.indexOf('cost_reputation') !== -1 ? headers.indexOf('cost_reputation') : headers.indexOf('cost_rep');
+  const idxReqResource = headers.indexOf('req_resource');
+  const idxReqMin = headers.indexOf('req_min');
+  const idxReqMax = headers.indexOf('req_max');
+  const idxReward1Type = headers.indexOf('reward_1_type');
+  const idxReward1Min = headers.indexOf('reward_1_min');
+  const idxReward1Max = headers.indexOf('reward_1_max');
+  const idxReward2Type = headers.indexOf('reward_2_type');
+  const idxReward2Min = headers.indexOf('reward_2_min');
+  const idxReward2Max = headers.indexOf('reward_2_max');
+  const idxReward3Type = headers.indexOf('reward_3_type');
+  const idxReward3Min = headers.indexOf('reward_3_min');
+  const idxReward3Max = headers.indexOf('reward_3_max');
+  const idxWeight = headers.indexOf('weight');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line || line.startsWith('#')) continue;
+    if (!line || line.startsWith('#') || !/[a-zA-Z0-9]/.test(line)) continue;
     const columns = line.split(delimiter);
     if (columns.length < 3) continue;
     
@@ -371,16 +507,37 @@ function parseCSV(csvText, fileName = '') {
     const originalCategory = category;
     
     // Normalizar categorías basadas en el archivo CSV para mantener compatibilidad con el código JS
+    const catLower = category.trim().toLowerCase();
     if (fileName === 'production') {
-      if (category === 'Gathering') category = 'BasicGathering';
-      else if (category === 'Building') category = 'ProductionRate';
+      if (catLower === 'gathering') category = 'BasicGathering';
+      else if (catLower === 'building') category = 'ProductionRate';
     } else if (fileName === 'prices') {
-      if (category === 'Buy' || category === 'Sell' || category === 'Action') category = 'Sales';
+      if (catLower === 'buy' || catLower === 'sell' || catLower === 'action') category = 'Sales';
     } else if (fileName === 'buildings') {
-      if (category === 'Upgrade') category = 'Building';
+      if (catLower === 'upgrade' || catLower === 'building') category = 'Building';
     } else if (fileName === 'timings') {
       category = 'Timing';
+    } else if (fileName === 'orders') {
+      category = 'Order';
     }
+
+    // Normalizaciones generales adicionales de categoría para blindaje contra cualquier tipo de letra
+    const currentCatLower = category.trim().toLowerCase();
+    if (currentCatLower === 'basicgathering') category = 'BasicGathering';
+    else if (currentCatLower === 'productionrate') category = 'ProductionRate';
+    else if (currentCatLower === 'sales') category = 'Sales';
+    else if (currentCatLower === 'building') category = 'Building';
+    else if (currentCatLower === 'timing') category = 'Timing';
+    else if (currentCatLower === 'foodequivalence') category = 'FoodEquivalence';
+    else if (currentCatLower === 'foodneed') category = 'FoodNeed';
+    else if (currentCatLower === 'crop') category = 'Crop';
+    else if (currentCatLower === 'processing') category = 'Processing';
+    else if (currentCatLower === 'attributeweight') category = 'AttributeWeight';
+    else if (currentCatLower === 'attributexp') category = 'AttributeXP';
+    else if (currentCatLower === 'xpyield') category = 'XPYield';
+    else if (currentCatLower === 'efficiency') category = 'Efficiency';
+    else if (currentCatLower === 'efficiencypenalty') category = 'EfficiencyPenalty';
+    else if (currentCatLower === 'order') category = 'Order';
     
     const type = columns[idxType] || '';
     const name = columns[idxName] || '';
@@ -390,6 +547,22 @@ function parseCSV(csvText, fileName = '') {
     const duration = idxDuration !== -1 ? (parseFloat(columns[idxDuration]) || 0) : 0;
     const yield_amount = idxYieldAmount !== -1 ? (parseFloat(columns[idxYieldAmount]) || 0) : 0;
     const yield_type = idxYieldType !== -1 ? (columns[idxYieldType] || '') : '';
+    const cost_reputation = idxCostReputation !== -1 ? (parseFloat(columns[idxCostReputation]) || 0) : 0;
+    
+    // Campos para orders.csv
+    const req_resource = idxReqResource !== -1 ? (columns[idxReqResource] || '').trim() : '';
+    const req_min = idxReqMin !== -1 ? (parseFloat(columns[idxReqMin]) || 0) : 0;
+    const req_max = idxReqMax !== -1 ? (parseFloat(columns[idxReqMax]) || 0) : 0;
+    const reward_1_type = idxReward1Type !== -1 ? (columns[idxReward1Type] || '').trim() : '';
+    const reward_1_min = idxReward1Min !== -1 ? (parseFloat(columns[idxReward1Min]) || 0) : 0;
+    const reward_1_max = idxReward1Max !== -1 ? (parseFloat(columns[idxReward1Max]) || 0) : 0;
+    const reward_2_type = idxReward2Type !== -1 ? (columns[idxReward2Type] || '').trim() : '';
+    const reward_2_min = idxReward2Min !== -1 ? (parseFloat(columns[idxReward2Min]) || 0) : 0;
+    const reward_2_max = idxReward2Max !== -1 ? (parseFloat(columns[idxReward2Max]) || 0) : 0;
+    const reward_3_type = idxReward3Type !== -1 ? (columns[idxReward3Type] || '').trim() : '';
+    const reward_3_min = idxReward3Min !== -1 ? (parseFloat(columns[idxReward3Min]) || 0) : 0;
+    const reward_3_max = idxReward3Max !== -1 ? (parseFloat(columns[idxReward3Max]) || 0) : 0;
+    const weight = idxWeight !== -1 ? (parseFloat(columns[idxWeight]) || 0) : 0;
     
     // Recomponer extra_info si contenía delimitadores internamente
     let extra_info = '';
@@ -438,28 +611,42 @@ function parseCSV(csvText, fileName = '') {
       final_yield_type = 'gold';
       final_cost_gold = 0;
     }
+
+    const output_min = idxOutputMin !== -1 && columns[idxOutputMin] !== undefined && columns[idxOutputMin] !== '' ? parseFloat(columns[idxOutputMin]) : final_yield_amount;
+    const output_max = idxOutputMax !== -1 && columns[idxOutputMax] !== undefined && columns[idxOutputMax] !== '' ? parseFloat(columns[idxOutputMax]) : final_yield_amount;
     
     if (category === 'Crop') {
       parsedConfig[category][type] = {
         name: name,
         cost: final_cost_gold,
         duration: duration,
-        yield: final_yield_amount
+        yield: final_yield_amount,
+        output_min: output_min,
+        output_max: output_max
       };
     } else if (category === 'Building' || category === 'Upgrade') {
       parsedConfig[category][type] = {
-        name, cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron,
+        name, cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron, cost_reputation,
         duration, yield_type: final_yield_type, yield_amount: final_yield_amount, yield_pop,
-        tier, req_th
+        tier, req_th, output_min: output_min, output_max: output_max
+      };
+    } else if (category === 'Order') {
+      parsedConfig[category][type] = {
+        name, req_resource, req_min, req_max,
+        reward_1_type, reward_1_min, reward_1_max,
+        reward_2_type, reward_2_min, reward_2_max,
+        reward_3_type, reward_3_min, reward_3_max,
+        weight
       };
     } else {
       parsedConfig[category][type] = {
         name, duration,
         yield: final_yield_amount, yield_type: final_yield_type,
+        output_min: output_min, output_max: output_max,
         consume_amount: final_consume_amount, consume_type: final_consume_type,
         input: final_consume_type, input_amt: final_consume_amount, attr,
         emoji, food_value, sellable, min_stock, max_stock,
-        cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron,
+        cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron, cost_reputation,
         // 'value' alias para mechanics.csv
         value: final_yield_amount
       };
@@ -499,15 +686,46 @@ function applyTimingsFromConfig() {
         }
       }
     }
+
+    // 3. Compatibilidad para recetas de fogatas (bonfire_t1/t2/t3 -> bonfire_auto/manual, etc.)
+    if (CONFIG.Processing) {
+      const mappings = [
+        { tier: 1, autoKey: 'bonfire_auto', manualKey: 'bonfire_manual', baseKey: 'bonfire_t1' },
+        { tier: 2, autoKey: 'pot_auto', manualKey: 'pot_manual', baseKey: 'bonfire_t2' },
+        { tier: 3, autoKey: 'kitchen_auto', manualKey: 'kitchen_manual', baseKey: 'bonfire_t3' }
+      ];
+      
+      mappings.forEach(m => {
+        const baseRec = CONFIG.Processing[m.baseKey];
+        if (baseRec) {
+          const autoTiming = CONFIG.Timing && CONFIG.Timing[`${m.baseKey}_auto`];
+          const manualTiming = CONFIG.Timing && CONFIG.Timing[`${m.baseKey}_manual`];
+          
+          CONFIG.Processing[m.autoKey] = {
+            ...baseRec,
+            duration: autoTiming ? autoTiming.duration : (m.tier === 1 ? 5.0 : (m.tier === 2 ? 4.0 : 3.0))
+          };
+          
+          CONFIG.Processing[m.manualKey] = {
+            ...baseRec,
+            duration: manualTiming ? manualTiming.duration : (m.tier === 1 ? 3.0 : (m.tier === 2 ? 2.0 : 1.5))
+          };
+        }
+      });
+    }
   }
 }
 
 // Inicialización síncrona inmediata con los datos por defecto
 function initDefaultConfig() {
   const testConfig = {};
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata'];
   for (const name of files) {
-    const parsed = parseCSV(DEFAULT_CSV_DATA[name] || '', name);
+    const text = DEFAULT_CSV_DATA[name] || '';
+    const parsed = parseCSV(text, name);
+    if (name === 'missiondata') {
+      window.GAME_MISSIONS = parseMissions(text);
+    }
     for (const category in parsed) {
       if (!testConfig[category]) {
         testConfig[category] = {};
@@ -524,18 +742,26 @@ initDefaultConfig();
 
 // Carga asíncrona de todos los archivos CSV desde el servidor local
 async function loadAllCSVs() {
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata'];
   const results = {};
-    for (const name of files) {
-      try {
-        const res = await fetch(`src/data/${name}.csv?t=${Date.now()}`);
-        if (!res.ok) throw new Error('not found');
-        results[name] = parseCSV(await res.text(), name);
-      } catch (e) {
-        console.warn(`No se pudo cargar ${name}.csv, usando datos por defecto:`, e);
-        results[name] = parseCSV(DEFAULT_CSV_DATA[name] || '', name);
+  for (const name of files) {
+    try {
+      const res = await fetch(`src/data/${name}.csv?t=${Date.now()}`);
+      if (!res.ok) throw new Error('not found');
+      const text = await res.text();
+      results[name] = parseCSV(text, name);
+      if (name === 'missiondata') {
+        window.GAME_MISSIONS = parseMissions(text);
+      }
+    } catch (e) {
+      console.warn(`No se pudo cargar ${name}.csv, usando datos por defecto:`, e);
+      const text = DEFAULT_CSV_DATA[name] || '';
+      results[name] = parseCSV(text, name);
+      if (name === 'missiondata') {
+        window.GAME_MISSIONS = parseMissions(text);
       }
     }
+  }
   return results;
 }
 

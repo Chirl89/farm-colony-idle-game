@@ -1,30 +1,44 @@
+window.stopPlayerConstruction = function() {
+  state.playerConstructing = null;
+  state.playerBuilding = null;
+  showToast("Te has retirado de la construcción", "info");
+  recalculateRates();
+  updateUI();
+};
+
 // ACCIONES DE RECOLECCIÓN MANUAL
 function gatherWood() {
+  if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
   state.gatherCooldown = cooldown;
   state.gatherType = 'wood';
   state.playerConstructing = null;
+  state.playerBuilding = null;
   showToast("Comenzando a recolectar madera...", "info");
   updateUI();
 }
 
 function gatherStone() {
+  if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
   state.gatherCooldown = cooldown;
   state.gatherType = 'stone';
   state.playerConstructing = null;
+  state.playerBuilding = null;
   showToast("Comenzando a recolectar piedra...", "info");
   updateUI();
 }
 
 function gatherBerries() {
+  if (state.playerBuilding !== null) { showToast("Estas construyendo...", "warning"); return; }
   if (state.gatherCooldown > 0) { showToast("Aún te estás recuperando...", "warning"); return; }
   const cooldown = CONFIG.Timing && CONFIG.Timing.gather_cooldown ? CONFIG.Timing.gather_cooldown.duration : 2.0;
   state.gatherCooldown = cooldown;
   state.gatherType = 'berries';
   state.playerConstructing = null;
+  state.playerBuilding = null;
   showToast("Comenzando a recolectar frutos...", "info");
   updateUI();
 }
@@ -34,20 +48,32 @@ function deliverGatheredResources() {
   if (!type) return;
   
   if (type === 'wood') {
-    const yieldVal = CONFIG.BasicGathering.wood_manual.yield;
-    state.wood += yieldVal;
-    resourcesGeneratedThisSecond.wood += yieldVal;
-    showToast(`+${yieldVal} Madera recolectada`, "success");
+    const cfg = CONFIG.BasicGathering.wood_manual;
+    const yieldMin = cfg.output_min !== undefined ? cfg.output_min : cfg.yield;
+    const yieldMax = cfg.output_max !== undefined ? cfg.output_max : cfg.yield;
+    const rawVal = yieldMin + Math.random() * (yieldMax - yieldMin);
+    const yieldVal = Math.round(rawVal);
+    const added = addResourceStock('wood', yieldVal);
+    resourcesGeneratedThisSecond.wood += added;
+    showToast(`+${added} Madera recolectada`, "success");
   } else if (type === 'stone') {
-    const yieldVal = CONFIG.BasicGathering.stone_manual.yield;
-    state.stone += yieldVal;
-    resourcesGeneratedThisSecond.stone += yieldVal;
-    showToast(`+${yieldVal} Piedra recolectada`, "success");
+    const cfg = CONFIG.BasicGathering.stone_manual;
+    const yieldMin = cfg.output_min !== undefined ? cfg.output_min : cfg.yield;
+    const yieldMax = cfg.output_max !== undefined ? cfg.output_max : cfg.yield;
+    const rawVal = yieldMin + Math.random() * (yieldMax - yieldMin);
+    const yieldVal = Math.round(rawVal);
+    const added = addResourceStock('stone', yieldVal);
+    resourcesGeneratedThisSecond.stone += added;
+    showToast(`+${added} Piedra recolectada`, "success");
   } else if (type === 'berries') {
-    const yieldVal = CONFIG.BasicGathering.berries_manual.yield;
-    state.berries = (state.berries || 0) + yieldVal;
+    const cfg = CONFIG.BasicGathering.berries_manual;
+    const yieldMin = cfg.output_min !== undefined ? cfg.output_min : cfg.yield;
+    const yieldMax = cfg.output_max !== undefined ? cfg.output_max : cfg.yield;
+    const rawVal = yieldMin + Math.random() * (yieldMax - yieldMin);
+    const yieldVal = Math.round(rawVal);
+    const added = addResourceStock('berries', yieldVal);
     updateGlobalFood();
-    showToast(`+${yieldVal} Frutos recolectados`, "success");
+    showToast(`+${added} Frutos recolectados`, "success");
   }
   
   state.gatherType = null;
@@ -55,9 +81,23 @@ function deliverGatheredResources() {
   updateUI();
 }
 
+function getColonistHiringRepCost() {
+  const baseColonists = CONFIG?.Economy?.hire_rep_base_colonists?.value ?? 2;
+  const repPerColonist = CONFIG?.Economy?.hire_rep_per_colonist?.value ?? 5;
+  const currentCount = state.colonists ? state.colonists.length : 0;
+  return Math.max(0, (currentCount - baseColonists) * repPerColonist);
+}
+
 function hireColonist(candidateIdx) {
   if (!state.candidates || !state.candidates[candidateIdx]) {
     showToast("Candidato no disponible", "warning");
+    return;
+  }
+  
+  // Reputación requerida paramétrica
+  const coste_rep = getColonistHiringRepCost();
+  if ((state.reputation || 0) < coste_rep) {
+    showToast(`❌ Necesitas ${coste_rep} de Reputación para contratar más aldeanos`, 'error');
     return;
   }
   
@@ -153,10 +193,40 @@ function buyResourceSelected(type, amount = 1) {
     showToast("Fórmula de compra no encontrada", "warning");
     return;
   }
-  const cost = (buyRule.cost_gold || 0) * amount;
+
+  // Calcular espacio disponible
+  let storageType = null;
+  let currentVal = 0;
+  if (type === 'wood') {
+    storageType = 'wood';
+    currentVal = state.wood || 0;
+  } else if (type === 'stone') {
+    storageType = 'stone';
+    currentVal = state.stone || 0;
+  } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'].includes(type)) {
+    storageType = 'food';
+    currentVal = state[type] || 0;
+  } else if (type.endsWith('_seeds')) {
+    storageType = 'seeds';
+    const seedType = type.replace('_seeds', '');
+    currentVal = state.seeds ? (state.seeds[seedType] || 0) : 0;
+  }
+
+  let finalAmount = amount;
+  if (storageType && state.storageCapacity && state.storageCapacity[storageType] !== undefined) {
+    const cap = state.storageCapacity[storageType];
+    const space = Math.max(0, cap - currentVal);
+    if (space <= 0) {
+      showToast(`⚠️ Almacén de ${storageType === 'food' ? 'Alimentos' : (storageType === 'seeds' ? 'Semillas' : (storageType === 'wood' ? 'Madera' : 'Piedra'))} lleno. ¡No puedes comprar más!`, "warning");
+      return;
+    }
+    finalAmount = Math.min(amount, space);
+  }
+
+  const cost = (buyRule.cost_gold || 0) * finalAmount;
   if (state.gold >= cost) {
     state.gold -= cost;
-    addResourceStock(type, amount);
+    addResourceStock(type, finalAmount);
     updateGlobalFood();
     
     const rawNames = {
@@ -166,7 +236,7 @@ function buyResourceSelected(type, amount = 1) {
       wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
     };
     
-    showToast(`¡Compradas ${amount} unidades de ${rawNames[type] || type} por ${cost}🪙!`, "success");
+    showToast(`¡Compradas ${finalAmount} unidades de ${rawNames[type] || type} por ${cost}🪙!`, "success");
     recalculateRates();
     updateUI();
   } else {
@@ -333,6 +403,22 @@ function switchColonistsSubTab(subTabId) {
   state.currentColonistsSubTab = subTabId;
 }
 
+function switchMissionsSubTab(subTabId) {
+  const buttons = document.querySelectorAll('#tab-missions .subtab-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  const contents = document.querySelectorAll('#tab-missions .subtab-content');
+  contents.forEach(content => content.classList.remove('active-subcontent'));
+  
+  const targetBtn = document.getElementById(`subtab-btn-missions-${subTabId}`);
+  if (targetBtn) targetBtn.classList.add('active');
+  
+  const targetContent = document.getElementById(`subtab-missions-${subTabId}`);
+  if (targetContent) targetContent.classList.add('active-subcontent');
+  
+  state.currentMissionsSubTab = subTabId;
+}
+
 function changeColonistJobDirectly(colonistId, newJobValue) {
   if (!state.colonists) return;
   const col = state.colonists.find(c => c.id === colonistId);
@@ -460,6 +546,30 @@ function initEventHandlers() {
   if (tabSales) tabSales.addEventListener('click', () => switchTab('sales'));
   const tabCol = document.getElementById('tab-btn-colonists');
   if (tabCol) tabCol.addEventListener('click', () => switchTab('colonists'));
+  const tabMissions = document.getElementById('tab-btn-missions');
+  if (tabMissions) tabMissions.addEventListener('click', () => {
+    if (typeof generateAvailableMissions === 'function' && (!state.availableMissions || state.availableMissions.length === 0)) {
+      generateAvailableMissions();
+    }
+    switchTab('missions');
+  });
+
+  // Delegación de eventos para lanzar misiones
+  document.addEventListener('click', e => {
+    if (e.target && e.target.classList.contains('btn-launch-mission')) {
+      const idx = parseInt(e.target.getAttribute('data-idx'));
+      const dropdowns = document.querySelectorAll(`.mission-colonist-dropdown-${idx}`);
+      const colonistIds = Array.from(dropdowns)
+        .map(sel => sel.value)
+        .filter(val => val !== "")
+        .map(val => parseInt(val));
+      
+      const uniqueColonistIds = [...new Set(colonistIds)];
+      if (typeof launchMission === 'function') {
+        launchMission(idx, uniqueColonistIds);
+      }
+    }
+  });
 
   // Botones de recolección manual
   const btnGatherWood = document.getElementById('btn-gather-wood');
@@ -517,6 +627,8 @@ function initEventHandlers() {
   if (subtabProcesado) subtabProcesado.addEventListener('click', () => switchSubTab('procesado'));
   const subtabRecursos = document.getElementById('subtab-btn-recursos');
   if (subtabRecursos) subtabRecursos.addEventListener('click', () => switchSubTab('recursos'));
+  const subtabAlmacenamiento = document.getElementById('subtab-btn-almacenamiento');
+  if (subtabAlmacenamiento) subtabAlmacenamiento.addEventListener('click', () => switchSubTab('almacenamiento'));
   
   const subtabColonistsHire = document.getElementById('subtab-btn-colonists-hire');
   if (subtabColonistsHire) subtabColonistsHire.addEventListener('click', () => switchColonistsSubTab('hire'));
@@ -526,6 +638,12 @@ function initEventHandlers() {
   if (subtabColonistsPriority) subtabColonistsPriority.addEventListener('click', () => switchColonistsSubTab('priority'));
   const subtabColonistsSummary = document.getElementById('subtab-btn-colonists-summary');
   if (subtabColonistsSummary) subtabColonistsSummary.addEventListener('click', () => switchColonistsSubTab('summary'));
+
+  const subtabMissionsOrders = document.getElementById('subtab-btn-missions-orders');
+  if (subtabMissionsOrders) subtabMissionsOrders.addEventListener('click', () => switchMissionsSubTab('orders'));
+  const subtabMissionsExpeditions = document.getElementById('subtab-btn-missions-expeditions');
+  if (subtabMissionsExpeditions) subtabMissionsExpeditions.addEventListener('click', () => switchMissionsSubTab('expeditions'));
+
 
   // Botones de construcción de edificios
   const btnBuildBasic = document.getElementById('btn-build-basic');
@@ -542,11 +660,38 @@ function initEventHandlers() {
   if (btnBuildMarket) btnBuildMarket.addEventListener('click', buildMarket);
   const btnBuildGranary = document.getElementById('btn-build-granary');
   if (btnBuildGranary) btnBuildGranary.addEventListener('click', buildGranary);
+  const btnBuildWell = document.getElementById('btn-build-well');
+  if (btnBuildWell) btnBuildWell.addEventListener('click', buildWell);
+
+  const btnBuildWarehouseWood = document.getElementById('btn-build-wood-warehouse'); // O bien con id genérico
+  const btnBuildWarehouseWoodReal = document.getElementById('btn-build-warehouse-wood');
+  if (btnBuildWarehouseWoodReal) btnBuildWarehouseWoodReal.addEventListener('click', () => buildWarehouse('wood'));
+  const btnBuildWarehouseStoneReal = document.getElementById('btn-build-warehouse-stone');
+  if (btnBuildWarehouseStoneReal) btnBuildWarehouseStoneReal.addEventListener('click', () => buildWarehouse('stone'));
+  const btnBuildWarehouseFoodReal = document.getElementById('btn-build-warehouse-food');
+  if (btnBuildWarehouseFoodReal) btnBuildWarehouseFoodReal.addEventListener('click', () => buildWarehouse('food'));
+  const btnBuildWarehouseSeedsReal = document.getElementById('btn-build-warehouse-seeds');
+  if (btnBuildWarehouseSeedsReal) btnBuildWarehouseSeedsReal.addEventListener('click', () => buildWarehouse('seeds'));
 
   // Liberar colonos
 
   const btnResetAssignments = document.getElementById('btn-reset-assignments');
   if (btnResetAssignments) btnResetAssignments.addEventListener('click', resetAllAssignments);
+
+  // Inicializar la visualización de precios en el mercado manual
+  if (typeof updateSellResourcePriceDisplay === 'function') updateSellResourcePriceDisplay();
+  if (typeof updateBuyResourcePriceDisplay === 'function') updateBuyResourcePriceDisplay();
+
+  // Delegación de eventos para el tablón de pedidos (PASO I - REP-TABL) - Global
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('.btn-fulfill-order');
+    if (button) {
+      const orderId = button.getAttribute('data-order-id');
+      if (orderId && typeof fulfillOrder === 'function') {
+        fulfillOrder(orderId);
+      }
+    }
+  });
 }
 
 // Registro DOMContentLoaded para inicializar manejadores
@@ -806,6 +951,42 @@ function dismissColonist(colonistId) {
   }
 }
 
+// Variables del Panel Dev
+let devSpeedMultiplier = 1;
+let devModeActive = false;
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.shiftKey && e.key.toUpperCase() === 'D') {
+    toggleDevPanel();
+  }
+});
+
+function toggleDevPanel() {
+  devModeActive = !devModeActive;
+  const panel = document.getElementById('dev-panel');
+  if (panel) panel.style.display = devModeActive ? 'block' : 'none';
+  if (typeof updateUI === 'function') updateUI();
+}
+window.toggleDevPanel = toggleDevPanel;
+
+Object.defineProperty(window, 'devSpeedMultiplier', {
+  get: () => devSpeedMultiplier,
+  set: (val) => {
+    devSpeedMultiplier = val;
+    if (typeof updateUI === 'function') updateUI();
+  }
+});
+
+Object.defineProperty(window, 'devModeActive', {
+  get: () => devModeActive,
+  set: (val) => {
+    devModeActive = val;
+    const panel = document.getElementById('dev-panel');
+    if (panel) panel.style.display = devModeActive ? 'block' : 'none';
+    if (typeof updateUI === 'function') updateUI();
+  }
+});
+
 // INICIALIZACIÓN PRINCIPAL DEL JUEGO
 window.onload = async function() {
   // Inicializar referencias DOM
@@ -830,6 +1011,7 @@ window.onload = async function() {
   switchTab(state.currentTab || 'basic');
   switchSubTab(state.currentSubTab || 'viviendas');
   switchColonistsSubTab(state.currentColonistsSubTab || 'hire');
+  switchMissionsSubTab(state.currentMissionsSubTab || 'orders');
   renderFoodPriorityList();
   recalculateRates();
 };

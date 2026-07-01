@@ -16,6 +16,9 @@ const DEFAULT_STATE = {
   maxPopulation: 0,
   colonists: [],
   candidates: [],
+  orders: [],
+  ordersRefreshDay: 0,
+  reputation: 0,
   basicHouses: 0,
   upgradedHouses: 0,
   houses: [],
@@ -44,6 +47,9 @@ const DEFAULT_STATE = {
   markets: [],
   bonfires: [],
   granaries: [],
+  wells: [],
+  waterToday: 0,
+  waterMax: 0,
   autoSell: {
     wood: false,
     stone: false,
@@ -123,8 +129,16 @@ const DEFAULT_STATE = {
   townHall: { built: false, tier: 1, isUpgrading: false, upgradeElapsed: 0, isUnderConstruction: false, constructionElapsed: 0, constructionDuration: 1, workerAssigned: 0 },
   maxBuildingTier: 0,
   playerConstructing: null,
+  playerBuilding: null,
   seeds: { wheat: 0, potato: 0, carrot: 0 },
-  nextActivationId: 1
+  nextActivationId: 1,
+  warehouses: [],
+  storageCapacity: {},
+  missions: [],
+  availableMissions: [],
+  missionHistory: [],
+  currentMissionsSubTab: 'orders',
+  missionsRefreshDay: 1
 };
 
 const COLONIST_NAMES = [
@@ -393,6 +407,9 @@ function loadGame() {
       if (typeof state.playerConstructing === 'undefined') {
         state.playerConstructing = null;
       }
+      if (typeof state.playerBuilding === 'undefined') {
+        state.playerBuilding = null;
+      }
       
       if (typeof state.gatherCooldown === 'undefined') {
         state.gatherCooldown = 0;
@@ -400,6 +417,55 @@ function loadGame() {
       if (typeof state.gatherType === 'undefined') {
         state.gatherType = null;
       }
+      
+      // Migración obligatoria de pozos
+      if (!Array.isArray(state.wells)) {
+        state.wells = [];
+      }
+      if (typeof state.waterToday === 'undefined') {
+        state.waterToday = 0;
+      }
+      if (typeof state.waterMax === 'undefined') {
+        state.waterMax = 0;
+      }
+      
+      // Migración de almacenes
+      if (!Array.isArray(state.warehouses)) {
+        state.warehouses = [];
+      }
+      if (typeof state.storageCapacity === 'undefined' || state.storageCapacity === null) {
+        state.storageCapacity = {};
+      }
+
+      // Migración de pedidos y reputación (PASO I - REP-TABL)
+      if (!Array.isArray(state.orders)) {
+        state.orders = [];
+      }
+      if (typeof state.ordersRefreshDay === 'undefined') {
+        state.ordersRefreshDay = 0;
+      }
+      if (typeof state.reputation === 'undefined') {
+        state.reputation = 0;
+      }
+
+      // Migración de misiones (PASO J - REP-MISI)
+      if (!Array.isArray(state.missions)) {
+        state.missions = [];
+      }
+      if (!Array.isArray(state.availableMissions)) {
+        state.availableMissions = [];
+      }
+      if (!Array.isArray(state.missionHistory)) {
+        state.missionHistory = [];
+      }
+      if (typeof state.currentMissionsSubTab === 'undefined') {
+        state.currentMissionsSubTab = 'orders';
+      }
+      if (typeof state.missionsRefreshDay === 'undefined') {
+        state.missionsRefreshDay = 1;
+      }
+
+
       
       // Asegurar inicialización de variables de alimentación
       if (!state.foodPriority || state.foodPriority.includes('cooked') || state.foodPriority.includes('raw')) {
@@ -693,6 +759,7 @@ function loadGame() {
       
       updateGlobalFood();
 
+      if (typeof recalculateStorageCapacity === 'function') recalculateStorageCapacity();
       if (typeof recalculateRates === 'function') recalculateRates();
       if (typeof renderFoodPriorityList === 'function') renderFoodPriorityList();
       showToast("Partida cargada con éxito", "success");
@@ -832,3 +899,142 @@ function initializeHousingAssignments() {
     }
   });
 }
+
+// Recalcular la capacidad de almacenamiento de recursos según el ayuntamiento y almacenes completados
+function recalculateStorageCapacity() {
+  const thTier = (state.townHall && state.townHall.tier) || 1;
+  
+  // Capacidad base según Ayuntamiento y mechanics.csv
+  let baseWood = 100, baseStone = 100, baseFood = 100, baseSeeds = 100;
+  if (typeof CONFIG !== 'undefined' && CONFIG.Storage) {
+    baseWood = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
+    baseStone = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
+    baseFood = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
+    baseSeeds = CONFIG.Storage[`townhall_t${thTier}_capacity`]?.value ?? (thTier === 1 ? 100 : (thTier === 2 ? 200 : 500));
+  } else {
+    // Fallback hardcodeado si CONFIG no está cargado
+    const caps = { 1: 100, 2: 200, 3: 500 };
+    const c = caps[thTier] || 100;
+    baseWood = c; baseStone = c; baseFood = c; baseSeeds = c;
+  }
+
+  // Inicializar storageCapacity
+  state.storageCapacity = {
+    wood: baseWood,
+    stone: baseStone,
+    food: baseFood,
+    seeds: baseSeeds
+  };
+
+  // Sumar bonus de los almacenes completados
+  if (Array.isArray(state.warehouses)) {
+    state.warehouses.forEach(w => {
+      if (w.isUnderConstruction) return; // solo almacenes construidos
+      const tier = w.tier || 1;
+      let bonus = tier === 1 ? 200 : (tier === 2 ? 500 : 1000);
+      if (typeof CONFIG !== 'undefined' && CONFIG.Storage) {
+        const bonusKey = `warehouse_t${tier}_bonus`;
+        bonus = CONFIG.Storage[bonusKey]?.value ?? bonus;
+      }
+      if (state.storageCapacity[w.type] !== undefined) {
+        state.storageCapacity[w.type] += bonus;
+      }
+    });
+  }
+
+  // Forzar capping de recursos actuales para no exceder la capacidad calculada
+  if (state.storageCapacity) {
+    if (state.wood > state.storageCapacity.wood) state.wood = state.storageCapacity.wood;
+    if (state.stone > state.storageCapacity.stone) state.stone = state.storageCapacity.stone;
+    
+    // Alimentos y procesados de alimentos (capacidad grupal total)
+    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+    let totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
+    if (totalFood > state.storageCapacity.food) {
+      let excess = totalFood - state.storageCapacity.food;
+      // Reducir de forma secuencial empezando por alimentos básicos y luego cocinados
+      for (let i = 0; i < foodKeys.length; i++) {
+        const k = foodKeys[i];
+        const val = state[k] || 0;
+        if (val > 0) {
+          const toDeduct = Math.min(val, excess);
+          state[k] = val - toDeduct;
+          excess -= toDeduct;
+          if (excess <= 0) break;
+        }
+      }
+      updateGlobalFood();
+    }
+
+    // Semillas (capacidad grupal total)
+    if (state.seeds) {
+      const seedKeys = ['wheat', 'potato', 'carrot'];
+      let totalSeeds = seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0);
+      if (totalSeeds > state.storageCapacity.seeds) {
+        let excess = totalSeeds - state.storageCapacity.seeds;
+        for (let i = 0; i < seedKeys.length; i++) {
+          const k = seedKeys[i];
+          const val = state.seeds[k] || 0;
+          if (val > 0) {
+            const toDeduct = Math.min(val, excess);
+            state.seeds[k] = val - toDeduct;
+            excess -= toDeduct;
+            if (excess <= 0) break;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Genera un colono especialista con un atributo alto (8-10) y un título especial
+function generateSpecialistColonist(speciality) {
+  const allAttrs = ['woodcutting', 'mining', 'farming', 'cooking', 'trading', 'exploration', 'combat', 'construction'];
+  let actualSpeciality = speciality;
+  if (speciality === 'random' || speciality === 'any') {
+    actualSpeciality = allAttrs[Math.floor(Math.random() * allAttrs.length)];
+  }
+  
+  // Generar colono nuevo
+  const specialist = generateNewColonist(null);
+  
+  // Extraer valores desde CONFIG o usar fallbacks
+  const specialistMin = CONFIG.Colonist && CONFIG.Colonist.specialist_min ? CONFIG.Colonist.specialist_min.value : 8;
+  const specialistMax = CONFIG.Colonist && CONFIG.Colonist.specialist_max ? CONFIG.Colonist.specialist_max.value : 10;
+  const specialistSecondaryMax = CONFIG.Colonist && CONFIG.Colonist.specialist_attr_secondary ? CONFIG.Colonist.specialist_attr_secondary.value : 2;
+  
+  const mainVal = Math.floor(specialistMin + Math.random() * (specialistMax - specialistMin + 1));
+  
+  allAttrs.forEach(attr => {
+    if (attr === actualSpeciality) {
+      specialist.attributes[attr] = mainVal;
+    } else {
+      specialist.attributes[attr] = Math.floor(1 + Math.random() * specialistSecondaryMax);
+    }
+    specialist.attributeXP[attr] = 0;
+  });
+  
+  // Obtener título según especialidad
+  let title = "Especialista";
+  if (CONFIG.SpecialistTitle && CONFIG.SpecialistTitle[actualSpeciality]) {
+    const titlesStr = CONFIG.SpecialistTitle[actualSpeciality].name || "";
+    const titlesArray = titlesStr.split(',').map(t => t.trim());
+    if (titlesArray.length > 0 && titlesArray[0]) {
+      title = titlesArray[Math.floor(Math.random() * titlesArray.length)];
+    }
+  }
+  
+  specialist.specialist = true;
+  specialist.speciality = actualSpeciality;
+  specialist.title = title;
+  
+  state.colonists.push(specialist);
+  showToast(`🌟 ¡${title} ${specialist.name} se une a la colonia!`, 'success');
+  
+  if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+  
+  return specialist;
+}
+

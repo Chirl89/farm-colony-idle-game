@@ -1,4 +1,4 @@
-﻿# Plan de Implementacion v4 - Aetheria: Granja & Colonia
+# Plan de Implementacion v4 - Aetheria: Granja & Colonia
 ## Reordenado por prioridad optima de implementacion (2026-06-26)
 
 > REGLAS:
@@ -7,6 +7,8 @@
 > - Backups = boton "Backup ZIP" en la UI del juego.
 > - CSVs de test se generan AL COMPLETAR cada bloque (ver test/README.md).
 > - ui-render.js ~170KB: usar grep_search antes de view_file.
+> - **NO HARDCODING:** Queda estrictamente prohibido meter valores de coste, ratios, probabilidades o multiplicadores fijos en el código JS. Todo debe venir de los CSVs cargados en CONFIG.
+> - **FUNCIONES COMPACTAS:** Si una función en Javascript se extiende más de 40-50 líneas, debe refactorizarse dividiendo la lógica en subfunciones auxiliares independientes y reutilizables.
 
 ---
 
@@ -40,18 +42,18 @@
 | # | Paso | Riesgo | Descripción | Archivos clave | Estado |
 |---|------|--------|-------------|----------------|--------|
 | **BLOQUE 0 -- Quick Wins (sin dependencias, sin riesgo)** ||||||
-| 1 | **PASO A** - `[DEV]` | Verde | Panel de desarrollo Ctrl+Shift+D | ui-render.js, ui-events.js | Pendiente |
-| 2 | **PASO B** - `[UI-DIAS]` | Verde | Tasas de produccion en dias de juego | ui-render.js | Pendiente |
-| 3 | **PASO C** - `[UI-AYTO]` | Verde | Renombrar Ayuntamiento por tiers | buildings.csv, ui-render.js | Pendiente |
-| 4 | **PASO D** - `[COL-HAMBRE]` | Verde | Hambre reactiva (colonos comen al instante) | gameloop.js | Pendiente |
+| 1 | **PASO A** - `[DEV]` | Verde | Panel de desarrollo Ctrl+Shift+D | ui-render.js, ui-events.js | Completado (2026-06-29) |
+| 2 | **PASO B** - `[UI-DIAS]` | Verde | Tasas de produccion en dias de juego | ui-render.js | Completado (2026-06-29) |
+| 3 | **PASO C** - `[UI-AYTO]` | Verde | Renombrar Ayuntamiento por tiers | buildings.csv, ui-render.js | Completado (2026-06-29) |
+| 4 | **PASO D** - `[COL-HAMBRE]` | Verde | Hambre reactiva (colonos comen al instante) | gameloop.js | Completado (2026-06-29) |
 | **BLOQUE 1 -- Infraestructura basica** ||||||
-| 5 | **PASO E** - `[CON-OBRA]` | Amarillo | Jugador bloqueado durante construccion | gamestate.js, gameloop.js, ui | Pendiente |
-| 6 | **PASO F** - `[INF-POZO]` | Rojo | Pozo de agua (recurso diario limitado) | 8 archivos | Pendiente |
-| 7 | **PASO G** - `[INF-ALMA]` | Rojo | Almacenes y capacidad maxima de recursos | 8 archivos | Pendiente |
-| 7.B | BACKUP | - | Backup vBloque1 | - | Pendiente |
+| 5 | **PASO E** - `[CON-OBRA]` | Amarillo | Jugador bloqueado durante construccion | gamestate.js, gameloop.js, ui | Completado (2026-06-29) |
+| 6 | **PASO F** - `[INF-POZO]` | Rojo | Pozo de agua (recurso diario limitado) | 8 archivos | Completado (2026-06-30) |
+| 7 | **PASO G** - `[INF-ALMA]` | Rojo | Almacenes y capacidad maxima de recursos | 8 archivos | Completado (2026-06-30) |
+| 7.B | BACKUP | - | Backup vBloque1 | - | Completado (2026-06-30) |
 | **BLOQUE 2 -- Produccion y reputacion** ||||||
-| 8 | **PASO H** - `[PROD-RAND]` | Verde | Aleatoriedad en produccion (rango min-max) | production.csv, gameloop.js | Pendiente |
-| 9 | **PASO I** - `[REP-TABL]` | Amarillo | Tablon de pedidos (reputacion sin misiones) | 6 archivos | Pendiente |
+| 8 | **PASO H** - `[PROD-RAND]` | Verde | Aleatoriedad en produccion (rango min-max) | production.csv, gameloop.js | Completado (2026-06-30) |
+| 9 | **PASO I** - `[REP-TABL]` | Amarillo | Tablon de pedidos (reputacion sin misiones) | 6 archivos | Completado (2026-06-30) |
 | 10 | **PASO J** - `[REP-MISI]` | Rojo | Sistema de misiones + especialistas (missiondata.csv) | missiondata.csv + 8 archivos | Pendiente |
 | 10.B | BACKUP | - | Backup vBloque2 | - | Pendiente |
 | **BLOQUE 3 -- Arbol de tecnologia** ||||||
@@ -736,45 +738,28 @@ En src/js/gameloop.js — en gameTick(), fuera del ciclo día/noche, siempre:
     Si elapsedDays >= durationDays: completeMission(mission)
 
 Función completeMission(mission) (en buildings.js o gameloop.js):
-  const def = GAME_MISSIONS.find(m => m.id === mission.defId)
-  Calcular éxito: 
-    attrSum = colonos.reduce(sum de def.attribute)
-    successChance = def.baseSuccessRate + (attrSum / (colonos.length * 10)) * 0.4
-    éxito = Math.random() < successChance
-
-  Si éxito:
-    state.reputation += def.rewardRep
-    state.gold += def.rewardGold
-    Si def.rewardSeedsType !== 'none': state.seeds[def.rewardSeedsType] += def.rewardSeedsAmt
-    Si def.rewardSpecialist !== 'none': generateSpecialistColonist(def.rewardSpecialist)
-    XP de def.attribute a todos los colonos asignados
-    showToast(`🏆 Misión "${mission.name}" completada con éxito!`, 'success')
-  Si no:
-    XP parcial (50%)
-    showToast(`💀 Misión "${mission.name}" fallida.`, 'error')
-
-  Restaurar trabajos de los colonos (prevJob)
-  state.missionHistory.push({ ...mission, success: éxito })
-  generateAvailableMissions()
-  updateUI()
+  Debe refactorizarse en subfunciones compactas (<40 líneas) para evitar funciones infladas:
+  1. getMissionSuccessChance(mission, def):
+     Calcula la probabilidad de éxito basándose en la suma de atributos relevantes de los colonos.
+     Usa parámetros de CONFIG: CONFIG.Raid.success_scaling_factor (en vez de 0.4) y CONFIG.Raid.max_attribute_cap (en vez de 10) para no hardcodear la fórmula.
+     éxito = Math.random() < successChance
+  2. rewardMissionSuccess(mission, def):
+     Otorga reputación, oro y semillas (según def.rewardSeedsAmt).
+     Si def.rewardSpecialist !== 'none', invoca generateSpecialistColonist(def.rewardSpecialist).
+     Otorga XP a todos los colonos asignados en su atributo de misión.
+  3. rewardMissionFailure(mission, def):
+     Otorga XP parcial (50%) a los colonos asignados.
+  4. restoreMissionColonists(mission):
+     Restaura el trabajo original (prevJob) de cada colono y apaga el flag onMission.
 
 PARTE 4 — Colonos especialistas
 En src/js/gamestate.js — función generateSpecialistColonist(speciality):
-  const SPECIALIST_TITLES = {
-    woodcutting: ['Maestro Leñador', 'Talabosques', 'Veterano Maderero'],
-    mining: ['Maestro Minero', 'Experto en Vetas', 'Veterano de la Roca'],
-    farming: ['Maestro Agricultor', 'Sembradora Experta', 'Veterano del Campo'],
-    cooking: ['Chef Maestro', 'Cocinera Experta', 'Veterano de Fogones'],
-    trading: ['Maestro Mercader', 'Comerciante Experta', 'Veterano de Ferias'],
-    exploration: ['Explorador Leyenda', 'Rastreadora Maestra', 'Veterano Expedicionario'],
-    combat: ['Guerrero Legendario', 'Combatiente Maestra', 'Veterano de Batallas'],
-    random: () → elige speciality aleatoria de las de arriba
-  };
-  Genera colono normal con generateNewColonist()
-  Especialidad: 8-10 aleatorio
-  Resto de atributos: 1-3 aleatorio
-  Añade: specialist:true, speciality, title
-
+  Los títulos de los especialistas NO deben estar hardcodeados en código.
+  Se leerán desde CONFIG.SpecialistTitle (ej. SpecialistTitle.woodcutting.value que contendrá "Maestro Leñador,Talabosques,Veterano Maderero" dividido por comas en el CSV mechanics.csv o similar).
+  Genera el colono con generateNewColonist().
+  Asigna especialidad (valor entre 8-10, configurable vía CONFIG.Colonist.specialist_min/max).
+  Resto de atributos: 1-3.
+  Añade: specialist:true, speciality, title.
   state.colonists.push(specialist)
   showToast(`🌟 ¡${title} ${name} se une a la colonia!`, 'success')
 

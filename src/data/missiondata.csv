@@ -1,0 +1,16 @@
+Category;ID;Name;Description;Weight;MinDays;MaxDays;Difficulty;Attribute;BaseSuccessRate;RewardRep;RewardGold;RewardSeedsType;RewardSeedsAmt;RewardSpecialist;ColMin;ColMax
+Mission;gather_wood;Buscar Madera;La aldea necesita madera urgentemente.;20;2;5;1;woodcutting;0.75;8;0;none;0;none;1;3
+Mission;gather_stone;Extraer Piedra;Las canteras necesitan refuerzo.;20;2;5;1;mining;0.75;8;0;none;0;none;1;3
+Mission;gather_food;Buscar Provisiones;Los almacenes se agotan.;20;2;5;1;farming;0.80;10;0;none;0;none;1;3
+Mission;explore_ruins;Explorar Ruinas;Ruinas avistadas al norte.;12;4;8;2;exploration;0.60;15;5;none;0;none;1;2
+Mission;explore_deep;Expedición Profunda;Tierras desconocidas.;5;8;14;3;exploration;0.40;30;20;none;0;none;2;4
+Mission;trade_convoy;Escoltar Caravana;Una caravana necesita protección.;12;3;7;2;trading;0.65;12;20;none;0;none;2;3
+Mission;gold_delivery;Entrega Especial;Un mercader paga bien.;6;4;8;2;trading;0.70;5;100;none;0;none;1;2
+Mission;defend_village;Defender Aldea;Una aldea pide ayuda.;10;3;6;2;combat;0.55;20;10;none;0;none;2;4
+Mission;seeds_rare;Buscar Semillas Raras;Plantas únicas en el bosque.;10;5;10;2;farming;0.60;5;0;wheat;2;none;1;3
+Mission;seeds_potato;Conseguir Tubérculos;Semillas de un agricultor.;6;4;8;2;farming;0.65;5;0;potato;2;none;1;2
+Mission;seeds_carrot;Rastrear Semillas;Jardín abandonado.;6;4;8;2;farming;0.65;5;0;carrot;2;none;1;2
+Mission;headhunt_any;Reclutar Especialista;Localizar a un experto.;8;8;15;3;exploration;0.45;0;0;none;0;random;2;4
+Mission;headhunt_miner;Reclutar Maestro Minero;Un legendario minero.;4;10;15;3;exploration;0.40;0;0;none;0;mining;2;4
+Mission;headhunt_farmer;Reclutar Maestro Agricultor;Un experto en colinas.;4;10;15;3;farming;0.40;0;0;none;0;farming;2;4
+Mission;headhunt_warrior;Reclutar Guerrero;Un veterano busca causa.;4;10;15;3;combat;0.40;0;0;none;0;combat;2;4

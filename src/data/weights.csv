@@ -21,12 +21,12 @@ Category;Level;Name;Weight;Notes
 # Los niveles 7-10 son muy raros o imposibles en generacion normal;;;;
 # (los niveles altos se obtienen via especializacion por misiones);;;;
 ;;;;
-AttributeWeight;1;Nivel 1 - Muy debil;10;Relativamente comun en early game
-AttributeWeight;2;Nivel 2 - Debil;20;
-AttributeWeight;3;Nivel 3 - Normal bajo;40;El mas comun — colono tipico del early game
-AttributeWeight;4;Nivel 4 - Normal alto;25;Buen colono
-AttributeWeight;5;Nivel 5 - Bueno;4;Raro
-AttributeWeight;6;Nivel 6 - Muy bueno;1;Muy raro en generacion normal
+AttributeWeight;1;Nivel 1 - Muy debil;20;Relativamente comun en early game
+AttributeWeight;2;Nivel 2 - Debil;45;
+AttributeWeight;3;Nivel 3 - Normal bajo;30;El mas comun — colono tipico del early game
+AttributeWeight;4;Nivel 4 - Normal alto;4;Buen colono
+AttributeWeight;5;Nivel 5 - Bueno;1;Raro
+AttributeWeight;6;Nivel 6 - Muy bueno;0;Muy raro en generacion normal
 AttributeWeight;7;Nivel 7 - Experto;0;No aparece en generacion normal. Solo via XP o mision
 AttributeWeight;8;Nivel 8 - Maestro;0;Solo via XP o especialistas de mision
 AttributeWeight;9;Nivel 9 - Leyenda;0;Solo especialistas de mision (atributo principal)

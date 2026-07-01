@@ -73,4 +73,14 @@ Los estados posibles para cada prueba son: `PASS` | `FAIL` | `SKIP` | `PENDING`.
 
 | Archivo | Mecánica | Fecha de Generación | Estado Global |
 |---------|----------|---------------------|---------------|
-| *(se irán registrando aquí tras completarse las pruebas de cada paso)* | | | |
+| `test_UI-AYTO_20260629_165044.csv` | Ayuntamiento renombrado (PASO C) | 2026-06-29 | 5 PASS, 0 FAIL |
+| [test_COL-HAMBRE_20260629_170423.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_COL-HAMBRE_20260629_170423.csv) | Hambre reactiva (PASO D) | 2026-06-29 | 4 PASS, 0 FAIL |
+| [test_CON-OBRA_20260629_170900.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_CON-OBRA_20260629_170900.csv) | Jugador bloqueado en obra (PASO E) | 2026-06-29 | 6 PASS, 0 FAIL |
+| [test_INF-POZO_20260630_090200.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_INF-POZO_20260630_090200.csv) | Pozo de agua (PASO F) | 2026-06-30 | 10 PASS, 0 FAIL |
+| [test_INF-ALMA_20260630_071500.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_INF-ALMA_20260630_071500.csv) | Almacenes y capacidad (PASO G) | 2026-06-30 | 9 PASS, 0 FAIL |
+| [test_PROD-RAND_20260630_093242.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_PROD-RAND_20260630_093242.csv) | Aleatoriedad en producción (PASO H) | 2026-06-30 | 5 PASS, 0 FAIL |
+| [test_REP-TABL_20260630_101500.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REP-TABL_20260630_101500.csv) | Tablón de pedidos (PASO I) | 2026-06-30 | 7 PASS, 0 FAIL |
+| [test_REF-PARAM_20260630_151320.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REF-PARAM_20260630_151320.csv) | Refactor Parametrizacion y Modularidad | 2026-06-30 | 8 PASS, 0 FAIL |
+| [test_REP-MISI_20260630_160000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REP-MISI_20260630_160000.csv) | Sistema de misiones + especialistas (PASO J) | 2026-06-30 | 9 PASS, 0 FAIL |
+
+

@@ -1,0 +1,11 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Sin pozo waterMax=0;Sin pozos;Ver state.waterMax;0;0;PASS;El estado inicial se mapea correctamente a 0
+U02;Unit;1 pozo T1 waterMax=50;Pozo T1 construido;Ver waterMax;50;50;PASS;La capacidad del pozo T1 (50) se suma correctamente
+U03;Unit;2 pozos T1 waterMax=100;2 pozos T1;Ver waterMax;100;100;PASS;Las capacidades de múltiples pozos se suman correctamente
+U04;Unit;Agua se repone al amanecer;waterToday=0 llega amanecer;Amanecer;waterToday=waterMax-consumo;waterToday se repone a 50 (menos consumo);PASS;Se actualiza al amanecer
+U05;Unit;Colono consume 2 agua al amanecer;1 colono 1 pozo T1;Amanecer;waterToday=48;waterToday es 48;PASS;Se descuentan 2 unidades por el colono
+U06;Unit;Granja water espera si waterToday=0;waterToday=0 granja en water;Tick;stageElapsed no avanza;stageElapsed se congela en el tope;PASS;La granja muestra el aviso de "Sin agua hoy"
+U07;Unit;Granja riega y descuenta 5 agua;waterToday=10;Tick;waterToday=5;waterToday se reduce a 5;PASS;Se descuenta el coste de riego (5) al avanzar el ciclo
+I01;Integracion;Ciclo completo cultivo con pozo;1 pozo 1 granja;Cultivar completo;Cosecha exitosa;La granja completa el ciclo y da comida;PASS;El agua del pozo permite el correcto funcionamiento agrícola
+I02;Integracion;Sin pozo la granja nunca cosecha;0 pozos 1 granja;50 dias;Atascada en stage water;La granja queda bloqueada indefinidamente en etapa water;PASS;Cumple la condición de dependencia de agua
+R01;Regresion;Eficiencia colonos no afectada;Sistema anterior;Jugar con pozo;Eficiencia igual;La eficiencia de los colonos se mantiene idéntica;PASS;No se introdujeron efectos secundarios en la fórmula de eficiencia

@@ -1,3 +1,40 @@
+// Comprobar si el jugador puede pagar los costes parametrizados de un edificio/mejora
+function canAffordBuilding(cfg) {
+  if (!cfg) return false;
+  
+  const goldCost = cfg.cost_gold || 0;
+  const woodCost = cfg.cost_wood || 0;
+  const stoneCost = cfg.cost_stone || 0;
+  const ironCost = cfg.cost_iron || 0;
+  const repCost = cfg.cost_reputation || 0;
+  
+  if (state.gold < goldCost) return false;
+  if (state.wood < woodCost) return false;
+  if (state.stone < stoneCost) return false;
+  if ((state.iron || 0) < ironCost) return false;
+  if ((state.reputation || 0) < repCost) return false;
+  
+  return true;
+}
+
+// Descontar los costes de construcción de un edificio del estado del jugador
+function deductBuildingCosts(cfg) {
+  if (!cfg) return;
+  
+  state.gold -= (cfg.cost_gold || 0);
+  state.wood -= (cfg.cost_wood || 0);
+  state.stone -= (cfg.cost_stone || 0);
+  if (cfg.cost_iron) {
+    state.iron = (state.iron || 0) - cfg.cost_iron;
+  }
+  if (cfg.cost_reputation) {
+    state.reputation = (state.reputation || 0) - cfg.cost_reputation;
+  }
+}
+
+window.canAffordBuilding = canAffordBuilding;
+window.deductBuildingCosts = deductBuildingCosts;
+
 // AUTOASIGNACIÓN DE CONSTRUCTORES
 function autoAssignBuilders() {
   if (!state.colonists) return;
@@ -1103,3 +1140,435 @@ function destroyBuildingPrompt(arrayName, idx) {
   recalculateRates();
   updateUI();
 }
+
+function recalculateWaterMax() {
+  if (!state.wells) state.wells = [];
+  
+  const capT1 = CONFIG?.Water?.well_t1_capacity?.value ?? 50;
+  const capT2 = CONFIG?.Water?.well_t2_capacity?.value ?? 120;
+  
+  let total = 0;
+  state.wells.forEach(w => {
+    if (w.isUnderConstruction) return;
+    if (w.tier === 1) total += capT1;
+    else if (w.tier === 2) total += capT2;
+  });
+  
+  state.waterMax = total;
+  state.waterToday = Math.min(state.waterToday || 0, state.waterMax);
+}
+
+function buildWell() {
+  if (!state.townHall.built || state.townHall.isUnderConstruction) {
+    showToast("Debes completar la construcción de la Casa del Jugador primero.", "warning");
+    return;
+  }
+  const cfg = CONFIG?.Building?.well;
+  if (!cfg) return;
+  
+  // Utilizar canAffordBuilding si está disponible, sino fallback
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    if (!state.wells) state.wells = [];
+    state.wells.push({
+      id: state.wells.length,
+      tier: 1,
+      isUnderConstruction: true,
+      constructionElapsed: 0,
+      constructionDuration: (cfg && cfg.duration) || 5,
+      isUpgrading: false,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
+    });
+    autoAssignBuilders();
+    showToast("🏗️ Comenzando construcción de Pozo. ¡Asigna constructores para comenzar!", "info");
+    recalculateWaterMax();
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast("Recursos insuficientes para construir el Pozo", "warning");
+  }
+}
+
+function upgradeWell(idx) {
+  if (!state.wells || !state.wells[idx]) return;
+  const well = state.wells[idx];
+  if (well.isUnderConstruction || well.isUpgrading) {
+    showToast("Este pozo ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = well.tier || 1;
+  if (tier >= 2) {
+    showToast("Este pozo ya está en el nivel máximo.", "info");
+    return;
+  }
+  
+  let cfg;
+  if (tier === 1) {
+    if (state.maxBuildingTier < 2) {
+      showToast("Se requiere Centro Comunitario (Nivel 2) para mejorar el Pozo a Tier 2.", "warning");
+      return;
+    }
+    cfg = CONFIG?.Building?.well_t2;
+  }
+  
+  if (!cfg) return;
+  
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.gold -= (cfg.cost_gold || 0);
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    well.isUpgrading = true;
+    well.upgradingToTier = tier + 1;
+    well.constructionElapsed = 0;
+    well.constructionDuration = (cfg && cfg.duration) || 10;
+    well.activatedAt = state.nextActivationId++;
+    well.isPaused = false;
+    autoAssignBuilders();
+    
+    showToast(`🏗️ Comenzando mejora de Pozo #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateWaterMax();
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Pozo (Oro: ${cfg.cost_gold || 0}, Madera: ${cfg.cost_wood}, Piedra: ${cfg.cost_stone})`, "warning");
+  }
+}
+
+window.recalculateWaterMax = recalculateWaterMax;
+window.buildWell = buildWell;
+window.upgradeWell = upgradeWell;
+
+function selectWeightedOrderTemplate(templates) {
+  const totalWeight = templates.reduce((sum, t) => sum + (t.weight || 0), 0);
+  let rand = Math.random() * totalWeight;
+  for (const t of templates) {
+    rand -= (t.weight || 0);
+    if (rand <= 0) return t;
+  }
+  return templates[templates.length - 1];
+}
+
+function generateDailyOrders() {
+  if (typeof state.currentDay === 'undefined') state.currentDay = 1;
+  if (typeof state.ordersRefreshDay === 'undefined') state.ordersRefreshDay = 0;
+  
+  const refreshInterval = CONFIG?.Economy?.orders_refresh_interval?.value ?? 2;
+  
+  if (state.currentDay >= state.ordersRefreshDay + refreshInterval || !state.orders || state.orders.length === 0) {
+    const templates = CONFIG.Order ? Object.values(CONFIG.Order) : [];
+    if (templates.length === 0) return;
+    
+    const newOrders = [];
+    for (let i = 0; i < 3; i++) {
+      const template = selectWeightedOrderTemplate(templates);
+      const amount = Math.floor(template.req_min + Math.random() * (template.req_max - template.req_min + 1));
+      
+      const rewards = [];
+      for (let rIdx = 1; rIdx <= 3; rIdx++) {
+        const rType = template[`reward_${rIdx}_type`] || 'none';
+        if (rType && rType !== 'none') {
+          const rMin = template[`reward_${rIdx}_min`] || 0;
+          const rMax = template[`reward_${rIdx}_max`] || 0;
+          const rAmount = Math.floor(rMin + Math.random() * (rMax - rMin + 1));
+          if (rAmount > 0) {
+            rewards.push({ type: rType, amount: rAmount });
+          }
+        }
+      }
+      
+      newOrders.push({
+        id: `order_${state.currentDay}_${i}`,
+        resource: template.req_resource,
+        amount: amount,
+        rewards: rewards,
+        completed: false
+      });
+    }
+    
+    state.orders = newOrders;
+    state.ordersRefreshDay = state.currentDay;
+    
+    if (typeof updateUI === 'function') {
+      updateUI();
+    }
+  }
+}
+
+function fulfillOrder(orderId) {
+  if (!state.orders) return;
+  const order = state.orders.find(o => o.id === orderId);
+  if (!order) {
+    showToast("Pedido no encontrado", "warning");
+    return;
+  }
+  if (order.completed) {
+    showToast("Este pedido ya ha sido completado", "info");
+    return;
+  }
+  
+  const currentStock = getResourceStock(order.resource);
+  if (Math.floor(currentStock) >= order.amount) {
+    deductResourceStock(order.resource, order.amount);
+    
+    // Otorgar recompensas dinámicas
+    if (Array.isArray(order.rewards)) {
+      order.rewards.forEach(reward => {
+        if (reward.type === 'reputation') {
+          state.reputation = (state.reputation || 0) + reward.amount;
+        } else if (reward.type.endsWith('_seeds')) {
+          const seedType = reward.type.replace('_seeds', '');
+          if (state.seeds && typeof state.seeds[seedType] !== 'undefined') {
+            state.seeds[seedType] += reward.amount;
+          }
+        } else {
+          state[reward.type] = (state[reward.type] || 0) + reward.amount;
+        }
+      });
+    } else if (order.reward) {
+      state.reputation = (state.reputation || 0) + order.reward;
+    }
+    
+    order.completed = true;
+    
+    const resConfig = CONFIG?.resources?.[order.resource];
+    const emoji = resConfig?.Emoji || '📦';
+    const name = resConfig?.Name || order.resource;
+    
+    showToast(`✅ ¡Pedido de ${name} entregado!`, "success");
+    
+    if (typeof updateGlobalFood === 'function') updateGlobalFood();
+    if (typeof recalculateRates === 'function') recalculateRates();
+    if (typeof updateUI === 'function') updateUI();
+  }
+}
+
+function generateAvailableMissions() {
+  if (!state.availableMissions) state.availableMissions = [];
+  if (!window.GAME_MISSIONS || GAME_MISSIONS.length === 0) return;
+  
+  while (state.availableMissions.length < 2) {
+    const activeHeadhuntDefIds = (state.availableMissions || [])
+      .filter(m => m.status === 'active' && m.defId.startsWith('headhunt_'))
+      .map(m => m.defId);
+    
+    const recentHeadhuntDefIds = (state.missionHistory || [])
+      .filter(h => h.defId.startsWith('headhunt_') && (state.currentDay - h.completedDay) < 20)
+      .map(h => h.defId);
+    
+    const filteredMissions = GAME_MISSIONS.filter(m => {
+      if (m.id.startsWith('headhunt_')) {
+        if (activeHeadhuntDefIds.includes(m.id) || recentHeadhuntDefIds.includes(m.id)) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    if (filteredMissions.length === 0) break;
+    
+    const availableDefIds = state.availableMissions.map(am => am.defId);
+    const uniqueMissions = filteredMissions.filter(m => !availableDefIds.includes(m.id));
+    
+    const pool = uniqueMissions.length > 0 ? uniqueMissions : filteredMissions;
+    
+    const totalWeight = pool.reduce((sum, m) => sum + m.weight, 0);
+    let rand = Math.random() * totalWeight;
+    let selected = pool[pool.length - 1];
+    
+    for (const m of pool) {
+      rand -= m.weight;
+      if (rand <= 0) {
+        selected = m;
+        break;
+      }
+    }
+    
+    const duration = Math.floor(selected.minDays + Math.random() * (selected.maxDays - selected.minDays + 1));
+    
+    state.availableMissions.push({
+      id: "avail_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
+      defId: selected.id,
+      name: selected.name,
+      description: selected.description,
+      duration: duration,
+      durationDays: duration,
+      colonistsMin: selected.colonistsMin,
+      colonistsMax: selected.colonistsMax,
+      rewardRep: selected.rewardRep,
+      rewardGold: selected.rewardGold,
+      rewardSeedsType: selected.rewardSeedsType,
+      rewardSeedsAmt: selected.rewardSeedsAmt,
+      rewardSpecialist: selected.rewardSpecialist,
+      attribute: selected.attribute,
+      baseSuccessRate: selected.baseSuccessRate,
+      status: 'available',
+      elapsedDays: 0
+    });
+  }
+}
+
+function launchMission(missionAvailIdx, colonistIds) {
+  if (!state.availableMissions || !state.availableMissions[missionAvailIdx]) {
+    showToast("Misión no disponible", "warning");
+    return;
+  }
+  
+  const mAvail = state.availableMissions[missionAvailIdx];
+  
+  if (!Array.isArray(colonistIds) || colonistIds.length < mAvail.colonistsMin || colonistIds.length > mAvail.colonistsMax) {
+    showToast(`Esta misión requiere entre ${mAvail.colonistsMin} y ${mAvail.colonistsMax} aldeanos`, "warning");
+    return;
+  }
+  
+  const selectedColonists = [];
+  for (const cid of colonistIds) {
+    const col = state.colonists.find(c => c.id === cid);
+    if (!col || col.onMission) {
+      showToast("Uno de los aldeanos elegidos no está disponible", "warning");
+      return;
+    }
+    selectedColonists.push(col);
+  }
+  
+  const prevJobs = {};
+  const missionId = "active_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+  
+  selectedColonists.forEach(col => {
+    prevJobs[col.id] = col.job;
+    col.prevJob = col.job;
+    col.job = 'mission';
+    col.onMission = true;
+    col.missionId = missionId;
+  });
+  
+  mAvail.status = 'active';
+  mAvail.assignedColonistIds = colonistIds;
+  mAvail.prevJobs = prevJobs;
+  mAvail.elapsedDays = 0;
+  mAvail.missionId = missionId;
+  mAvail.durationDays = mAvail.duration;
+  
+  showToast(`🗺️ Misión iniciada: ${mAvail.name}`, "success");
+  
+  if (typeof fixColonistAllocation === 'function') fixColonistAllocation();
+  if (typeof recalculateRates === 'function') recalculateRates();
+  if (typeof updateUI === 'function') updateUI();
+}
+
+function rotateMissions() {
+  state.availableMissions = [];
+  generateAvailableMissions();
+}
+
+function buildWarehouse(type) {
+  if (!state.townHall.built || state.townHall.isUnderConstruction) {
+    showToast("Debes completar la construcción de la Casa del Jugador primero.", "warning");
+    return;
+  }
+  const buildingId = `warehouse_${type}`;
+  const cfg = CONFIG.Storage?.[buildingId];
+  if (!cfg) return;
+  
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.gold -= (cfg.cost_gold || 0);
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    if (!state.warehouses) state.warehouses = [];
+    state.warehouses.push({
+      id: state.warehouses.length,
+      type: type, // 'wood', 'stone', 'food', 'seeds'
+      tier: 1,
+      isUnderConstruction: true,
+      constructionElapsed: 0,
+      constructionDuration: (cfg && cfg.duration) || 20,
+      isUpgrading: false,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
+    });
+    autoAssignBuilders();
+    showToast(`🏗️ Comenzando construcción de Almacén de ${cfg.name}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para construir el Almacén de ${cfg.name}`, "warning");
+  }
+}
+
+function upgradeWarehouse(idx) {
+  if (!state.warehouses || !state.warehouses[idx]) return;
+  const warehouse = state.warehouses[idx];
+  if (warehouse.isUnderConstruction || warehouse.isUpgrading) {
+    showToast("Este almacén ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = warehouse.tier || 1;
+  if (tier >= 3) {
+    showToast("Este almacén ya está en el nivel máximo.", "info");
+    return;
+  }
+  
+  const type = warehouse.type;
+  let cfg;
+  if (tier === 1) {
+    if (state.maxBuildingTier < 2) {
+      showToast("Se requiere Centro Comunitario (Nivel 2) para mejorar el Almacén a Tier 2.", "warning");
+      return;
+    }
+    cfg = CONFIG.Storage?.[`warehouse_${type}_t2`];
+  } else if (tier === 2) {
+    if (state.maxBuildingTier < 3) {
+      showToast("Se requiere Ayuntamiento (Nivel 3) para mejorar el Almacén a Tier 3.", "warning");
+      return;
+    }
+    cfg = CONFIG.Storage?.[`warehouse_${type}_t3`];
+  }
+  
+  if (!cfg) return;
+  
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.gold -= (cfg.cost_gold || 0);
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    warehouse.isUpgrading = true;
+    warehouse.upgradingToTier = tier + 1;
+    warehouse.constructionElapsed = 0;
+    warehouse.constructionDuration = (cfg && cfg.duration) || 40;
+    warehouse.activatedAt = state.nextActivationId++;
+    warehouse.isPaused = false;
+    autoAssignBuilders();
+    
+    showToast(`🏗️ Comenzando mejora de Almacén de ${cfg.name} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Almacén de ${cfg.name}`, "warning");
+  }
+}
+
+window.generateDailyOrders = generateDailyOrders;
+window.fulfillOrder = fulfillOrder;
+window.generateAvailableMissions = generateAvailableMissions;
+window.launchMission = launchMission;
+window.rotateMissions = rotateMissions;
+window.buildWarehouse = buildWarehouse;
+window.upgradeWarehouse = upgradeWarehouse;
+
+

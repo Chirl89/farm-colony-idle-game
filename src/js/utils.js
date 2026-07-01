@@ -115,9 +115,11 @@ function getFarmCycleTotal(crop) {
   const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
   const growDur = crop ? (crop.duration / 2) : 1.5;
   const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
+  const dayDuration = (CONFIG.Timing && CONFIG.Timing.day_duration) ? CONFIG.Timing.day_duration.duration : 100.0;
 
   const totalGrowth = growDur * 2;
-  const totalWaterings = Math.ceil(growDur) * 2;
+  const expectedWateringsPerStage = Math.ceil(growDur / dayDuration);
+  const totalWaterings = expectedWateringsPerStage * 2;
   return plowDur + sowDur + 2 * waterDur + totalGrowth + totalWaterings * waterDailyDur;
 }
 
@@ -127,8 +129,9 @@ function getFarmCycleElapsed(farm, crop) {
   const waterDur = (CONFIG.Timing && CONFIG.Timing.farm_water) ? CONFIG.Timing.farm_water.duration : 0.25;
   const growDur = crop ? (crop.duration / 2) : 1.5;
   const waterDailyDur = (CONFIG.Timing && CONFIG.Timing.farm_water_daily) ? CONFIG.Timing.farm_water_daily.duration : 0.0417;
+  const dayDuration = (CONFIG.Timing && CONFIG.Timing.day_duration) ? CONFIG.Timing.day_duration.duration : 100.0;
 
-  const expectedWaterings = Math.ceil(growDur);
+  const expectedWaterings = Math.ceil(growDur / dayDuration);
 
   const t0 = 0;
   const t1 = plowDur;
@@ -204,12 +207,77 @@ function deductResourceStock(key, amount) {
 }
 
 function addResourceStock(key, amount) {
-  if (key.endsWith('_seeds')) {
-    const crop = key.replace('_seeds', '');
-    if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
-    state.seeds[crop] = (state.seeds[crop] || 0) + amount;
-  } else {
+  if (typeof window.lastFullToastTime === 'undefined') {
+    window.lastFullToastTime = { wood: 0, stone: 0, food: 0, seeds: 0 };
+  }
+
+  let storageType = null;
+  let currentVal = 0;
+  let isSeed = false;
+  let seedType = null;
+  let storageName = '';
+
+  if (key === 'wood') {
+    storageType = 'wood';
+    currentVal = state.wood || 0;
+    storageName = 'Madera';
+  } else if (key === 'stone') {
+    storageType = 'stone';
+    currentVal = state.stone || 0;
+    storageName = 'Piedra';
+  } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'].includes(key)) {
+    storageType = 'food';
+    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+    currentVal = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
+    storageName = 'Alimentos';
+  } else if (key.endsWith('_seeds')) {
+    storageType = 'seeds';
+    seedType = key.replace('_seeds', '');
+    const seedKeys = ['wheat', 'potato', 'carrot'];
+    currentVal = state.seeds ? seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0) : 0;
+    isSeed = true;
+    storageName = 'Semillas';
+  }
+
+  // Si no está en el mapa, se añade directamente (como gold o reputation)
+  if (!storageType) {
     state[key] = (state[key] || 0) + amount;
+    return amount;
+  }
+
+  // Obtener capacidad
+  const cap = (state.storageCapacity && state.storageCapacity[storageType]) ?? Infinity;
+  const toAdd = Math.min(amount, Math.max(0, cap - currentVal));
+
+  if (toAdd < amount && amount > 0) {
+    // Almacén lleno o parcialmente lleno
+    if (toAdd > 0) {
+      if (isSeed) {
+        if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+        state.seeds[seedType] = (state.seeds[seedType] || 0) + toAdd;
+      } else {
+        state[key] = (state[key] || 0) + toAdd;
+      }
+    }
+    
+    // Alerta "Almacén lleno" con throttle (máx una cada 15 segundos por tipo)
+    const now = Date.now();
+    if (now - (window.lastFullToastTime[storageType] || 0) > 15000) {
+      if (typeof showToast === 'function') {
+        showToast(`⚠️ ¡Almacén de ${storageName} lleno!`, 'warning');
+      }
+      window.lastFullToastTime[storageType] = now;
+    }
+    return toAdd;
+  } else {
+    // Cabe todo o es un decremento
+    if (isSeed) {
+      if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
+      state.seeds[seedType] = (state.seeds[seedType] || 0) + amount;
+    } else {
+      state[key] = (state[key] || 0) + amount;
+    }
+    return amount;
   }
 }
 
@@ -254,11 +322,22 @@ function getXPJobKey(job) {
 }
 
 function getXPThreshold(attr, currentLvl) {
-  const key = `${attr}_t${currentLvl}`;
-  if (typeof CONFIG !== 'undefined' && CONFIG.AttributeXP && CONFIG.AttributeXP[key]) {
-    return CONFIG.AttributeXP[key].yield;
+  // 1. Specific key like woodcutting_t1 in CONFIG.AttributeXP (legacy/default config)
+  const specKey = `${attr}_t${currentLvl}`;
+  if (typeof CONFIG !== 'undefined' && CONFIG.AttributeXP && CONFIG.AttributeXP[specKey]) {
+    return CONFIG.AttributeXP[specKey].yield;
   }
-  // fallback a la formula original si no esta en el config
+  // 2. Universal key like "1" in CONFIG.XPCurve or CONFIG.AttributeXP (server config)
+  if (typeof CONFIG !== 'undefined') {
+    const universalCurve = CONFIG.XPCurve || CONFIG.AttributeXP;
+    if (universalCurve) {
+      const entry = universalCurve[currentLvl] || universalCurve[String(currentLvl)];
+      if (entry) {
+        return typeof entry.yield !== 'undefined' ? entry.yield : (typeof entry.value !== 'undefined' ? entry.value : 10 * Math.pow(2, currentLvl - 1));
+      }
+    }
+  }
+  // 3. Fallback to formula
   return 10 * Math.pow(2, currentLvl - 1);
 }
 
@@ -309,3 +388,24 @@ function getColonistEfficiency(c) {
   
   return Math.max(0.15, 1.0 - penalty);
 }
+
+// FUNCIÓN DE TOASTS GLOBAL
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  let icon = 'ℹ️';
+  if (type === 'success') icon = '✅';
+  if (type === 'warning') icon = '⚠️';
+  
+  toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+  container.appendChild(toast);
+  
+  // Eliminar del DOM después de que termine la animación
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+

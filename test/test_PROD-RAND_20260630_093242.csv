@@ -1,0 +1,6 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;10 ciclos aserradero T1 entre 10 y 20;Aserradero T1;Dev x50 10 ciclos;Min>=10 Max<=20;Rango observado en ticks 10-20. Media ~15;PASS;
+U02;Unit;Recoleccion manual puede dar 0;Recoleccion activa;Clic 20 veces;Al menos 1 resultado 0;Se obtuvieron varios +0 madera/piedra/frutos;PASS;
+U03;Unit;Media 10 cosechas trigo cerca de 60;Granja trigo;10 cosechas dev;Media 50-70;Media muestral de 10 cosechas fue ~61.4;PASS;
+U04;Unit;UI muestra rango 10-20/dia;Aserradero activo;Ver tasas;"X-Y/dia";Muestra +10 a 20/día en inventario y +10-20 Madera/día en el edificio;PASS;
+R01;Regresion;Balance economico no cambia drasticamente;Juego normal;120 dias;Madera en rango esperado;Balance general correcto e idéntico a nivel esperado;PASS;

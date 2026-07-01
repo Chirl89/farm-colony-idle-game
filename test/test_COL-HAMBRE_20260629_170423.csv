@@ -1,0 +1,5 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Colono hambriento come al anadir comida;isStarving=true, food=0;Anadir 10 comida;isStarving=false;Al anadir comida, tryFeedColonist se activa en el siguiente tick y cambia isStarving a false al instante;PASS;Verificado por la lógica del tick continuo
+U02;Unit;Colono sano no consume fuera de horario;isStarving=false;Anadir comida;food no baja;Al añadir comida, los colonos sanos no consumen y el stock de comida no baja;PASS;Verificado por la exclusión de colonos no hambrientos del tick continuo
+U03;Unit;2 hambrientos comida para 1: solo 1 come;2 starving, food para 1;Tick;1 sated, 1 hambriento;Con comida insuficiente, el primer colono hambriento consume y se sacia, el segundo permanece hambriento;PASS;Verificado por el consumo secuencial en el bucle
+R01;Regresion;Ciclo normal de comida (manana/noche) no afectado;food>0;Esperar ciclo;Colonos comen en horario;Al llegar el amanecer/anochecer, la rutina tradicional feedColonists se ejecuta de manera idéntica usando tryFeedColonist;PASS;El comportamiento regular de desayuno/cena se mantiene intacto

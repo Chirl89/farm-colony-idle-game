@@ -142,7 +142,9 @@ const DEFAULT_STATE = {
   currentMissionsSubTab: 'orders',
   activeTrades: [],
   playerOnMission: false,
-  playerMission: null
+  playerMission: null,
+  unlockedTechs: ['basic_construction'],
+  researchQueue: null
 };
 
 const COLONIST_NAMES = [
@@ -499,6 +501,13 @@ function loadGame() {
       }
       if (typeof state.missionsRefreshDay === 'undefined') {
         state.missionsRefreshDay = 1;
+      }
+
+      if (typeof state.unlockedTechs === 'undefined' || !Array.isArray(state.unlockedTechs)) {
+        state.unlockedTechs = ['basic_construction'];
+      }
+      if (typeof state.researchQueue === 'undefined') {
+        state.researchQueue = null;
       }
 
 
@@ -1091,4 +1100,30 @@ function generateSpecialistColonist(speciality) {
   
   return specialist;
 }
+
+function isBuildingUnlocked(buildingId) {
+  if (!buildingId) return true;
+  if (!CONFIG || !CONFIG.Tech) return true;
+  
+  // Encontrar si alguna tecnología bloquea este edificio
+  let techLockingThis = null;
+  for (const techId in CONFIG.Tech) {
+    const tech = CONFIG.Tech[techId];
+    if (tech && tech.unlocks) {
+      const unlocksList = tech.unlocks.split(',').map(s => s.trim().toLowerCase());
+      if (unlocksList.includes(buildingId.toLowerCase())) {
+        techLockingThis = techId;
+        break;
+      }
+    }
+  }
+  
+  // Si ninguna tecnología lo bloquea, está desbloqueado por defecto
+  if (!techLockingThis) return true;
+  
+  // Comprobar si ya se ha investigado
+  return state.unlockedTechs && state.unlockedTechs.includes(techLockingThis);
+}
+
+window.isBuildingUnlocked = isBuildingUnlocked;
 

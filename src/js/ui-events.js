@@ -425,7 +425,10 @@ function initEventHandlers() {
     switchTab('missions');
   });
 
-  // Delegación de eventos para lanzar misiones
+  const tabTech = document.getElementById('tab-btn-tech');
+  if (tabTech) tabTech.addEventListener('click', () => switchTab('tech'));
+
+  // Delegación de eventos para lanzar misiones e investigación
   document.addEventListener('click', e => {
     if (e.target && e.target.classList.contains('btn-launch-mission')) {
       if (state.playerOnMission) {
@@ -442,6 +445,13 @@ function initEventHandlers() {
       const uniqueColonistIds = [...new Set(colonistIds)];
       if (typeof launchMission === 'function') {
         launchMission(idx, uniqueColonistIds);
+      }
+    }
+    
+    if (e.target && e.target.classList.contains('btn-start-research')) {
+      const techId = e.target.getAttribute('data-tech-id');
+      if (typeof startResearch === 'function') {
+        startResearch(techId);
       }
     }
   });

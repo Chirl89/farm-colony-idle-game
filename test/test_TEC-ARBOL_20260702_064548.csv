@@ -1,0 +1,9 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+U01;Unit;Intentar construir casa básica sin Construcción Básica;unlockedTechs sin basic_construction;Llamar buildBasicHouse();Muestra advertencia toast de investigación;Lanza toast advirtiendo que requiere Construcción Básica;PASS
+U02;Unit;Construcción Básica desbloqueada por defecto;Nueva colonia iniciada;Cargar DEFAULT_STATE;basic_construction está en unlockedTechs;unlockedTechs contiene basic_construction por defecto;PASS
+U03;Unit;Coste de investigación se deduce correctamente;Recursos suficientes y cola vacía;Investigar improved_tools;Se deducen 20 madera, 10 piedra y 5 reputación;Los recursos y reputación se deducen correctamente;PASS
+U04;Unit;Límite de una sola investigación activa;Investigación ya iniciada;Intentar investigar otra tecnología;Muestra advertencia toast y no se inicia;Muestra toast de ya hay investigación en curso;PASS
+U05;Unit;Progreso y finalización de investigación;Investigación activa con 3 días;Avanzar 3 días de juego;researchQueue se limpia, unlockedTechs añade la tecnología;La tecnología se investiga tras 3 días y la cola queda libre;PASS
+U06;Unit;Desbloqueo de edificios tras investigación;Tecnología improved_tools investigada;Intentar construir smithy o ver botón;Botón habilitado y construcción permitida;El botón y la función de construcción permiten crear el taller;PASS
+I01;Integracion;Flujo completo: investigar, construir y producir;Estado inicial;Investigar improved_tools, construir smithy, asignar colono;El taller se construye y produce con éxito;Flujo completado con éxito, produciendo herramientas;PASS
+R01;Regresion;Compatibilidad con partidas guardadas anteriores;Cargar partida guardada antigua sin tech;unlockedTechs y researchQueue migran a valores por defecto;El estado carga correctamente sin errores de undefined;PASS

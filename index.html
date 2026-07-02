@@ -260,6 +260,9 @@
       <button id="tab-btn-missions" class="tab-btn">
         📋 Pedidos/Misiones
       </button>
+      <button id="tab-btn-tech" class="tab-btn">
+        🎓 Tecnología
+      </button>
     </div>
 
     <!-- DASHBOARD PRINCIPAL (CONTENEDORES DE CONTENIDO DE PESTAÑAS) -->
@@ -997,6 +1000,16 @@
         </div>
       </div>
 
+      <!-- PESTAÑA: TECNOLOGÍA -->
+      <div id="tab-tech" class="tab-content">
+        <section class="module-card">
+          <div class="module-title"><span>🎓 Árbol de Tecnología</span></div>
+          <div id="tech-tree-container">
+            <!-- Dinámico -->
+          </div>
+        </section>
+      </div>
+
     </main>
 
     <!-- FOOTER -->
@@ -1068,11 +1081,20 @@
     </div>
     
     <!-- Ciclo -->
-    <div>
+    <div style="margin-bottom:0.75rem;">
       <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.35rem;">☀️ Ciclo rápido:</div>
       <div style="display:flex; gap:0.35rem;">
         <button onclick="state.timePhase='day';state.phaseElapsed=0;updateUI()" class="btn btn-secondary" style="flex:1;padding:0.25rem;font-size:0.7rem;">🌅 Amanecer</button>
         <button onclick="state.timePhase='night';state.phaseElapsed=0;updateUI()" class="btn btn-secondary" style="flex:1;padding:0.25rem;font-size:0.7rem;">🌙 Noche</button>
+      </div>
+    </div>
+
+    <!-- Acciones especiales -->
+    <div>
+      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:0.35rem;">🛠️ Acciones especiales:</div>
+      <div style="display:flex; flex-direction:column; gap:0.35rem;">
+        <button onclick="devUnlockAllTechs()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;text-align:left;">🎓 Desbloquear Toda la Tecnología</button>
+        <button onclick="devBuildOneOfEach()" class="btn btn-secondary" style="padding:0.25rem;font-size:0.7rem;text-align:left;">🏗️ Construir uno de cada edificio</button>
       </div>
     </div>
   </div>

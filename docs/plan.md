@@ -60,10 +60,10 @@
 | 10.1 | **PASO J.1** - `[REC-DESC]` | Verde | Descartar recursos en recolección (tirarlos sin vender) | index.html, ui-render.js, ui-events.js | Completado (2026-07-01) |
 | 10.2 | **PASO J.2** - `[ALM-REFA]` | Rojo | Almacenes de dos tipos (recursos y comida) y refactorización | buildings.csv + 5 archivos | Completado (2026-07-01) |
 | 10.3 | **PASO J.3** - `[COM-TRIP]` | Rojo | Comercio con tres pueblos y caravanas temporales | villages.csv + 7 archivos | Completado (2026-07-01) |
-| 10.C | BACKUP | - | Backup vBloqueASAP | - | Pendiente |
+| 10.C | BACKUP | - | Backup vBloqueASAP | - | Completado (2026-07-01) |
 | **BLOQUE 3 -- Arbol de tecnologia** ||||||
-| 11 | **PASO K** - `[TEC-ARBOL]` | Rojo | Arbol de tecnologia (desbloqueo de edificios) | tech.csv + 6 archivos | Pendiente |
-| 11.B | BACKUP | - | Backup vBloque3 | - | Pendiente |
+| 11 | **PASO K** - `[TEC-ARBOL]` | Rojo | Arbol de tecnologia (desbloqueo de edificios) | tech.csv + 6 archivos | Completado (2026-07-02) |
+| 11.B | BACKUP | - | Backup vBloque3 | - | Completado (2026-07-02) |
 | **BLOQUE 4 -- Herramientas y metal** ||||||
 | 12 | **PASO L** - `[MET-TALL]` | Amarillo | Herramientas + Taller del Herrero | 8 archivos | Pendiente |
 | 13 | **PASO M** - `[MET-FORJA]` | Amarillo | Mineral de hierro + Forja | 8 archivos | Pendiente |

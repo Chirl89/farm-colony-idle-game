@@ -53,6 +53,7 @@
 | ✅ PASO J.1 | Descartar recursos en recolección (`[REC-DESC]`) | 2026-07-01 |
 | ✅ PASO J.2 | Almacenes de dos tipos únicos (`[ALM-REFA]`) | 2026-07-01 |
 | ✅ PASO J.3 | Comercio con tres pueblos y caravanas temporales (`[COM-TRIP]`) | 2026-07-01 |
+| ✅ PASO K | Árbol de tecnologías y bloqueos (`[TEC-ARBOL]`) | 2026-07-02 |
 
 ---
 

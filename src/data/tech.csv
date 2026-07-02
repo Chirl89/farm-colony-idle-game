@@ -1,0 +1,10 @@
+Category;ID;Name;Description;Req_TH;Req_Tech;Cost_Gold;Cost_Wood;Cost_Stone;Cost_Rep;Research_Days;Unlocks
+Tech;basic_construction;Construccion Basica;Habilita la construccion de chozas, granjas y fogatas.;1;none;0;0;0;0;0;basic_house,farm,bonfire
+Tech;improved_tools;Herramientas Mejoradas;Habilita el taller del herrero.;1;basic_construction;0;20;10;5;3;smithy
+Tech;iron_working;Trabajo en Hierro;Habilita la forja de metal.;2;improved_tools;0;30;50;15;7;forge
+Tech;advanced_farming;Agricultura Avanzada;Habilita granjas y graneros mejorados.;1;basic_construction;0;10;0;10;4;granary_t2,farm_t2
+Tech;masonry;Albanileria;Habilita la mejora de canteras y cabanas.;2;basic_construction;10;20;30;20;5;quarry_t2,house_t2,upgraded_house
+Tech;water_management;Gestion del Agua;Habilita la construccion de pozos.;1;basic_construction;0;15;20;8;3;well
+Tech;storage_basic;Almacenamiento Basico;Habilita almacenes de recursos y comida.;1;basic_construction;0;20;15;5;3;warehouse_wood,warehouse_stone,resource_warehouse,food_granary
+Tech;military_basic;Defensa Basica;Habilita empalizadas y puestos de guardia.;2;basic_construction;0;20;20;15;5;palisade,guardpost
+Tech;advanced_cooking;Alta Cocina;Habilita cocinas avanzadas y molinos.;2;advanced_farming;5;10;0;10;4;bonfire_t3,mill

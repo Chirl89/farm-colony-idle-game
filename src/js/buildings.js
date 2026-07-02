@@ -268,6 +268,10 @@ function recalculateMaxPopulation() {
 }
 
 function buildBasicHouse() {
+  if (!isBuildingUnlocked('basic_house')) {
+    showToast("Requiere investigar Construcción Básica", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -311,6 +315,10 @@ function upgradeHouseItem(idx) {
   }
   
   if (house.tier === 1) {
+    if (!isBuildingUnlocked('upgraded_house') && !isBuildingUnlocked('house_t2')) {
+      showToast("Requiere investigar Albañilería", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar viviendas a Tier 2.", "warning");
       return;
@@ -336,6 +344,10 @@ function upgradeHouseItem(idx) {
       showToast("Recursos insuficientes para mejorar a Cabaña (Requiere 40 Madera y 30 Piedra)", "warning");
     }
   } else if (house.tier === 2) {
+    if (!isBuildingUnlocked('luxury_house')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar viviendas a Tier 3.", "warning");
       return;
@@ -367,6 +379,10 @@ function upgradeHouseItem(idx) {
 }
 
 function buildLumberMill() {
+  if (!isBuildingUnlocked('lumbermill')) {
+    showToast("Requiere investigación", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -406,12 +422,20 @@ function upgradeLumberMill(idx) {
   
   let cfg;
   if (tier === 1) {
+    if (!isBuildingUnlocked('lumbermill_t2')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Aserradero a Tier 2.", "warning");
       return;
     }
     cfg = CONFIG.Building.lumbermill_t2;
   } else if (tier === 2) {
+    if (!isBuildingUnlocked('lumbermill_t3')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Aserradero a Tier 3.", "warning");
       return;
@@ -443,6 +467,10 @@ function upgradeLumberMill(idx) {
 }
 
 function buildQuarry() {
+  if (!isBuildingUnlocked('quarry')) {
+    showToast("Requiere investigación", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -482,12 +510,20 @@ function upgradeQuarry(idx) {
   
   let cfg;
   if (tier === 1) {
+    if (!isBuildingUnlocked('quarry_t2')) {
+      showToast("Requiere investigar Albañilería", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar la Cantera a Tier 2.", "warning");
       return;
     }
     cfg = CONFIG.Building.quarry_t2;
   } else if (tier === 2) {
+    if (!isBuildingUnlocked('quarry_t3')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cantera a Tier 3.", "warning");
       return;
@@ -519,6 +555,10 @@ function upgradeQuarry(idx) {
 }
 
 function buildFarm() {
+  if (!isBuildingUnlocked('farm')) {
+    showToast("Requiere investigar Construcción Básica", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -554,6 +594,10 @@ function buildFarm() {
 
 // MERCADO
 function buildMarket() {
+  if (!isBuildingUnlocked('market')) {
+    showToast("Requiere investigación", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -586,6 +630,10 @@ function buildMarket() {
 
 // HOGUERA Y COCINADO
 function buildBonfire() {
+  if (!isBuildingUnlocked('bonfire')) {
+    showToast("Requiere investigar Construcción Básica", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -622,6 +670,10 @@ function upgradeBonfire(idx) {
   if (bonfire.isUnderConstruction) return;
   
   if (bonfire.tier === 1) {
+    if (!isBuildingUnlocked('pot_upgrade') && !isBuildingUnlocked('bonfire_t2')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Caldero a Tier 2.", "warning");
       return;
@@ -639,6 +691,10 @@ function upgradeBonfire(idx) {
       showToast("Recursos insuficientes para mejorar a Caldero (Requiere 50 Oro y 30 Piedra)", "warning");
     }
   } else if (bonfire.tier === 2) {
+    if (!isBuildingUnlocked('kitchen_upgrade') && !isBuildingUnlocked('bonfire_t3')) {
+      showToast("Requiere investigar Alta Cocina", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cocina de Taberna a Tier 3.", "warning");
       return;
@@ -857,6 +913,10 @@ function buySeed(type) {
 }
 
 function buildGranary() {
+  if (!isBuildingUnlocked('granary')) {
+    showToast("Requiere investigación", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
     return;
@@ -904,12 +964,20 @@ function upgradeGranary(idx) {
   
   let cfg;
   if (tier === 1) {
+    if (!isBuildingUnlocked('granary_t2')) {
+      showToast("Requiere investigar Agricultura Avanzada", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Granero a Tier 2.", "warning");
       return;
     }
     cfg = CONFIG.Building.granary_t2;
   } else if (tier === 2) {
+    if (!isBuildingUnlocked('granary_t3')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Granero a Tier 3.", "warning");
       return;
@@ -1167,6 +1235,10 @@ function recalculateWaterMax() {
 }
 
 function buildWell() {
+  if (!isBuildingUnlocked('well')) {
+    showToast("Requiere investigar Gestión del Agua", "warning");
+    return;
+  }
   if (!state.townHall.built || state.townHall.isUnderConstruction) {
     showToast("Debes completar la construcción de la Casa del Jugador primero.", "warning");
     return;
@@ -1218,6 +1290,10 @@ function upgradeWell(idx) {
   
   let cfg;
   if (tier === 1) {
+    if (!isBuildingUnlocked('well_t2')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Centro Comunitario (Nivel 2) para mejorar el Pozo a Tier 2.", "warning");
       return;
@@ -1494,6 +1570,11 @@ function buildWarehouse(type) {
     mappedType = 'food';
   }
   
+  if (!isBuildingUnlocked(buildingId)) {
+    showToast("Requiere investigar Almacenamiento Básico", "warning");
+    return;
+  }
+  
   const cfg = CONFIG.Storage?.[buildingId];
   if (!cfg) return;
   
@@ -1543,12 +1624,20 @@ function upgradeWarehouse(idx) {
   let cfg;
   let buildingBaseId = type === 'resource' ? 'resource_warehouse' : 'food_granary';
   if (tier === 1) {
+    if (!isBuildingUnlocked(`${buildingBaseId}_t2`)) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 2) {
       showToast("Se requiere Centro Comunitario (Nivel 2) para mejorar el Almacén a Tier 2.", "warning");
       return;
     }
     cfg = CONFIG.Storage?.[`${buildingBaseId}_t2`];
   } else if (tier === 2) {
+    if (!isBuildingUnlocked(`${buildingBaseId}_t3`)) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
     if (state.maxBuildingTier < 3) {
       showToast("Se requiere Ayuntamiento (Nivel 3) para mejorar el Almacén a Tier 3.", "warning");
       return;
@@ -1888,6 +1977,264 @@ function discardResource(resourceId, amount) {
 }
 
 window.discardResource = discardResource;
+
+function startResearch(techId) {
+  if (!CONFIG || !CONFIG.Tech || !CONFIG.Tech[techId]) {
+    showToast("Tecnología no encontrada.", "warning");
+    return;
+  }
+  const tech = CONFIG.Tech[techId];
+  
+  if (state.researchQueue) {
+    showToast("Ya hay una investigación en curso.", "warning");
+    return;
+  }
+  
+  if (state.unlockedTechs && state.unlockedTechs.includes(techId)) {
+    showToast("Esta tecnología ya está investigada.", "info");
+    return;
+  }
+  
+  const thTier = (state.townHall && state.townHall.tier) || 1;
+  const reqTh = tech.req_th || 1;
+  if (thTier < reqTh) {
+    showToast(`Se requiere Ayuntamiento nivel ${reqTh} para investigar esto.`, "warning");
+    return;
+  }
+  
+  const reqTech = tech.req_tech || 'none';
+  if (reqTech !== 'none' && (!state.unlockedTechs || !state.unlockedTechs.includes(reqTech))) {
+    const parentTechName = CONFIG.Tech[reqTech] ? CONFIG.Tech[reqTech].name : reqTech;
+    showToast(`Requiere investigar primero: ${parentTechName}`, "warning");
+    return;
+  }
+  
+  const costGold = tech.cost_gold || 0;
+  const costWood = tech.cost_wood || 0;
+  const costStone = tech.cost_stone || 0;
+  const costRep = tech.cost_reputation || tech.cost_rep || 0;
+  
+  if (state.gold < costGold || state.wood < costWood || state.stone < costStone || (state.reputation || 0) < costRep) {
+    showToast("Recursos o reputación insuficientes.", "warning");
+    return;
+  }
+  
+  state.gold -= costGold;
+  state.wood -= costWood;
+  state.stone -= costStone;
+  state.reputation = (state.reputation || 0) - costRep;
+  
+  const days = tech.research_days !== undefined ? tech.research_days : 0;
+  if (days <= 0) {
+    if (!state.unlockedTechs) state.unlockedTechs = [];
+    state.unlockedTechs.push(techId);
+    showToast(`¡Investigación completada: ${tech.name}!`, "success");
+  } else {
+    state.researchQueue = {
+      techId: techId,
+      elapsed: 0,
+      duration: days
+    };
+    showToast(`🎓 Comenzando investigación: ${tech.name} (${days} días).`, "info");
+  }
+  
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+function completeResearch() {
+  if (!state.researchQueue) return;
+  const techId = state.researchQueue.techId;
+  const tech = CONFIG.Tech[techId];
+  
+  if (!state.unlockedTechs) state.unlockedTechs = [];
+  if (!state.unlockedTechs.includes(techId)) {
+    state.unlockedTechs.push(techId);
+  }
+  
+  state.researchQueue = null;
+  
+  showToast(`🎓 ¡Investigación completada: ${tech ? tech.name : techId}!`, "success");
+  
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+window.startResearch = startResearch;
+window.completeResearch = completeResearch;
+
+function devUnlockAllTechs() {
+  if (CONFIG && CONFIG.Tech) {
+    state.unlockedTechs = Object.keys(CONFIG.Tech);
+    state.researchQueue = null;
+    showToast("🔓 Todas las tecnologías han sido investigadas.", "success");
+    recalculateRates();
+    updateUI();
+    saveGame();
+  }
+}
+
+function devBuildOneOfEach() {
+  // 1. Choza
+  if (!state.houses) state.houses = [];
+  state.houses.push({
+    id: state.houses.length,
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 1,
+    constructionDuration: 1,
+    workerAssigned: 0,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 2. Aserradero
+  if (!state.lumberMills) state.lumberMills = [];
+  state.lumberMills.push({
+    id: state.lumberMills.length,
+    workerAssigned: 0,
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 3. Cantera
+  if (!state.quarries) state.quarries = [];
+  state.quarries.push({
+    id: state.quarries.length,
+    workerAssigned: 0,
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 4. Granja
+  if (!state.farms) state.farms = [];
+  state.farms.push({
+    id: state.farms.length,
+    workerAssigned: 0,
+    crop: 'wheat',
+    stage: 'idle',
+    stageElapsed: 0,
+    activeCrop: 'wheat',
+    needsWatering: false,
+    waterElapsed: 0,
+    wateringsCompleted: 0,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 5. Fogata
+  if (!state.bonfires) state.bonfires = [];
+  state.bonfires.push({
+    id: state.bonfires.length,
+    workerAssigned: 0,
+    elapsed: 0,
+    isRunning: false,
+    mode: 'none',
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 6. Mercado
+  if (!state.markets) state.markets = [];
+  state.markets.push({
+    id: state.markets.length,
+    workerAssigned: 0,
+    elapsed: 0,
+    isRunning: false,
+    sales: { food: 0, stone: 0, wood: 0 },
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 7. Granero
+  if (!state.granaries) state.granaries = [];
+  state.granaries.push({
+    id: state.granaries.length,
+    tier: 1,
+    workerAssigned: 0,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    isUpgrading: false,
+    selectedCrop: 'wheat',
+    elapsed: 0,
+    isRunning: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 8. Pozo
+  if (!state.wells) state.wells = [];
+  state.wells.push({
+    id: state.wells.length,
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 5,
+    constructionDuration: 5,
+    isUpgrading: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  // 9. Almacenes (Recursos y Comida)
+  if (!state.warehouses) state.warehouses = [];
+  state.warehouses.push({
+    id: state.warehouses.length,
+    type: 'resource',
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 20,
+    constructionDuration: 20,
+    isUpgrading: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+  state.warehouses.push({
+    id: state.warehouses.length,
+    type: 'food',
+    tier: 1,
+    isUnderConstruction: false,
+    constructionElapsed: 20,
+    constructionDuration: 20,
+    isUpgrading: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+
+  showToast("🏗️ Construido un edificio de cada tipo (completados).", "success");
+  
+  if (typeof recalculateMaxPopulation === 'function') recalculateMaxPopulation();
+  if (typeof initializeHousingAssignments === 'function') initializeHousingAssignments();
+  if (typeof recalculateWaterMax === 'function') recalculateWaterMax();
+  if (typeof recalculateStorageCapacity === 'function') recalculateStorageCapacity();
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+window.devUnlockAllTechs = devUnlockAllTechs;
+window.devBuildOneOfEach = devBuildOneOfEach;
 
 
 

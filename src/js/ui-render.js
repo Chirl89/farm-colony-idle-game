@@ -1931,6 +1931,9 @@ function updateUI() {
   }
   renderOrders();
   renderMissions();
+  if (state.currentTab === 'tech') {
+    renderTechTree();
+  }
 }
 
 if (typeof window.lastRenderedTownHallAssigned === 'undefined') {
@@ -2165,22 +2168,23 @@ function updateButtonStates() {
 
   const thBuilt = state.townHall.built && !state.townHall.isUnderConstruction;
   
-  const updateBtnState = (btnId, cfg, needsTh = true) => {
+  const updateBtnState = (btnId, cfg, needsTh = true, buildingId = '') => {
     const btn = document.getElementById(btnId);
     if (btn) {
-      btn.disabled = (needsTh && !thBuilt) || !canAffordBuilding(cfg) || state.playerOnMission;
+      const isLocked = !isBuildingUnlocked(buildingId || (cfg ? cfg.id : ''));
+      btn.disabled = isLocked || (needsTh && !thBuilt) || !canAffordBuilding(cfg) || state.playerOnMission;
       updateCostBadgesAffordability(btnId, cfg);
     }
   };
   
-  updateBtnState('btn-build-basic', CONFIG.Building.basic_house);
-  updateBtnState('btn-build-lumbermill', CONFIG.Building.lumbermill);
-  updateBtnState('btn-build-quarry', CONFIG.Building.quarry);
-  updateBtnState('btn-build-farm', CONFIG.Building.farm);
-  updateBtnState('btn-build-bonfire', CONFIG.Building.bonfire);
-  updateBtnState('btn-build-market', CONFIG.Building.market);
-  updateBtnState('btn-build-granary', CONFIG.Building.granary);
-  updateBtnState('btn-build-well', CONFIG.Building.well);
+  updateBtnState('btn-build-basic', CONFIG.Building.basic_house, true, 'basic_house');
+  updateBtnState('btn-build-lumbermill', CONFIG.Building.lumbermill, true, 'lumbermill');
+  updateBtnState('btn-build-quarry', CONFIG.Building.quarry, true, 'quarry');
+  updateBtnState('btn-build-farm', CONFIG.Building.farm, true, 'farm');
+  updateBtnState('btn-build-bonfire', CONFIG.Building.bonfire, true, 'bonfire');
+  updateBtnState('btn-build-market', CONFIG.Building.market, true, 'market');
+  updateBtnState('btn-build-granary', CONFIG.Building.granary, true, 'granary');
+  updateBtnState('btn-build-well', CONFIG.Building.well, true, 'well');
   
   if (!state.townHall.built) {
     updateBtnState('btn-build-townhall', CONFIG.Building.townhall, false);
@@ -2245,8 +2249,8 @@ function updateButtonStates() {
   const resWarehouseCfg = CONFIG.Storage?.resource_warehouse || { cost_gold: 20, cost_wood: 10, cost_stone: 10 };
   const foodGranaryCfg = CONFIG.Storage?.food_granary || { cost_gold: 25, cost_wood: 15, cost_stone: 15 };
 
-  updateBtnState('btn-build-warehouse-wood', resWarehouseCfg);
-  updateBtnState('btn-build-warehouse-food', foodGranaryCfg);
+  updateBtnState('btn-build-warehouse-wood', resWarehouseCfg, true, 'resource_warehouse');
+  updateBtnState('btn-build-warehouse-food', foodGranaryCfg, true, 'food_granary');
 
   // Botón contratar colono obsoleto (gestionado individualmente por candidato)
   if (DOM.btnHireColonist) {
@@ -2326,6 +2330,149 @@ function updateButtonStates() {
       if (bar) bar.style.width = '0%';
     }
   });
+
+  // Habilitar/deshabilitar botones de mejora de Pozos
+  if (Array.isArray(state.wells)) {
+    state.wells.forEach((well, idx) => {
+      const btn = document.getElementById(`well-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = well.tier || 1;
+        let cfg = CONFIG?.Building?.[`well_t${tier + 1}`] || { cost_gold: 50, cost_wood: 50, cost_stone: 40 };
+        const isLocked = !isBuildingUnlocked(`well_t${tier + 1}`);
+        const canAfford = state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission;
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Almacenes
+  if (Array.isArray(state.warehouses)) {
+    state.warehouses.forEach((w, idx) => {
+      const btn = document.getElementById(`warehouse-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = w.tier || 1;
+        const baseId = w.type === 'resource' ? 'resource_warehouse' : 'food_granary';
+        let cfg = CONFIG.Storage?.[`${baseId}_t${tier + 1}`];
+        const isLocked = !isBuildingUnlocked(`${baseId}_t${tier + 1}`);
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission;
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Aserraderos
+  if (Array.isArray(state.lumberMills)) {
+    state.lumberMills.forEach((mill, idx) => {
+      const btn = document.getElementById(`mill-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = mill.tier || 1;
+        const nextTierId = `lumbermill_t${tier + 1}`;
+        const cfg = CONFIG.Building[nextTierId];
+        const isLocked = !isBuildingUnlocked(nextTierId);
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission || (tier === 1 && state.maxBuildingTier < 2) || (tier === 2 && state.maxBuildingTier < 3);
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Canteras
+  if (Array.isArray(state.quarries)) {
+    state.quarries.forEach((quarry, idx) => {
+      const btn = document.getElementById(`quarry-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = quarry.tier || 1;
+        const nextTierId = `quarry_t${tier + 1}`;
+        const cfg = CONFIG.Building[nextTierId];
+        const isLocked = !isBuildingUnlocked(nextTierId);
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission || (tier === 1 && state.maxBuildingTier < 2) || (tier === 2 && state.maxBuildingTier < 3);
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Viviendas
+  if (Array.isArray(state.houses)) {
+    state.houses.forEach((house, idx) => {
+      const btn = document.getElementById(`house-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = house.tier || 1;
+        const nextTierId = tier === 1 ? 'upgraded_house' : 'luxury_house';
+        const cfg = CONFIG.Building[nextTierId];
+        const isLocked = tier === 1
+          ? !isBuildingUnlocked('upgraded_house') && !isBuildingUnlocked('house_t2')
+          : !isBuildingUnlocked('luxury_house');
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission || (tier === 1 && state.maxBuildingTier < 2) || (tier === 2 && state.maxBuildingTier < 3);
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Hogueras
+  if (Array.isArray(state.bonfires)) {
+    state.bonfires.forEach((bonfire, idx) => {
+      const btn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = bonfire.tier || 1;
+        const nextTierId = tier === 1 ? 'pot_upgrade' : 'kitchen_upgrade';
+        const cfg = CONFIG.Building[nextTierId];
+        const isLocked = tier === 1 
+          ? !isBuildingUnlocked('pot_upgrade') && !isBuildingUnlocked('bonfire_t2')
+          : !isBuildingUnlocked('kitchen_upgrade') && !isBuildingUnlocked('bonfire_t3');
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission || (tier === 1 && state.maxBuildingTier < 2) || (tier === 2 && state.maxBuildingTier < 3);
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
+
+  // Habilitar/deshabilitar botones de mejora de Graneros
+  if (Array.isArray(state.granaries)) {
+    state.granaries.forEach((granary, idx) => {
+      const btn = document.getElementById(`granary-upgrade-btn-${idx}`);
+      if (btn) {
+        const tier = granary.tier || 1;
+        const nextTierId = `granary_t${tier + 1}`;
+        const cfg = CONFIG.Building[nextTierId];
+        const isLocked = !isBuildingUnlocked(nextTierId);
+        const canAfford = cfg && state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone;
+        btn.disabled = isLocked || !canAfford || state.playerOnMission || (tier === 1 && state.maxBuildingTier < 2) || (tier === 2 && state.maxBuildingTier < 3);
+        if (isLocked) {
+          btn.innerText = "🔒 Bloqueado";
+        } else if (cfg) {
+          btn.innerText = `Mejorar (🪙${cfg.cost_gold || 0}, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`;
+        }
+      }
+    });
+  }
 }
 
 function toggleCostAffordability(element, currentAmount, costAmount) {
@@ -4590,6 +4737,127 @@ window.renderTradeTab = renderTradeTab;
 window.updateTradeDetails = updateTradeDetails;
 window.updatePlayerTradeDetails = updatePlayerTradeDetails;
 window.updatePlayerTravelOverlay = updatePlayerTravelOverlay;
+
+function renderTechTree() {
+  const container = document.getElementById('tech-tree-container');
+  if (!container) return;
+  
+  if (!CONFIG || !CONFIG.Tech) {
+    container.innerHTML = '<div class="placeholder-text">Cargando árbol de tecnologías...</div>';
+    return;
+  }
+
+  if (!document.getElementById('tech-tree-styles')) {
+    const style = document.createElement('style');
+    style.id = 'tech-tree-styles';
+    style.textContent = `
+      @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1.0; }
+        100% { opacity: 0.6; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  let html = `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem; margin-top: 1rem;">`;
+  
+  for (const techId in CONFIG.Tech) {
+    const tech = CONFIG.Tech[techId];
+    if (!tech) continue;
+    
+    const isCompleted = state.unlockedTechs && state.unlockedTechs.includes(techId);
+    const isResearching = state.researchQueue && state.researchQueue.techId === techId;
+    
+    // Check prerequisites
+    const thTier = (state.townHall && state.townHall.tier) || 1;
+    const reqTh = tech.req_th || 1;
+    const reqTech = tech.req_tech || 'none';
+    const hasParentTech = reqTech === 'none' || (state.unlockedTechs && state.unlockedTechs.includes(reqTech));
+    const meetsTh = thTier >= reqTh;
+    const isAvailable = !isCompleted && !isResearching && hasParentTech && meetsTh;
+    const isLocked = !isCompleted && !isResearching && (!hasParentTech || !meetsTh);
+    
+    let statusBadge = '';
+    let cardClass = '';
+    let footerHtml = '';
+    
+    if (isCompleted) {
+      statusBadge = `<span style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">✔️ Investigada</span>`;
+      cardClass = 'border: 1px solid rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.02);';
+    } else if (isResearching) {
+      const pct = Math.min(100, (state.researchQueue.elapsed / state.researchQueue.duration) * 100);
+      statusBadge = `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; animation: pulse 1.5s infinite;">⏳ Investigando (${state.researchQueue.elapsed}/${state.researchQueue.duration} días)</span>`;
+      cardClass = 'border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.02);';
+      footerHtml = `
+        <div style="margin-top: 0.8rem;">
+          <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+            <div style="width: ${pct}%; height: 100%; background: #3b82f6; transition: width 0.3s ease;"></div>
+          </div>
+        </div>
+      `;
+    } else if (isLocked) {
+      statusBadge = `<span style="background: rgba(156, 163, 175, 0.2); color: #9ca3af; border: 1px solid rgba(156, 163, 175, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">🔒 Bloqueada</span>`;
+      cardClass = 'opacity: 0.6; border: 1px solid rgba(255,255,255,0.05);';
+      
+      let reqs = [];
+      if (!meetsTh) reqs.push(`Ayuntamiento T${reqTh}`);
+      if (!hasParentTech) {
+        const parentName = CONFIG.Tech[reqTech] ? CONFIG.Tech[reqTech].name : reqTech;
+        reqs.push(`Investigar ${parentName}`);
+      }
+      footerHtml = `<div style="font-size: 0.7rem; color: #ef4444; margin-top: 0.5rem; font-weight: bold;">Requiere: ${reqs.join(', ')}</div>`;
+    } else { // Available
+      statusBadge = `<span style="background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">💡 Disponible</span>`;
+      cardClass = 'border: 1px solid rgba(255,255,255,0.1);';
+      
+      const costGold = tech.cost_gold || 0;
+      const costWood = tech.cost_wood || 0;
+      const costStone = tech.cost_stone || 0;
+      const costRep = tech.cost_reputation || tech.cost_rep || 0;
+      
+      const canAfford = state.gold >= costGold && state.wood >= costWood && state.stone >= costStone && (state.reputation || 0) >= costRep;
+      const isQueueBusy = !!state.researchQueue;
+      
+      let costsStr = [];
+      if (costGold > 0) costsStr.push(`🪙${costGold}`);
+      if (costWood > 0) costsStr.push(`🪵${costWood}`);
+      if (costStone > 0) costsStr.push(`🪨${costStone}`);
+      if (costRep > 0) costsStr.push(`🌟${costRep}`);
+      if (costsStr.length === 0) costsStr.push('Gratis');
+      
+      const btnDisabled = !canAfford || isQueueBusy;
+      const titleReason = isQueueBusy ? 'Ya hay otra investigación en curso' : (!canAfford ? 'Recursos o reputación insuficientes' : '');
+      
+      footerHtml = `
+        <div style="margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem;">
+          <div style="font-size: 0.7rem; color: var(--color-text-muted);">Coste: ${costsStr.join(' | ')}</div>
+          <button class="btn btn-primary btn-start-research" data-tech-id="${techId}" ${btnDisabled ? 'disabled' : ''} title="${titleReason}" style="width: 100%; font-size: 0.75rem; padding: 0.3rem 0.5rem; justify-content: center;">
+            Investigar (${tech.research_days || 0}d)
+          </button>
+        </div>
+      `;
+    }
+    
+    html += `
+      <div class="building-box" style="position: relative; display: flex; flex-direction: column; justify-content: space-between; border-radius: 8px; padding: 1rem; ${cardClass}">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; gap: 0.5rem;">
+            <h4 style="margin: 0; font-size: 0.95rem; font-weight: bold; color: var(--color-text);">${tech.name}</h4>
+            ${statusBadge}
+          </div>
+          <p style="margin: 0; font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.3;">${tech.description}</p>
+        </div>
+        ${footerHtml}
+      </div>
+    `;
+  }
+  
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+window.renderTechTree = renderTechTree;
 
 
 

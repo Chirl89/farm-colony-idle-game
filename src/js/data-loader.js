@@ -352,7 +352,17 @@ Village;high_stone;Piedra Alta;1;stone;2;wood;3
 Village;fertile_valley_food;Fértil Valle;1;food;3;stone;2
 Village;fertile_valley_wheat;Fértil Valle;1;wheat_seeds;5;stone;2
 Village;fertile_valley_potato;Fértil Valle;1;potato_seeds;8;stone;2
-Village;fertile_valley_carrot;Fértil Valle;1;carrot_seeds;12;stone;2`
+Village;fertile_valley_carrot;Fértil Valle;1;carrot_seeds;12;stone;2`,
+  tech: `Category;ID;Name;Description;Req_TH;Req_Tech;Cost_Gold;Cost_Wood;Cost_Stone;Cost_Rep;Research_Days;Unlocks
+Tech;basic_construction;Construccion Basica;Habilita la construccion de chozas, granjas y fogatas.;1;none;0;0;0;0;0;basic_house,farm,bonfire
+Tech;improved_tools;Herramientas Mejoradas;Habilita el taller del herrero.;1;basic_construction;0;20;10;5;3;smithy
+Tech;iron_working;Trabajo en Hierro;Habilita la forja de metal.;2;improved_tools;0;30;50;15;7;forge
+Tech;advanced_farming;Agricultura Avanzada;Habilita granjas y graneros mejorados.;1;basic_construction;0;10;0;10;4;granary_t2,farm_t2
+Tech;masonry;Albanileria;Habilita la mejora de canteras y cabanas.;2;basic_construction;10;20;30;20;5;quarry_t2,house_t2,upgraded_house
+Tech;water_management;Gestion del Agua;Habilita la construccion de pozos.;1;basic_construction;0;15;20;8;3;well
+Tech;storage_basic;Almacenamiento Basico;Habilita almacenes de recursos y comida.;1;basic_construction;0;20;15;5;3;warehouse_wood,warehouse_stone,resource_warehouse,food_granary
+Tech;military_basic;Defensa Basica;Habilita empalizadas y puestos de guardia.;2;basic_construction;0;20;20;15;5;palisade,guardpost
+Tech;advanced_cooking;Alta Cocina;Habilita cocinas avanzadas y molinos.;2;advanced_farming;5;10;0;10;4;bonfire_t3,mill`
 };
 
 // Parsear el CSV de misiones al array global GAME_MISSIONS
@@ -557,6 +567,9 @@ function parseCSV(csvText, fileName = '') {
   const idxReward3Min = headers.indexOf('reward_3_min');
   const idxReward3Max = headers.indexOf('reward_3_max');
   const idxWeight = headers.indexOf('weight');
+  const idxReqTech = headers.indexOf('req_tech');
+  const idxResearchDays = headers.indexOf('research_days');
+  const idxUnlocks = headers.indexOf('unlocks');
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -582,6 +595,8 @@ function parseCSV(csvText, fileName = '') {
       category = 'Timing';
     } else if (fileName === 'orders') {
       category = 'Order';
+    } else if (fileName === 'tech') {
+      category = 'Tech';
     }
 
     // Normalizaciones generales adicionales de categoría para blindaje contra cualquier tipo de letra
@@ -601,6 +616,7 @@ function parseCSV(csvText, fileName = '') {
     else if (currentCatLower === 'efficiency') category = 'Efficiency';
     else if (currentCatLower === 'efficiencypenalty') category = 'EfficiencyPenalty';
     else if (currentCatLower === 'order') category = 'Order';
+    else if (currentCatLower === 'tech') category = 'Tech';
     
     const type = columns[idxType] || '';
     const name = columns[idxName] || '';
@@ -702,8 +718,11 @@ function parseCSV(csvText, fileName = '') {
         weight
       };
     } else {
+      let req_tech = idxReqTech !== -1 ? (columns[idxReqTech] || 'none').trim() : 'none';
+      let research_days = idxResearchDays !== -1 ? (parseFloat(columns[idxResearchDays]) || 0) : 0;
+      let unlocks = idxUnlocks !== -1 ? (columns[idxUnlocks] || '').trim() : '';
       parsedConfig[category][type] = {
-        name, duration,
+        name, duration: duration || research_days,
         yield: final_yield_amount, yield_type: final_yield_type,
         output_min: output_min, output_max: output_max,
         consume_amount: final_consume_amount, consume_type: final_consume_type,
@@ -711,7 +730,9 @@ function parseCSV(csvText, fileName = '') {
         emoji, food_value, sellable, min_stock, max_stock,
         cost_gold: final_cost_gold, cost_wood, cost_stone, cost_iron, cost_reputation,
         // 'value' alias para mechanics.csv
-        value: final_yield_amount
+        value: final_yield_amount,
+        // Tech specific columns
+        req_tech, research_days, unlocks, req_th
       };
     }
   }
@@ -782,7 +803,7 @@ function applyTimingsFromConfig() {
 // Inicialización síncrona inmediata con los datos por defecto
 function initDefaultConfig() {
   const testConfig = {};
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages', 'tech'];
   for (const name of files) {
     const text = DEFAULT_CSV_DATA[name] || '';
     const parsed = parseCSV(text, name);
@@ -808,7 +829,7 @@ initDefaultConfig();
 
 // Carga asíncrona de todos los archivos CSV desde el servidor local
 async function loadAllCSVs() {
-  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages'];
+  const files = ['buildings', 'prices', 'production', 'timings', 'equivalences', 'weights', 'levelling', 'mechanics', 'resources', 'orders', 'missiondata', 'villages', 'tech'];
   const results = {};
   for (const name of files) {
     try {

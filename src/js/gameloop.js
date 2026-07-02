@@ -779,6 +779,16 @@ function gameTick() {
     if (state.phaseElapsed >= nightDuration) {
       state.currentDay++;
       
+      // Progresar investigación activa
+      if (state.researchQueue) {
+        state.researchQueue.elapsed += 1;
+        if (state.researchQueue.elapsed >= state.researchQueue.duration) {
+          if (typeof completeResearch === 'function') {
+            completeResearch();
+          }
+        }
+      }
+      
       if (typeof generateDailyOrders === 'function') {
         generateDailyOrders();
       }

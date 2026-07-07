@@ -40,7 +40,7 @@ Siempre que el usuario diga "paso X completado", mueve ese paso al backlog.
 
 ## 📋 Plan activo
 Ver: `docs/plan.md` (en la raíz del proyecto, en git)
-Próximo paso: **PASO L** — [MET-TALL] Herramientas + Taller del Herrero
+Próximo paso: **PASO M** — [MET-FORJA] Mineral de hierro + Forja
 
 Backlog completado: `docs/backlog.md`
 Prompts para nuevas conversaciones: `docs/prompts.md`
@@ -72,11 +72,11 @@ Prompts para nuevas conversaciones: `docs/prompts.md`
 ## 🚫 Lo que NO está implementado (no asumir que existe)
 - Misiones externas / missiondata.csv
 - Tablón de pedidos / reputación
-- Herramientas (pico, hacha, azada) y Taller del Herrero
-- Forja / mineral de hierro / lingotes
+- Forja / mineral de hierro / lingotes (Próximo paso)
 - Ganadería (animales, huevos, pieles)
 - Molino / harina / pan
 - Armería / equipo para colonos
 - Sistema de bandidos / raids
 - Panel de desarrollo (Ctrl+Shift+D)
 - Tutorial de primera partida
+

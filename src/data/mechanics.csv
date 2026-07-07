@@ -115,6 +115,7 @@ Storage;townhall_t3_capacity;Capacidad base Ayto T3;500;Capacidad inicial bajo a
 Storage;warehouse_t1_bonus;Bonus Almacen T1;200;Aumento de capacidad por almacén T1
 Storage;warehouse_t2_bonus;Bonus Almacen T2;500;Aumento de capacidad por almacén T2
 Storage;warehouse_t3_bonus;Bonus Almacen T3;1000;Aumento de capacidad por almacén T3
+Storage;tool_storage_size;Tamaño de herramienta;2;Cada herramienta ocupa 2 de almacenamiento de recursos
 # ============================================================;;;;
 # ESPECIALISTAS — Títulos por profesión;;;;
 # ============================================================;;;;
@@ -126,5 +127,11 @@ SpecialistTitle;trading;Maestro Mercader,Negociante Experto,Caravanero Veterano;
 SpecialistTitle;exploration;Maestro Explorador,Rastreador Experto,Veterano del Sendero;0;
 SpecialistTitle;combat;Maestro de Armas,Guerrero Experto,Veterano de Guardia;0;
 SpecialistTitle;construction;Maestro Constructor,Edificador Experto,Veterano de la Obra;0;
+
+# ============================================================;;;;
+# MINERÍA — Parámetros de canteras;;;;
+# ============================================================;;;;
+Mining;iron_ore_ratio;Piedra por mineral de hierro;5;Cada 5 piedras producidas en canteras, se produce 1 mineral de hierro
+
 
 

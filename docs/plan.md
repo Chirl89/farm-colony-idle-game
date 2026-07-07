@@ -65,8 +65,9 @@
 | 11 | **PASO K** - `[TEC-ARBOL]` | Rojo | Arbol de tecnologia (desbloqueo de edificios) | tech.csv + 6 archivos | Completado (2026-07-02) |
 | 11.B | BACKUP | - | Backup vBloque3 | - | Completado (2026-07-02) |
 | **BLOQUE 4 -- Herramientas y metal** ||||||
-| 12 | **PASO L** - `[MET-TALL]` | Amarillo | Herramientas + Taller del Herrero | 8 archivos | Pendiente |
-| 13 | **PASO M** - `[MET-FORJA]` | Amarillo | Mineral de hierro + Forja | 8 archivos | Pendiente |
+| 12 | **PASO L** - `[MET-TALL]` | Amarillo | Herramientas + Taller del Herrero | 8 archivos | Completado (2026-07-06) |
+
+| 13 | **PASO M** - `[MET-FORJA]` | Amarillo | Mineral de hierro + Forja | 8 archivos | Completado (2026-07-07) |
 | 13.B | BACKUP | - | Backup vBloque4 | - | Pendiente |
 | **BLOQUE 5 -- Sistema de trabajo (RUPTURA)** ||||||
 | 14 | **PASO N** - `[WORK-PRIO]` | Rojo | Prioridades de colonos [RUPTURA] | 4 archivos | Pendiente |

@@ -13,6 +13,9 @@ const DEFAULT_STATE = {
   cooked_potato: 0,
   cooked_carrot: 0,
   cooked_berries: 0,
+  iron_bar: 0,
+  iron: 0,
+  forges: [],
   maxPopulation: 0,
   colonists: [],
   candidates: [],
@@ -144,7 +147,20 @@ const DEFAULT_STATE = {
   playerOnMission: false,
   playerMission: null,
   unlockedTechs: ['basic_construction'],
-  researchQueue: null
+  researchQueue: null,
+  // PASO L - [MET-TALL]
+  smithies: [],
+  tools: []
+};
+
+// Qué tipo de herramienta necesita cada edificio (null = no necesita)
+const TOOL_REQUIREMENTS = {
+  lumberMills: 'axe',
+  quarries: 'pickaxe',
+  farms: 'hoe',
+  bonfires: null,
+  markets: null,
+  granaries: null
 };
 
 const COLONIST_NAMES = [
@@ -211,6 +227,8 @@ function generateNewColonist(id = null) {
     name: generateColonistName(),
     job: null,
     prevJob: null,
+    priorities: [],
+    currentTask: null,
     attributes: {
       woodcutting: generateAttribute(),
       mining: generateAttribute(),
@@ -306,7 +324,6 @@ function loadGame() {
         });
       }
       
-      // Limpiar mercaderes del mercado viejo en partidas guardadas
       if (Array.isArray(state.colonists)) {
         state.colonists.forEach(c => {
           if (c.job && c.job.startsWith('markets_')) {
@@ -314,6 +331,30 @@ function loadGame() {
             c.onMission = false;
             c.missionId = null;
           }
+          if (typeof c.priorities === 'undefined') {
+            c.priorities = [];
+            if (c.job) {
+              const parts = c.job.split('_');
+              const rawType = parts[0];
+              const typeMapping = {
+                lumbermills: 'lumberMills',
+                quarries: 'quarries',
+                farms: 'farms',
+                markets: 'markets',
+                bonfires: 'bonfires',
+                granaries: 'granaries',
+                smithies: 'smithies',
+                forges: 'forges'
+              };
+              const taskType = typeMapping[rawType] || rawType;
+              const buildingIdx = null;
+              c.priorities = [{ taskType, buildingIdx, weight: 1 }];
+              c.currentTask = c.priorities[0];
+            } else {
+              c.currentTask = null;
+            }
+          }
+          if (typeof c.currentTask === 'undefined') c.currentTask = null;
         });
       }
       if (Array.isArray(state.markets)) {
@@ -442,6 +483,17 @@ function loadGame() {
         if (typeof state.townHall.workerAssigned === 'undefined') state.townHall.workerAssigned = 0;
       }
       
+      // Sincronizar maxBuildingTier con el estado actual del Ayuntamiento
+      if (state.townHall && state.townHall.built) {
+        if (state.townHall.isUnderConstruction && !state.townHall.isUpgrading) {
+          state.maxBuildingTier = 0;
+        } else {
+          state.maxBuildingTier = state.townHall.tier || 1;
+        }
+      } else {
+        state.maxBuildingTier = 0;
+      }
+      
       if (typeof state.playerConstructing === 'undefined') {
         state.playerConstructing = null;
       }
@@ -510,8 +562,38 @@ function loadGame() {
         state.researchQueue = null;
       }
 
+      // Migración PASO L - [MET-TALL]
+      if (typeof state.iron_bar === 'undefined') state.iron_bar = 0;
+      if (!Array.isArray(state.smithies)) state.smithies = [];
+      if (!Array.isArray(state.tools)) state.tools = [];
+      // Limpiar herramientas con durabilidad inválida
+      if (Array.isArray(state.tools)) {
+        state.tools.forEach(t => {
+          if (typeof t.durability === 'undefined') t.durability = 100;
+          if (typeof t.assignedTo === 'undefined') t.assignedTo = null;
+        });
+      }
+      // Sanitizar smithies
+      if (Array.isArray(state.smithies)) {
+        state.smithies.forEach(s => {
+          if (typeof s.tier === 'undefined') s.tier = 1;
+          if (typeof s.selectedTool === 'undefined') s.selectedTool = 'axe_t1';
+          if (typeof s.elapsed === 'undefined') s.elapsed = 0;
+          if (typeof s.isRunning === 'undefined') s.isRunning = false;
+        });
+      }
 
-      
+      // Migración PASO M - [MET-FORJA]
+      if (typeof state.iron === 'undefined') state.iron = 0;
+      if (!Array.isArray(state.forges)) state.forges = [];
+      if (Array.isArray(state.forges)) {
+        state.forges.forEach(f => {
+          if (typeof f.tier === 'undefined') f.tier = 1;
+          if (typeof f.elapsed === 'undefined') f.elapsed = 0;
+          if (typeof f.isRunning === 'undefined') f.isRunning = false;
+        });
+      }
+
       // Asegurar inicialización de variables de alimentación
       if (!state.foodPriority || state.foodPriority.includes('cooked') || state.foodPriority.includes('raw')) {
         let newPriority = [];
@@ -955,9 +1037,14 @@ function getSeedsOccupation() {
 }
 
 function getResourcesOccupation() {
+  const toolSize = CONFIG?.Storage?.tool_storage_size?.value ?? 2;
+  const toolsCount = Array.isArray(state.tools) ? state.tools.length : 0;
+  const ironBarCount = state.iron_bar || 0;
   return (state.wood || 0) + 
          (state.stone || 0) + 
          (state.iron || 0) + 
+         ironBarCount +
+         (toolsCount * toolSize) + 
          getSeedsOccupation();
 }
 
@@ -1009,6 +1096,8 @@ function recalculateStorageCapacity() {
   state.storageCapacity = {
     wood: state.maxResourcesCapacity - resOcc + (state.wood || 0),
     stone: state.maxResourcesCapacity - resOcc + (state.stone || 0),
+    iron: state.maxResourcesCapacity - resOcc + (state.iron || 0),
+    iron_bar: state.maxResourcesCapacity - resOcc + (state.iron_bar || 0),
     seeds: state.maxResourcesCapacity - resOcc + getSeedsOccupation(),
     food: state.maxFoodCapacity,
     resource: state.maxResourcesCapacity
@@ -1018,8 +1107,8 @@ function recalculateStorageCapacity() {
   const currentResOccupied = getResourcesOccupation();
   if (currentResOccupied > state.maxResourcesCapacity) {
     let excess = currentResOccupied - state.maxResourcesCapacity;
-    // Reducir excedente empezando por semillas, luego piedra, luego madera
-    const keysToDeduct = ['carrot_seeds', 'potato_seeds', 'wheat_seeds', 'stone', 'wood'];
+    // Reducir excedente empezando por semillas, luego piedra, luego madera, luego lingotes/mineral
+    const keysToDeduct = ['carrot_seeds', 'potato_seeds', 'wheat_seeds', 'stone', 'wood', 'iron_bar', 'iron'];
     for (let i = 0; i < keysToDeduct.length; i++) {
       const k = keysToDeduct[i];
       const stock = getResourceStock(k);

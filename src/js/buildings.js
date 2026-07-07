@@ -1,4 +1,16 @@
 // Comprobar si el jugador puede pagar los costes parametrizados de un edificio/mejora
+function getBuildingDuration(timingKey, fallbackSeconds) {
+  const timing = CONFIG?.Timing?.[timingKey];
+  if (timing && typeof timing.duration !== 'undefined') {
+    let dur = timing.duration;
+    if (dur >= 100) {
+      return dur / 100;
+    }
+    return dur;
+  }
+  return fallbackSeconds;
+}
+
 function canAffordBuilding(cfg) {
   if (!cfg) return false;
   
@@ -52,7 +64,7 @@ function autoAssignBuilders() {
   }
 
   // Otros edificios
-  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries'];
+  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries', 'smithies', 'forges'];
   for (const type of typesToCheck) {
     if (Array.isArray(state[type])) {
       state[type].forEach((building, index) => {
@@ -200,7 +212,11 @@ function togglePlayerConstruct(type, index) {
           quarries: 'Cantera',
           farms: 'Granja',
           bonfires: 'Fogata',
-          markets: 'Puesto de Mercado'
+          markets: 'Puesto de Mercado',
+          smithies: 'Taller del Herrero',
+          wells: 'Pozo',
+          warehouses: 'Almacén',
+          granaries: 'Granero'
         };
         bName = `${names[type] || 'Edificio'} #${index + 1}`;
       }
@@ -288,7 +304,7 @@ function buildBasicHouse() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 1,
+      constructionDuration: getBuildingDuration('basic_house', 8.4),
       workerAssigned: 0,
       activatedAt: state.nextActivationId++,
       isPaused: false
@@ -331,7 +347,7 @@ function upgradeHouseItem(idx) {
       house.isUpgrading = true;
       house.upgradingToTier = 2;
       house.constructionElapsed = 0;
-      house.constructionDuration = (cfg && cfg.duration) || 20;
+      house.constructionDuration = getBuildingDuration('upgraded_house', 16.8);
       house.workerAssigned = 0;
       house.activatedAt = state.nextActivationId++;
       house.isPaused = false;
@@ -362,8 +378,7 @@ function upgradeHouseItem(idx) {
       house.isUpgrading = true;
       house.upgradingToTier = 3;
       house.constructionElapsed = 0;
-      const houseT3Cfg = CONFIG.Timing && CONFIG.Timing.upgraded_house_t3;
-      house.constructionDuration = (houseT3Cfg && houseT3Cfg.duration) || 30;
+      house.constructionDuration = getBuildingDuration('luxury_house', 33.6);
       house.workerAssigned = 0;
       house.activatedAt = state.nextActivationId++;
       house.isPaused = false;
@@ -397,7 +412,7 @@ function buildLumberMill() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('lumbermill', 16.8),
       activatedAt: state.nextActivationId++,
       isPaused: false
     });
@@ -453,7 +468,7 @@ function upgradeLumberMill(idx) {
     mill.isUpgrading = true;
     mill.upgradingToTier = tier + 1;
     mill.constructionElapsed = 0;
-    mill.constructionDuration = (cfg && cfg.duration) || 20;
+    mill.constructionDuration = getBuildingDuration(`lumbermill_t${tier + 1}`, tier === 1 ? 33.6 : 67.2);
     mill.activatedAt = state.nextActivationId++;
     mill.isPaused = false;
     
@@ -485,7 +500,7 @@ function buildQuarry() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('quarry', 16.8),
       activatedAt: state.nextActivationId++,
       isPaused: false
     });
@@ -541,7 +556,7 @@ function upgradeQuarry(idx) {
     quarry.isUpgrading = true;
     quarry.upgradingToTier = tier + 1;
     quarry.constructionElapsed = 0;
-    quarry.constructionDuration = (cfg && cfg.duration) || 20;
+    quarry.constructionDuration = getBuildingDuration(`quarry_t${tier + 1}`, tier === 1 ? 33.6 : 67.2);
     quarry.activatedAt = state.nextActivationId++;
     quarry.isPaused = false;
     
@@ -579,7 +594,7 @@ function buildFarm() {
       wateringsCompleted: 0,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('farm', 16.8),
       activatedAt: state.nextActivationId++,
       isPaused: false
     });
@@ -615,7 +630,7 @@ function buildMarket() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('market', 100.8),
       activatedAt: state.nextActivationId++,
       isPaused: false
     });
@@ -651,7 +666,7 @@ function buildBonfire() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('bonfire', 8.4),
       activatedAt: state.nextActivationId++,
       isPaused: false
     });
@@ -777,7 +792,7 @@ function buildTownHall() {
     state.townHall.tier = 1;
     state.townHall.isUnderConstruction = true;
     state.townHall.constructionElapsed = 0;
-    state.townHall.constructionDuration = (cfg && cfg.duration) || 1;
+    state.townHall.constructionDuration = getBuildingDuration('townhall', 8.4);
     state.townHall.activatedAt = state.nextActivationId++;
     state.townHall.isPaused = false;
     state.playerConstructing = { type: 'townHall' };
@@ -819,7 +834,7 @@ function upgradeTownHall() {
     state.townHall.isUpgrading = true;
     state.townHall.upgradingToTier = currentTier + 1;
     state.townHall.constructionElapsed = 0;
-    state.townHall.constructionDuration = (cfg && cfg.duration) || (currentTier === 1 ? 25 : 40);
+    state.townHall.constructionDuration = getBuildingDuration(currentTier === 1 ? 'townhall_t2' : 'townhall_t3', currentTier === 1 ? 16.8 : 33.6);
     state.townHall.workerAssigned = 0;
     state.townHall.activatedAt = state.nextActivationId++;
     state.townHall.isPaused = false;
@@ -932,7 +947,7 @@ function buildGranary() {
       workerAssigned: 0,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('granary', 50.4),
       isUpgrading: false,
       selectedCrop: 'wheat',
       elapsed: 0,
@@ -995,7 +1010,7 @@ function upgradeGranary(idx) {
     granary.isUpgrading = true;
     granary.upgradingToTier = tier + 1;
     granary.constructionElapsed = 0;
-    granary.constructionDuration = (cfg && cfg.duration) || 5;
+    granary.constructionDuration = getBuildingDuration(`granary_t${tier + 1}`, tier === 1 ? 100.8 : 201.6);
     granary.activatedAt = state.nextActivationId++;
     granary.isPaused = false;
     autoAssignBuilders();
@@ -1071,7 +1086,11 @@ function destroyBuildingPrompt(arrayName, idx) {
     bonfires: 'bonfire',
     granaries: 'granary',
     markets: 'market',
-    houses: 'basic_house'
+    houses: 'basic_house',
+    smithies: 'smithy',
+    forges: 'forge',
+    wells: 'well',
+    warehouses: null
   };
   const baseKey = baseKeys[arrayName];
   if (baseKey && CONFIG.Building[baseKey]) {
@@ -1136,6 +1155,21 @@ function destroyBuildingPrompt(arrayName, idx) {
       const cfg = CONFIG.Building.luxury_house;
       if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
     }
+  } else if (arrayName === 'smithies') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building?.smithy_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  } else if (arrayName === 'forges') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building?.forge_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
+  }
+
+  // Para smithies: liberar herramientas asignadas a este taller si alguna vez las tiene
+  if (arrayName === 'smithies') {
+    // (las herramientas son del jugador, no del edificio — no se eliminan)
   }
 
   const refundGold = Math.floor(totalGold * 0.5);
@@ -1149,7 +1183,11 @@ function destroyBuildingPrompt(arrayName, idx) {
     bonfires: 'Hoguera/Cocina',
     granaries: 'Granero',
     markets: 'Puesto de Mercado',
-    houses: 'Choza/Residencia'
+    houses: 'Choza/Residencia',
+    smithies: 'Taller del Herrero',
+    forges: 'Forja',
+    wells: 'Pozo',
+    warehouses: 'Almacén'
   };
   const bName = `${displayNames[arrayName] || 'Edificio'} #${idx + 1}`;
   
@@ -1260,7 +1298,7 @@ function buildWell() {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 5,
+      constructionDuration: getBuildingDuration('well', 5),
       isUpgrading: false,
       activatedAt: state.nextActivationId++,
       isPaused: false
@@ -1314,7 +1352,7 @@ function upgradeWell(idx) {
     well.isUpgrading = true;
     well.upgradingToTier = tier + 1;
     well.constructionElapsed = 0;
-    well.constructionDuration = (cfg && cfg.duration) || 10;
+    well.constructionDuration = getBuildingDuration(`well_t${tier + 1}`, 10);
     well.activatedAt = state.nextActivationId++;
     well.isPaused = false;
     autoAssignBuilders();
@@ -1593,7 +1631,7 @@ function buildWarehouse(type) {
       tier: 1,
       isUnderConstruction: true,
       constructionElapsed: 0,
-      constructionDuration: (cfg && cfg.duration) || 20,
+      constructionDuration: getBuildingDuration(`warehouse_${type}`, 20),
       isUpgrading: false,
       activatedAt: state.nextActivationId++,
       isPaused: false
@@ -1658,7 +1696,7 @@ function upgradeWarehouse(idx) {
     warehouse.isUpgrading = true;
     warehouse.upgradingToTier = tier + 1;
     warehouse.constructionElapsed = 0;
-    warehouse.constructionDuration = (cfg && cfg.duration) || 40;
+    warehouse.constructionDuration = getBuildingDuration(`warehouse_${warehouse.type}_t${tier + 1}`, tier === 1 ? 40 : 80);
     warehouse.activatedAt = state.nextActivationId++;
     warehouse.isPaused = false;
     autoAssignBuilders();
@@ -2236,5 +2274,243 @@ function devBuildOneOfEach() {
 window.devUnlockAllTechs = devUnlockAllTechs;
 window.devBuildOneOfEach = devBuildOneOfEach;
 
+// ============================================================
+// PASO L - [MET-TALL] Taller del Herrero
+// ============================================================
 
+function buildSmithy() {
+  const isUnlocked = isBuildingUnlocked('smithy');
+  const thBuilt = state.townHall && state.townHall.built;
+  const thUnderConst = state.townHall && state.townHall.isUnderConstruction;
+  const maxTier = state.maxBuildingTier || 0;
+  const cfg = CONFIG?.Building?.smithy;
+  
+  console.log("[DEBUG SMITHY BUILD] isUnlocked:", isUnlocked, "thBuilt:", thBuilt, "thUnderConst:", thUnderConst, "maxTier:", maxTier, "cfg:", cfg);
+
+  if (!isUnlocked) {
+    showToast(`🔒 Requiere investigar Herramientas Mejoradas. (Desbloqueado: ${isUnlocked})`, "warning");
+    return;
+  }
+  if (!thBuilt || thUnderConst) {
+    showToast(`Debes completar la construcción del Ayuntamiento primero. (Construido: ${thBuilt}, En construcción: ${thUnderConst})`, "warning");
+    return;
+  }
+  if (!cfg) { 
+    showToast("Error: configuración del Taller no encontrada en CONFIG.Building.smithy.", "error"); 
+    return; 
+  }
+  const reqTh = typeof cfg.req_th !== 'undefined' ? cfg.req_th : 2;
+  if (maxTier < reqTh) {
+    showToast(`Se requiere Ayuntamiento (Nivel ${reqTh}) para construir el Taller. (Nivel de construcción actual: Tier ${maxTier})`, "warning");
+    return;
+  }
+  if (!canAffordBuilding(cfg)) {
+    showToast(`Recursos insuficientes (Coste: 🪵${cfg.cost_wood} Madera, 🪨${cfg.cost_stone} Piedra. Tienes: 🪵${Math.floor(state.wood)}, 🪨${Math.floor(state.stone)})`, "warning");
+    return;
+  }
+  state.wood  -= cfg.cost_wood  || 0;
+  state.stone -= cfg.cost_stone || 0;
+  state.gold  -= cfg.cost_gold  || 0;
+  const duration = getBuildingDuration('smithy', 50.4);
+  state.smithies.push({
+    id: state.smithies.length,
+    tier: 1,
+    workerAssigned: 0,
+    isUnderConstruction: true,
+    constructionElapsed: 0,
+    constructionDuration: duration,
+    isUpgrading: false,
+    upgradeElapsed: 0,
+    selectedTool: 'axe_t1',
+    elapsed: 0,
+    isRunning: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+  autoAssignBuilders();
+  showToast("🏗️ Comenzando construcción del Taller del Herrero.", "info");
+  recalculateRates();
+  updateUI();
+}
+
+function upgradeSmithy(idx) {
+  if (!state.smithies || !state.smithies[idx]) return;
+  const smithy = state.smithies[idx];
+  if (smithy.isUnderConstruction || smithy.isUpgrading) {
+    showToast("El Taller ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = smithy.tier || 1;
+  if (tier >= 2) {
+    showToast("El Taller ya está en el nivel máximo.", "info");
+    return;
+  }
+  if (!isBuildingUnlocked('smithy_t2')) {
+    showToast("🔒 Requiere investigación para mejorar el Taller a T2.", "warning");
+    return;
+  }
+  const cfg = CONFIG?.Building?.smithy_t2;
+  if (!cfg) return;
+  const reqTh = typeof cfg.req_th !== 'undefined' ? cfg.req_th : 3;
+  if (state.maxBuildingTier < reqTh) {
+    showToast(`Se requiere Ayuntamiento Nivel ${reqTh} para mejorar el Taller a T2. (Nivel de construcción actual: Tier ${state.maxBuildingTier})`, "warning");
+    return;
+  }
+  if (!canAffordBuilding(cfg)) {
+    showToast(`Recursos insuficientes para mejorar el Taller (🪙${cfg.cost_gold} Oro, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`, "warning");
+    return;
+  }
+  state.gold  -= cfg.cost_gold  || 0;
+  state.wood  -= cfg.cost_wood  || 0;
+  state.stone -= cfg.cost_stone || 0;
+  const duration = getBuildingDuration('smithy_t2', 100.8);
+  smithy.isUpgrading = true;
+  smithy.upgradingToTier = 2;
+  smithy.constructionElapsed = 0;
+  smithy.constructionDuration = duration;
+  autoAssignBuilders();
+  showToast(`🏗️ Mejorando Taller del Herrero #${idx + 1} a Tier 2.`, "info");
+  recalculateRates();
+  updateUI();
+}
+
+
+/** Asigna una herramienta (por id) a un edificio. Solo si la herramienta está libre y es del tipo correcto. */
+function assignTool(toolId, buildingType, buildingIdx) {
+  const tool = state.tools.find(t => t.id === toolId);
+  if (!tool) return;
+  const required = TOOL_REQUIREMENTS[buildingType];
+  if (!required) return;
+  // Verificar tipo compatible (axe, pickaxe, hoe, weapon)
+  if (tool.type !== required) {
+    showToast(`⚠️ Este edificio necesita ${required}, no ${tool.type}`, "warning");
+    return;
+  }
+  if (tool.assignedTo !== null) {
+    showToast("⚠️ Esta herramienta ya está asignada a otro edificio.", "warning");
+    return;
+  }
+  if (tool.durability <= 0) {
+    showToast("⚠️ Esta herramienta está rota, no se puede asignar.", "warning");
+    return;
+  }
+  const assignKey = `${buildingType.toLowerCase()}_${buildingIdx}`;
+  tool.assignedTo = assignKey;
+  showToast(`🔧 Herramienta asignada a ${buildingType} #${buildingIdx + 1}`, "success");
+  recalculateRates();
+  updateUI();
+}
+
+/** Desasigna la herramienta de un edificio concreto */
+function unassignTool(buildingType, buildingIdx) {
+  const assignKey = `${buildingType.toLowerCase()}_${buildingIdx}`;
+  const tool = state.tools.find(t => t.assignedTo === assignKey);
+  if (!tool) return;
+  tool.assignedTo = null;
+  showToast(`🔧 Herramienta liberada de ${buildingType} #${buildingIdx + 1}`, "info");
+  recalculateRates();
+  updateUI();
+}
+
+window.buildSmithy = buildSmithy;
+window.upgradeSmithy = upgradeSmithy;
+window.assignTool = assignTool;
+window.unassignTool = unassignTool;
+
+// PASO M - [MET-FORJA] Forja
+// ============================================================
+
+function buildForge() {
+  const isUnlocked = isBuildingUnlocked('forge');
+  const thBuilt = state.townHall && state.townHall.built;
+  const thUnderConst = state.townHall && state.townHall.isUnderConstruction;
+  const maxTier = state.maxBuildingTier || 0;
+  const cfg = CONFIG?.Building?.forge;
+  
+  if (!isUnlocked) {
+    showToast("🔒 Requiere investigar Trabajo en Hierro.", "warning");
+    return;
+  }
+  if (!thBuilt || thUnderConst) {
+    showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
+    return;
+  }
+  if (!cfg) { 
+    showToast("Error: configuración de la Forja no encontrada en CONFIG.Building.forge.", "error"); 
+    return; 
+  }
+  const reqTh = typeof cfg.req_th !== 'undefined' ? cfg.req_th : 2;
+  if (maxTier < reqTh) {
+    showToast(`Se requiere Ayuntamiento (Nivel ${reqTh}) para construir la Forja.`, "warning");
+    return;
+  }
+  if (!canAffordBuilding(cfg)) {
+    showToast(`Recursos insuficientes (Coste: 🪵${cfg.cost_wood} Madera, 🪨${cfg.cost_stone} Piedra. Tienes: 🪵${Math.floor(state.wood)}, 🪨${Math.floor(state.stone)})`, "warning");
+    return;
+  }
+  state.wood  -= cfg.cost_wood  || 0;
+  state.stone -= cfg.cost_stone || 0;
+  state.gold  -= cfg.cost_gold  || 0;
+  const duration = getBuildingDuration('forge', 50.4);
+  
+  if (!Array.isArray(state.forges)) state.forges = [];
+  state.forges.push({
+    id: state.forges.length,
+    tier: 1,
+    workerAssigned: 0,
+    isUnderConstruction: true,
+    constructionElapsed: 0,
+    constructionDuration: duration,
+    isUpgrading: false,
+    upgradeElapsed: 0,
+    elapsed: 0,
+    isRunning: false,
+    activatedAt: state.nextActivationId++,
+    isPaused: false
+  });
+  autoAssignBuilders();
+  showToast("🏗️ Comenzando construcción de la Forja.", "info");
+  recalculateRates();
+  updateUI();
+}
+
+function upgradeForge(idx) {
+  if (!state.forges || !state.forges[idx]) return;
+  const forge = state.forges[idx];
+  if (forge.isUnderConstruction || forge.isUpgrading) {
+    showToast("La Forja ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = forge.tier || 1;
+  if (tier >= 2) {
+    showToast("La Forja ya está en el nivel máximo.", "info");
+    return;
+  }
+  const cfg = CONFIG?.Building?.forge_t2;
+  if (!cfg) return;
+  const reqTh = typeof cfg.req_th !== 'undefined' ? cfg.req_th : 3;
+  if (state.maxBuildingTier < reqTh) {
+    showToast(`Se requiere Ayuntamiento Nivel ${reqTh} para mejorar la Forja a T2.`, "warning");
+    return;
+  }
+  if (!canAffordBuilding(cfg)) {
+    showToast(`Recursos insuficientes para mejorar la Forja (🪙${cfg.cost_gold} Oro, 🪵${cfg.cost_wood}, 🪨${cfg.cost_stone})`, "warning");
+    return;
+  }
+  state.gold  -= cfg.cost_gold  || 0;
+  state.wood  -= cfg.cost_wood  || 0;
+  state.stone -= cfg.cost_stone || 0;
+  const duration = getBuildingDuration('forge_t2', 100.8);
+  forge.isUpgrading = true;
+  forge.upgradingToTier = 2;
+  forge.constructionElapsed = 0;
+  forge.constructionDuration = duration;
+  autoAssignBuilders();
+  showToast(`🏗️ Mejorando Forja #${idx + 1} a Tier 2.`, "info");
+  recalculateRates();
+  updateUI();
+}
+
+window.buildForge = buildForge;
+window.upgradeForge = upgradeForge;
 

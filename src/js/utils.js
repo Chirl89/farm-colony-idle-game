@@ -208,7 +208,7 @@ function deductResourceStock(key, amount) {
 
 function addResourceStock(key, amount) {
   if (typeof window.lastFullToastTime === 'undefined') {
-    window.lastFullToastTime = { wood: 0, stone: 0, food: 0, seeds: 0 };
+    window.lastFullToastTime = { wood: 0, stone: 0, food: 0, seeds: 0, iron: 0, iron_bar: 0 };
   }
 
   let storageType = null;
@@ -225,6 +225,14 @@ function addResourceStock(key, amount) {
     storageType = 'stone';
     currentVal = state.stone || 0;
     storageName = 'Piedra';
+  } else if (key === 'iron') {
+    storageType = 'iron';
+    currentVal = state.iron || 0;
+    storageName = 'Mineral de Hierro';
+  } else if (key === 'iron_bar') {
+    storageType = 'iron_bar';
+    currentVal = state.iron_bar || 0;
+    storageName = 'Lingote de Hierro';
   } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'].includes(key)) {
     storageType = 'food';
     const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
@@ -408,4 +416,38 @@ function showToast(message, type = 'info') {
     toast.remove();
   }, 3000);
 }
+
+function isWarehouseFullForJob(jobKey) {
+  if (!jobKey || !state) return false;
+  const parts = jobKey.split('_');
+  const type = parts[0];
+  if (type === 'lumbermills') {
+    const cap = (state.storageCapacity && state.storageCapacity.wood) ?? Infinity;
+    const currentVal = state.wood || 0;
+    return currentVal >= cap;
+  } else if (type === 'quarries') {
+    const cap = (state.storageCapacity && state.storageCapacity.stone) ?? Infinity;
+    const currentVal = state.stone || 0;
+    return currentVal >= cap;
+  } else if (type === 'forges') {
+    const cap = (state.storageCapacity && state.storageCapacity.iron_bar) ?? Infinity;
+    const currentVal = state.iron_bar || 0;
+    return currentVal >= cap;
+  } else if (type === 'smithies') {
+    const cap = (state.storageCapacity && state.storageCapacity.resource) ?? Infinity;
+    const currentVal = typeof window.getResourcesOccupation === 'function' ? window.getResourcesOccupation() : 0;
+    const toolSize = CONFIG?.Storage?.tool_storage_size?.value ?? 2;
+    return currentVal + toolSize > cap;
+  } else if (type === 'farms') {
+    const cap = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
+    const currentVal = typeof window.getFoodOccupation === 'function' ? window.getFoodOccupation() : 0;
+    return currentVal >= cap;
+  } else if (type === 'bonfires') {
+    const cap = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
+    const currentVal = typeof window.getFoodOccupation === 'function' ? window.getFoodOccupation() : 0;
+    return currentVal >= cap;
+  }
+  return false;
+}
+window.isWarehouseFullForJob = isWarehouseFullForJob;
 

@@ -1,0 +1,7 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Cantera con pico produce mineral de hierro;Cantera T1 pico asignado;Tick;state.iron sube;state.iron aumenta correctamente;PASS;Calculado con base en CONFIG.Mining.iron_ore_ratio
+U02;Unit;Forja convierte 5 mineral en 1 lingote;iron=5 Forja activa;Ciclo;ironBars+=1 iron-=5;iron_bar aumenta en 1 y iron disminuye en 5;PASS;Receta cargada desde CONFIG
+U03;Unit;Herramienta T2 requiere ironBars;ironBars=2 Taller T2;Producir pico T2;ironBars-=2;Se deducen 2 lingotes al fabricar pico T2;PASS;Deducción en el crafteo del Herrero
+U04;Unit;Sin mineral Forja no produce;iron=0;Tick;ironBars sin cambio;La forja se detiene sin mineral de hierro;PASS;Validación de stock mínimo en Forjas
+I01;Integracion;Cadena completa cantera->mineral->forja->lingote->herramienta T2;Todo construido;Producir;Pico T2 obtenido;Se completa el ciclo productivo y crafteo T2;PASS;Verificación de flujo de metales completo
+R01;Regresion;Herramientas T1 siguen produciendose;Taller T1;Producir hacha T1;Hacha T1 OK;Las herramientas T1 se fabrican con madera de forma habitual;PASS;El Herrero T1 funciona sin lingotes

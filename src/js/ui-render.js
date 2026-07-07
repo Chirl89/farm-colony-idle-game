@@ -244,7 +244,7 @@ function renderLumberMills() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('lumbermills_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.lumberMills ? state.lumberMills.map(m => (m.isUnderConstruction ? '1' : '0') + '_' + (m.isUpgrading ? '1' : '0') + '_' + (m.tier || 1) + '_' + (m.isPaused ? '1' : '0') + '_' + (m.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.lumberMills ? state.lumberMills.map(m => (m.isUnderConstruction ? '1' : '0') + '_' + (m.isUpgrading ? '1' : '0') + '_' + (m.tier || 1) + '_' + (m.isPaused ? '1' : '0') + '_' + (m.workerAssigned || 0) + '_' + (m.isWarehouseFull ? '1' : '0')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastLumberMillsConstructionStatus) {
     lastLumberMillsConstructionStatus = currentStatus;
@@ -304,6 +304,23 @@ function renderLumberMills() {
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
               <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
               ${renderBuildingWorkerDropdowns('lumberMills', idx, maxWorkers)}
+            </div>
+            <div style="margin-top: 0.35rem; display: flex; flex-direction: column; gap: 0.2rem;">
+              <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">🪓 Herramienta:</span>
+              ${(() => {
+                const assignKey = `lumbermills_${idx}`;
+                const tool = state.tools ? state.tools.find(t => t.assignedTo === assignKey) : null;
+                if (tool) {
+                  const pct = Math.max(0, tool.durability || 0);
+                  return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.25); padding: 0.25rem 0.4rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                      <span style="font-size: 0.75rem; color: #fff;">🪓 Hacha T${tool.tier} (${pct.toFixed(0)}%)</span>
+                      <span style="font-size: 0.65rem; color: #a78bfa; font-weight: 500;">Auto-equipada</span>
+                    </div>`;
+                } else {
+                  return `<span style="font-size: 0.7rem; color: #f87171; font-style: italic;">⚠️ Sin hacha libre (Producción detenida)</span>`;
+                }
+              })()}
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
@@ -394,7 +411,11 @@ function renderLumberMills() {
         
         if (titleText) titleText.innerHTML = `🪵 ${bName} #${idx + 1}`;
         if (prodText) {
-          prodText.innerText = isWorking ? `+${displayYield} Madera/dia` : '0 Madera/dia';
+          if (mill.isWarehouseFull) {
+            prodText.innerHTML = `<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>`;
+          } else {
+            prodText.innerText = isWorking ? `+${displayYield} Madera/dia` : '0 Madera/dia';
+          }
           prodText.title = "por día de juego";
         }
         if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
@@ -429,7 +450,7 @@ function renderQuarries() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('quarries_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.quarries ? state.quarries.map(q => (q.isUnderConstruction ? '1' : '0') + '_' + (q.isUpgrading ? '1' : '0') + '_' + (q.tier || 1) + '_' + (q.isPaused ? '1' : '0') + '_' + (q.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.quarries ? state.quarries.map(q => (q.isUnderConstruction ? '1' : '0') + '_' + (q.isUpgrading ? '1' : '0') + '_' + (q.tier || 1) + '_' + (q.isPaused ? '1' : '0') + '_' + (q.workerAssigned || 0) + '_' + (q.isWarehouseFull ? '1' : '0')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastQuarriesConstructionStatus) {
     lastQuarriesConstructionStatus = currentStatus;
@@ -489,6 +510,23 @@ function renderQuarries() {
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
               <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
               ${renderBuildingWorkerDropdowns('quarries', idx, maxWorkers)}
+            </div>
+            <div style="margin-top: 0.35rem; display: flex; flex-direction: column; gap: 0.2rem;">
+              <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">⛏️ Herramienta:</span>
+              ${(() => {
+                const assignKey = `quarries_${idx}`;
+                const tool = state.tools ? state.tools.find(t => t.assignedTo === assignKey) : null;
+                if (tool) {
+                  const pct = Math.max(0, tool.durability || 0);
+                  return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.25); padding: 0.25rem 0.4rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                      <span style="font-size: 0.75rem; color: #fff;">⛏️ Pico T${tool.tier} (${pct.toFixed(0)}%)</span>
+                      <span style="font-size: 0.65rem; color: #a78bfa; font-weight: 500;">Auto-equipada</span>
+                    </div>`;
+                } else {
+                  return `<span style="font-size: 0.7rem; color: #f87171; font-style: italic;">⚠️ Sin pico libre (Producción detenida)</span>`;
+                }
+              })()}
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
               <span id="quarry-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
@@ -579,7 +617,11 @@ function renderQuarries() {
         
         if (titleText) titleText.innerHTML = `🪨 ${bName} #${idx + 1}`;
         if (prodText) {
-          prodText.innerText = isWorking ? `+${displayYield} Piedra/dia` : '0 Piedra/dia';
+          if (quarry.isWarehouseFull) {
+            prodText.innerHTML = `<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>`;
+          } else {
+            prodText.innerText = isWorking ? `+${displayYield} Piedra/dia` : '0 Piedra/dia';
+          }
           prodText.title = "por día de juego";
         }
         if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
@@ -614,7 +656,7 @@ function renderFarms() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('farms_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0') + '_' + (f.isPaused ? '1' : '0') + '_' + (f.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0') + '_' + (f.isPaused ? '1' : '0') + '_' + (f.workerAssigned || 0) + '_' + (f.isWarehouseFull ? '1' : '0')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastFarmsConstructionStatus) {
     lastFarmsConstructionStatus = currentStatus;
@@ -777,7 +819,11 @@ function renderFarms() {
         
         const farmProd = document.getElementById(`farm-prod-${idx}`);
         if (farmProd) {
-          farmProd.innerText = prodText;
+          if (farm.isWarehouseFull) {
+            farmProd.innerHTML = `<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>`;
+          } else {
+            farmProd.innerText = prodText;
+          }
           farmProd.title = "por día de juego";
         }
 
@@ -880,7 +926,11 @@ function renderFarms() {
             waterWarning = ' <span style="background-color: #ef4444; color: #fff; font-size: 0.65rem; padding: 0.1rem 0.35rem; border-radius: 4px; font-weight: 700; margin-left: 0.25rem;">⚠️ Sin agua hoy</span>';
           }
           if (statusText) {
-            statusText.innerHTML = `[${activeCropObj.name}] ${text}${waterWarning}`;
+            if (farm.isWarehouseFull) {
+              statusText.innerHTML = `[${activeCropObj.name}] <span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>`;
+            } else {
+              statusText.innerHTML = `[${activeCropObj.name}] ${text}${waterWarning}`;
+            }
           }
           if (btn) {
             btn.innerText = 'Cultivando...';
@@ -1702,14 +1752,16 @@ function updateRatesUI() {
     DOM.rateStone.title = "por día de juego";
   }
 
-  DOM.rateFood.textContent = formatRate(calculatedRates.food);
-  DOM.rateFood.title = "por día de juego";
-  if (calculatedRates.food > 0.001) {
-    DOM.rateFood.className = 'resource-rate rate-positive';
-  } else if (calculatedRates.food < -0.001) {
-    DOM.rateFood.className = 'resource-rate rate-negative';
-  } else {
-    DOM.rateFood.className = 'resource-rate rate-neutral';
+  if (DOM.rateFood) {
+    DOM.rateFood.textContent = formatRate(calculatedRates.food);
+    DOM.rateFood.title = "por día de juego";
+    if (calculatedRates.food > 0.001) {
+      DOM.rateFood.className = 'resource-rate rate-positive';
+    } else if (calculatedRates.food < -0.001) {
+      DOM.rateFood.className = 'resource-rate rate-negative';
+    } else {
+      DOM.rateFood.className = 'resource-rate rate-neutral';
+    }
   }
 
   if (DOM.rateCooked) {
@@ -1732,7 +1784,7 @@ function updateUI() {
   renderDetailedFoodInventory();
   renderDetailedResourcesInventory();
   renderWarehouses();
-  DOM.resGold.textContent = Math.floor(state.gold);
+  if (DOM.resGold) DOM.resGold.textContent = Math.floor(state.gold);
   if (DOM.resWood) DOM.resWood.textContent = Math.floor(state.wood);
   if (DOM.resStone) DOM.resStone.textContent = Math.floor(state.stone);
   
@@ -1785,12 +1837,14 @@ function updateUI() {
   if (DOM.resBerries) DOM.resBerries.textContent = Math.floor(state.berries || 0);
   const totalColonists = state.colonists ? state.colonists.length : 0;
   const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null).length : 0;
-  if (state.starvingColonists > 0) {
-    DOM.resColonists.innerHTML = `${totalColonists} / ${state.maxPopulation} <span style="font-size: 0.8rem; color: #f87171; font-weight: bold; margin-left: 0.25rem;">(⚠️${state.starvingColonists})</span>`;
-  } else {
-    DOM.resColonists.textContent = `${totalColonists} / ${state.maxPopulation}`;
+  if (DOM.resColonists) {
+    if (state.starvingColonists > 0) {
+      DOM.resColonists.innerHTML = `${totalColonists} / ${state.maxPopulation} <span style="font-size: 0.8rem; color: #f87171; font-weight: bold; margin-left: 0.25rem;">(⚠️${state.starvingColonists})</span>`;
+    } else {
+      DOM.resColonists.textContent = `${totalColonists} / ${state.maxPopulation}`;
+    }
   }
-  DOM.resFreeColonists.textContent = `Libres: ${freeColonists}`;
+  if (DOM.resFreeColonists) DOM.resFreeColonists.textContent = `Libres: ${freeColonists}`;
 
   // Actualizar tarjeta de Alimentación
   const starvingVal = document.getElementById('starving-count-val');
@@ -1819,7 +1873,7 @@ function updateUI() {
     woodMult += getAttributeMult(lvl) * getColonistEfficiency(c);
   });
   const woodRateVal = woodMult * (woodYield / woodDuration) * dayDuration;
-  DOM.woodAutoInfo.textContent = `+${woodRateVal.toFixed(woodRateVal % 1 === 0 ? 0 : 2)}/dia`;
+  if (DOM.woodAutoInfo) DOM.woodAutoInfo.textContent = `+${woodRateVal.toFixed(woodRateVal % 1 === 0 ? 0 : 2)}/dia`;
   
   const stoneDuration = CONFIG.BasicGathering.stone_auto.duration;
   const stoneYield = CONFIG.BasicGathering.stone_auto.yield;
@@ -1830,7 +1884,7 @@ function updateUI() {
     stoneMult += getAttributeMult(lvl) * getColonistEfficiency(c);
   });
   const stoneRateVal = stoneMult * (stoneYield / stoneDuration) * dayDuration;
-  DOM.stoneAutoInfo.textContent = `+${stoneRateVal.toFixed(stoneRateVal % 1 === 0 ? 0 : 2)}/dia`;
+  if (DOM.stoneAutoInfo) DOM.stoneAutoInfo.textContent = `+${stoneRateVal.toFixed(stoneRateVal % 1 === 0 ? 0 : 2)}/dia`;
 
   const berriesDuration = CONFIG.BasicGathering.berries_auto.duration;
   const berriesYield = CONFIG.BasicGathering.berries_auto.yield;
@@ -1841,7 +1895,7 @@ function updateUI() {
     berriesMult += getAttributeMult(lvl) * getColonistEfficiency(c);
   });
   const berriesRateVal = berriesMult * (berriesYield / berriesDuration) * dayDuration;
-  DOM.berriesAutoInfo.textContent = `+${berriesRateVal.toFixed(berriesRateVal % 1 === 0 ? 0 : 2)}/dia`;
+  if (DOM.berriesAutoInfo) DOM.berriesAutoInfo.textContent = `+${berriesRateVal.toFixed(berriesRateVal % 1 === 0 ? 0 : 2)}/dia`;
 
   // Renderizar y actualizar los edificios individuales en tab-production
   renderHouses();
@@ -1852,6 +1906,8 @@ function updateUI() {
   renderGranaries();
   renderWells();
   renderMarketBuildingUI();
+  renderSmithies();
+  renderForges();
 
   // Actualizar display de Agua Diaria
   const cardWater = document.getElementById('card-water');
@@ -1883,6 +1939,10 @@ function updateUI() {
   if (DOM.countGranaries) DOM.countGranaries.innerText = `Construidos: ${state.granaries ? state.granaries.length : 0}`;
   const countWellsEl = document.getElementById('count-wells');
   if (countWellsEl) countWellsEl.innerText = `Construidos: ${state.wells ? state.wells.length : 0}`;
+  const countSmithiesEl = document.getElementById('count-smithies');
+  if (countSmithiesEl) countSmithiesEl.innerText = `Construidos: ${state.smithies ? state.smithies.length : 0}`;
+  const countForgesEl = document.getElementById('count-forges');
+  if (countForgesEl) countForgesEl.innerText = `Construidas: ${state.forges ? state.forges.length : 0}`;
 
   // Contadores de almacenes construidos
   const countWoodW = document.getElementById('count-warehouse-wood');
@@ -2172,7 +2232,28 @@ function updateButtonStates() {
     const btn = document.getElementById(btnId);
     if (btn) {
       const isLocked = !isBuildingUnlocked(buildingId || (cfg ? cfg.id : ''));
-      btn.disabled = isLocked || (needsTh && !thBuilt) || !canAffordBuilding(cfg) || state.playerOnMission;
+      const hasThLevel = !cfg || typeof cfg.req_th === 'undefined' || state.maxBuildingTier >= cfg.req_th;
+      const afford = canAffordBuilding(cfg);
+      
+      let reason = '';
+      if (isLocked) {
+        reason = '🔒 Requiere investigar la tecnología correspondiente';
+      } else if (needsTh && !thBuilt) {
+        reason = '🏢 Requiere que el Ayuntamiento esté completamente construido';
+      } else if (!hasThLevel) {
+        reason = `🏢 Requiere Ayuntamiento Nivel ${cfg.req_th} (Tu Nivel: Tier ${state.maxBuildingTier})`;
+      } else if (!afford) {
+        reason = '🪵 Recursos insuficientes';
+      } else if (state.playerOnMission) {
+        reason = '🧭 El jugador está de viaje comercial';
+      }
+      
+      btn.disabled = !!reason;
+      if (reason) {
+        btn.title = reason;
+      } else {
+        btn.removeAttribute('title');
+      }
       updateCostBadgesAffordability(btnId, cfg);
     }
   };
@@ -2185,6 +2266,16 @@ function updateButtonStates() {
   updateBtnState('btn-build-market', CONFIG.Building.market, true, 'market');
   updateBtnState('btn-build-granary', CONFIG.Building.granary, true, 'granary');
   updateBtnState('btn-build-well', CONFIG.Building.well, true, 'well');
+  if (CONFIG.Building.smithy) {
+    const isLocked = !isBuildingUnlocked('smithy');
+    const afford = canAffordBuilding(CONFIG.Building.smithy);
+    const hasThLevel = state.maxBuildingTier >= (CONFIG.Building.smithy.req_th || 2);
+    console.log("[DEBUG SMITHY BTN] isLocked:", isLocked, "thBuilt:", thBuilt, "afford:", afford, "hasThLevel:", hasThLevel, "playerOnMission:", state.playerOnMission, "maxBuildingTier:", state.maxBuildingTier);
+    updateBtnState('btn-build-smithy', CONFIG.Building.smithy, true, 'smithy');
+  }
+  if (CONFIG.Building.forge) {
+    updateBtnState('btn-build-forge', CONFIG.Building.forge, true, 'forge');
+  }
   
   if (!state.townHall.built) {
     updateBtnState('btn-build-townhall', CONFIG.Building.townhall, false);
@@ -2871,6 +2962,9 @@ function renderDetailedResourcesInventory() {
     const resources = [
       { key: 'wood', name: 'Madera', icon: '🪵', color: '#f59e0b', isSeed: false },
       { key: 'stone', name: 'Piedra', icon: '🪨', color: '#94a3b8', isSeed: false },
+      { key: 'iron', name: 'Mineral', icon: '⚙️', color: '#fb7185', isSeed: false },
+      { key: 'iron_bar', name: 'Lingotes', icon: '🔩', color: '#a78bfa', isSeed: false },
+      { key: 'tools', name: 'Herramientas', icon: '🔧', color: '#60a5fa', isSeed: false, isTool: true },
       { key: 'wheat_seeds', name: 'Sem. Trigo', icon: '🌾', color: '#fbbf24', isSeed: true },
       { key: 'potato_seeds', name: 'Sem. Patata', icon: '🥔', color: '#a8a29e', isSeed: true },
       { key: 'carrot_seeds', name: 'Sem. Zanahoria', icon: '🥕', color: '#f97316', isSeed: true }
@@ -2904,6 +2998,9 @@ function renderDetailedResourcesInventory() {
   const resourcesList = [
     { key: 'wood', stateKey: 'wood', isSeed: false },
     { key: 'stone', stateKey: 'stone', isSeed: false },
+    { key: 'iron', stateKey: 'iron', isSeed: false },
+    { key: 'iron_bar', stateKey: 'iron_bar', isSeed: false },
+    { key: 'tools', stateKey: 'tools', isSeed: false, isTool: true },
     { key: 'wheat_seeds', stateKey: 'wheat', isSeed: true },
     { key: 'potato_seeds', stateKey: 'potato', isSeed: true },
     { key: 'carrot_seeds', stateKey: 'carrot', isSeed: true }
@@ -2913,6 +3010,8 @@ function renderDetailedResourcesInventory() {
     let qty = 0;
     if (item.isSeed) {
       qty = state.seeds ? (state.seeds[item.stateKey] || 0) : 0;
+    } else if (item.isTool) {
+      qty = state.tools ? state.tools.length : 0;
     } else {
       qty = state[item.stateKey] || 0;
     }
@@ -3285,37 +3384,80 @@ function renderColonistsDetailList() {
   }
 
   // Key check to prevent dropdown close on game tick loops
-  const colonistsKey = state.colonists.map(c => `${c.id}:${c.job}:${c.houseIdx}:${c.isStarving ? 1 : 0}`).join(',') + `_houses:${state.houses.length}:${state.houses.map(h => h.tier).join(',')}`;
+  const colonistsKey = state.colonists.map(c => `${c.id}:${c.job}:${c.houseIdx}:${c.isStarving ? 1 : 0}:${(c.priorities || []).map(p => `${p.taskType}_${p.buildingIdx}_${p.weight}`).join('.')}`).join(',') + `_houses:${state.houses.length}:${state.houses.map(h => h.tier).join(',')}`;
   if (lastRenderedColonistsDetailKey === colonistsKey) {
     return;
   }
   lastRenderedColonistsDetailKey = colonistsKey;
 
-  // Build the list of job options
-  const jobOptions = [
-    { value: "", label: "❌ Sin Trabajo (Libre)" },
-    { value: "wood", label: "🪵 Leñador Básico" },
-    { value: "stone", label: "🪨 Cantero Básico" },
-    { value: "berries", label: "🍓 Forrajeador de Frutos" },
-    { value: "construction", label: "🔨 Constructor (Auto)" }
+  const getJobLabel = (job) => {
+    if (!job) return '⏸️ Libre (Idle)';
+    if (job === 'wood') return '🪵 Leñador Básico';
+    if (job === 'stone') return '🪨 Cantero Básico';
+    if (job === 'berries') return '🍓 Forrajeador de Frutos';
+    if (job === 'construction') return '🔨 Constructor';
+    if (job === 'townHall') return '🏛️ Ayuntamiento';
+    
+    const parts = job.split('_');
+    if (parts.length === 2) {
+      const type = parts[0];
+      const idx = parseInt(parts[1]) + 1;
+      const names = {
+        lumbermills: '🪵 Aserradero',
+        quarries: '🪨 Cantera',
+        farms: '🌾 Granja',
+        markets: '📈 Mercader',
+        bonfires: '🔥 Cocinero/Hoguera',
+        granaries: '🌾 Granero',
+        smithies: '⚒️ Herrero',
+        forges: '⚙️ Forja'
+      };
+      return `${names[type] || type} #${idx}`;
+    }
+
+    const genericNames = {
+      lumberMills: '🪵 Aserradero (General)',
+      quarries: '🪨 Cantera (General)',
+      farms: '🌾 Granja (General)',
+      markets: '📈 Mercader (General)',
+      bonfires: '🔥 Cocinero/Hoguera (General)',
+      granaries: '🌾 Granero (General)',
+      smithies: '⚒️ Herrero (General)',
+      forges: '⚙️ Forja (General)'
+    };
+    return genericNames[job] || job;
+  };
+
+  const addOptions = [
+    { value: 'wood', label: '🪵 Leñador Básico', taskType: 'wood', buildingIdx: null },
+    { value: 'stone', label: '🪨 Cantero Básico', taskType: 'stone', buildingIdx: null },
+    { value: 'berries', label: '🍓 Recolector de Frutos', taskType: 'berries', buildingIdx: null },
+    { value: 'construction', label: '🔨 Constructor', taskType: 'construction', buildingIdx: null }
   ];
 
-  const addBuildingJobs = (list, prefix, label) => {
-    if (Array.isArray(list)) {
-      list.forEach((b, idx) => {
-        if (!b.isUnderConstruction && !b.isUpgrading) {
-          jobOptions.push({ value: `${prefix}_${idx}`, label: `${label} #${idx + 1}` });
-        }
+  const checkAndPushGenericOpt = (key, label, taskType) => {
+    if (state[key] && state[key].length > 0) {
+      addOptions.push({
+        value: key,
+        label: label,
+        taskType: taskType,
+        buildingIdx: null
       });
     }
   };
 
-  addBuildingJobs(state.lumberMills, 'lumbermills', '🪵 Aserradero');
-  addBuildingJobs(state.quarries, 'quarries', '🪨 Cantera');
-  addBuildingJobs(state.farms, 'farms', '🌾 Granja');
-  addBuildingJobs(state.markets, 'markets', '📈 Mercader');
-  addBuildingJobs(state.bonfires, 'bonfires', '🔥 Cocinero/Hoguera');
-  addBuildingJobs(state.granaries, 'granaries', '🌾 Granero');
+  checkAndPushGenericOpt('lumberMills', '🪵 Aserradero (General)', 'lumberMills');
+  checkAndPushGenericOpt('quarries', '🪨 Cantera (General)', 'quarries');
+  checkAndPushGenericOpt('farms', '🌾 Granja (General)', 'farms');
+  checkAndPushGenericOpt('markets', '📈 Mercader (General)', 'markets');
+  checkAndPushGenericOpt('bonfires', '🔥 Cocinero/Hoguera (General)', 'bonfires');
+  checkAndPushGenericOpt('granaries', '🌾 Granero (General)', 'granaries');
+  checkAndPushGenericOpt('smithies', '⚒️ Herrero (General)', 'smithies');
+  checkAndPushGenericOpt('forges', '⚙️ Forja (General)', 'forges');
+
+  const optionsHtml = addOptions.map(opt => `
+    <option value="${opt.value}">${opt.label}</option>
+  `).join('');
 
   let html = '';
   state.colonists.forEach((c, idx) => {
@@ -3334,12 +3476,6 @@ function renderColonistsDetailList() {
       const xpText = a.val < 10 ? ` (${currentXP.toFixed(1)}/${xpReq.toFixed(0)}d)` : ' (Máx)';
       return `<span title="${a.title}${xpText}" style="cursor:help; font-weight:700; color:${a.color}; background:rgba(255,255,255,0.04); padding:0.15rem 0.3rem; border-radius:4px; border:1px solid rgba(255,255,255,0.06);">${a.name}${a.val}</span>`;
     }).join(' ');
-
-    const optionsHtml = jobOptions.map(opt => `
-      <option value="${opt.value}" ${c.job === (opt.value === "" ? null : opt.value) ? 'selected' : ''}>
-        ${opt.label}
-      </option>
-    `).join('');
 
     const isStarving = c.isStarving;
     const isHomeless = c.houseIdx === null || c.houseIdx === undefined || c.houseIdx < 0 || !state.houses || c.houseIdx >= state.houses.length;
@@ -3399,6 +3535,32 @@ function renderColonistsDetailList() {
       ? `<span style="font-size: 0.95rem; font-weight: 700; color: #ffd700;">${c.name}</span> <span style="font-size: 0.8rem; font-style: italic; color: #fcd34d; font-weight: 600;">(${c.title})</span>` 
       : `<span style="font-size: 0.95rem; font-weight: 700; color: #a5b4fc;">${c.name}</span>`;
 
+    const priorities = c.priorities || [];
+    let prioritiesHtml = '';
+    if (priorities.length === 0) {
+      prioritiesHtml = `<span style="font-size: 0.75rem; color: var(--color-text-muted); font-style: italic;">Sin prioridades configuradas. Estará inactivo.</span>`;
+    } else {
+      prioritiesHtml = `
+        <div style="display: flex; flex-direction: column; gap: 0.3rem; width: 100%;">
+          ${priorities.map((p, pIdx) => {
+            const jobText = getJobLabel(p.buildingIdx !== null ? `${p.taskType}_${p.buildingIdx}` : p.taskType);
+            const isFirst = pIdx === 0;
+            const isLast = pIdx === priorities.length - 1;
+            return `
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 0.25rem 0.5rem; border-radius: 6px; gap: 0.5rem;">
+                <span style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">#${pIdx + 1} - ${jobText}</span>
+                <div style="display: flex; gap: 0.2rem; align-items: center;">
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.1rem 0.25rem; min-width: 20px; line-height: 1;" ${isFirst ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveColonistPriority(${c.id}, ${pIdx}, -1)">🔼</button>
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.1rem 0.25rem; min-width: 20px; line-height: 1;" ${isLast ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveColonistPriority(${c.id}, ${pIdx}, 1)">🔽</button>
+                  <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.1rem 0.25rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; min-width: 20px; line-height: 1;" onclick="removeColonistPriority(${c.id}, ${pIdx})">🗑️</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
     html += `
       <div class="building-item" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; border-radius: 12px; background: rgba(0, 0, 0, 0.2); ${borderStyle}">
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
@@ -3415,11 +3577,10 @@ function renderColonistsDetailList() {
           
           <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">Trabajo:</span>
-              <select ${c.onMission ? 'disabled style="background:rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #888; border-radius: 6px; padding: 0.35rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; cursor: not-allowed;"' : 'style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.35rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; cursor: pointer;"'}
-                      onchange="changeColonistJobDirectly(${c.id}, this.value)">
-                ${optionsHtml}
-              </select>
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">⚡ Tarea Activa:</span>
+              <span style="font-size: 0.75rem; font-weight: bold; color: ${c.job ? '#4ade80' : '#888'}; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 0.2rem 0.4rem; border-radius: 4px;">
+                ${getJobLabel(c.job)} ${c.currentTask && c.currentTask.isFallback ? '<span style="font-size: 0.65rem; color: #facc15; font-weight: normal; margin-left: 0.15rem;">(Auto)</span>' : ''}
+              </span>
             </div>
             <button class="btn" 
                     ${c.onMission ? 'disabled style="font-size: 0.75rem; padding: 0.35rem 0.6rem; border: 1px solid rgba(128,128,128,0.2); color: #888; background: rgba(128,128,128,0.05); cursor: not-allowed; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; outline: none; box-shadow: none; opacity:0.5;"' : 'style="font-size: 0.75rem; padding: 0.35rem 0.6rem; border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; background: rgba(239, 68, 68, 0.05); cursor: pointer; border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; transition: background 0.2s, border-color 0.2s; outline: none; box-shadow: none;" onmouseover="this.style.background=\'rgba(239, 68, 68, 0.15)\'; this.style.borderColor=\'rgba(239, 68, 68, 0.5)\';" onmouseout="this.style.background=\'rgba(239, 68, 68, 0.05)\'; this.style.borderColor=\'rgba(239, 68, 68, 0.3)\';" onclick="dismissColonist(' + c.id + ')"'}
@@ -3433,12 +3594,55 @@ function renderColonistsDetailList() {
           <span style="color: var(--color-text-muted); align-self: center; margin-right: 0.3rem;">Atributos:</span>
           ${attrBadges}
         </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.5rem; margin-top: 0.2rem;">
+          <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">📋 Prioridades de Trabajo:</span>
+          ${prioritiesHtml}
+          ${c.onMission ? '' : `
+            <div style="display: flex; align-items: center; gap: 0.3rem; margin-top: 0.2rem; width: 100%;">
+              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; min-width: 45px;">Añadir:</span>
+              <select id="add-priority-select-${c.id}" style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem 0.4rem; font-family: var(--font-primary); font-size: 0.75rem; cursor: pointer; flex: 1;">
+                ${optionsHtml}
+              </select>
+              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; background: #3b82f6; border-color: #3b82f6; color: #fff;" onclick="handleAddColonistPriorityClick(${c.id})">
+                ➕ Añadir
+              </button>
+            </div>
+          `}
+        </div>
       </div>
     `;
   });
 
   container.innerHTML = html;
 }
+
+window.handleAddColonistPriorityClick = function(colonistId) {
+  const select = document.getElementById(`add-priority-select-${colonistId}`);
+  if (!select) return;
+  const val = select.value;
+  if (!val) return;
+  
+  const parts = val.split('_');
+  const taskType = parts[0];
+  const buildingIdx = parts[1] !== undefined ? parseInt(parts[1]) : null;
+  
+  const typeMapping = {
+    lumbermills: 'lumberMills',
+    quarries: 'quarries',
+    farms: 'farms',
+    markets: 'markets',
+    bonfires: 'bonfires',
+    granaries: 'granaries',
+    smithies: 'smithies',
+    forges: 'forges'
+  };
+  const finalTaskType = typeMapping[taskType] || taskType;
+  
+  if (typeof window.addColonistPriority === 'function') {
+    window.addColonistPriority(colonistId, finalTaskType, buildingIdx);
+  }
+};
 
 function renderColonistsSummaryJobs() {
   const container = document.getElementById('colonists-summary-jobs-container');
@@ -3862,6 +4066,183 @@ function renderWarehouses() {
   }
 }
 window.renderWarehouses = renderWarehouses;
+
+// ============================================================
+// PASO L - [MET-TALL]: Render Talleres del Herrero
+// ============================================================
+
+let lastSmithiesStatus = '';
+function renderSmithies() {
+  const container = document.getElementById('active-smithies-list');
+  if (!container) return;
+  const smithies = Array.isArray(state.smithies) ? state.smithies : [];
+  const tools = Array.isArray(state.tools) ? state.tools : [];
+
+  // Cache key — includes tools so it rerenders when tools change
+  const cacheKey = smithies.map(s =>
+    `${s.isUnderConstruction ? 'C' : ''}${s.isUpgrading ? 'U' : ''}${s.tier}_${s.selectedTool}_${s.workerAssigned}_${s.elapsed?.toFixed(1)}_${s.isWarehouseFull ? 'W' : ''}`
+  ).join(',') + '|' + tools.map(t =>
+    `${t.id}:${t.type}:${t.tier}:${t.durability?.toFixed(0)}:${t.assignedTo || '-'}`
+  ).join(',');
+
+  if (smithies.length === 0) {
+    container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Taller del Herrero construido</div>`;
+    lastSmithiesStatus = '';
+    return;
+  }
+  if (cacheKey === lastSmithiesStatus) return;
+  lastSmithiesStatus = cacheKey;
+
+  const toolNames = { axe: '🪓 Hacha', pickaxe: '⛏️ Pico', hoe: '🛠️ Azada', weapon: '⚔️ Arma' };
+  const toolOptions_t1 = [
+    { key: 'axe_t1',     label: '🪓 Hacha Madera T1 (🪵4)',   cost: '🪵 4 Madera' },
+    { key: 'pickaxe_t1', label: '⛏️ Pico Madera T1 (🪵5)',    cost: '🪵 5 Madera' },
+    { key: 'hoe_t1',     label: '🛠️ Azada Madera T1 (🪵3)',   cost: '🪵 3 Madera' },
+    { key: 'weapon_t1',  label: '⚔️ Arma Básica T1 (🪵6)',    cost: '🪵 6 Madera' }
+  ];
+  const toolOptions_t2 = [
+    { key: 'axe_t2',     label: '🪓 Hacha Hierro T2 (🔩2)',   cost: '🔩 2 Lingotes' },
+    { key: 'pickaxe_t2', label: '⛏️ Pico Hierro T2 (🔩2)',    cost: '🔩 2 Lingotes' },
+    { key: 'hoe_t2',     label: '🛠️ Azada Hierro T2 (🔩1)',   cost: '🔩 1 Lingote'  },
+    { key: 'weapon_t2',  label: '⚔️ Arma Hierro T2 (🔩3)',    cost: '🔩 3 Lingotes' }
+  ];
+
+  let html = '';
+  smithies.forEach((smithy, idx) => {
+    const tier = smithy.tier || 1;
+    const isBuilding = smithy.isUnderConstruction || smithy.isUpgrading;
+    if (isBuilding) {
+      const pct = Math.min(100, ((smithy.constructionElapsed || 0) / (smithy.constructionDuration || 1)) * 100).toFixed(0);
+      const label = smithy.isUpgrading ? 'Mejorando' : 'Construyendo';
+      html += `
+        <div class="building-box">
+          <div class="building-tier-badge">${label}</div>
+          <div class="building-box-header">
+            <span class="building-box-title">⚒️ Taller del Herrero #${idx + 1}</span>
+            <span class="building-box-prod">${label}... (${pct}%)</span>
+          </div>
+          <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+            <div class="progress-bar-fill" style="width: ${pct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+            <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${smithy.workerAssigned || 0} / 2 Constructores auto</span>
+            <div style="display: flex; gap: 0.25rem;">
+              <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #f87171;" onclick="destroyBuildingPrompt('smithies', ${idx})">🗑️</button>
+              ${(() => {
+                const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'smithies' && state.playerConstructing.index === idx;
+                const constructBtnText = isPlayerOnIt ? '⏸️ Pausar' : '🔨 Iniciar';
+                const constructBtnColor = isPlayerOnIt ? '#10b981' : '';
+                return `<button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; ${constructBtnColor ? `background: ${constructBtnColor}; border-color: ${constructBtnColor}; color: #fff;` : ''}" onclick="togglePlayerConstruct('smithies', ${idx})">${constructBtnText}</button>`;
+              })()}
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+    // Activo
+    const availOpts = tier >= 2 ? [...toolOptions_t1, ...toolOptions_t2] : toolOptions_t1;
+    const optionsHtml = availOpts.map(o =>
+      `<option value="${o.key}" ${smithy.selectedTool === o.key ? 'selected' : ''}>${o.label}</option>`
+    ).join('');
+    const craftTiming = CONFIG?.Timing?.['smithy_' + (smithy.selectedTool || 'axe_t1')]?.duration ?? 4;
+    const elapsedPct = Math.min(100, ((smithy.elapsed || 0) / craftTiming) * 100).toFixed(0);
+    const isWorking = (smithy.workerAssigned || 0) > 0;
+
+    html += `
+      <div class="building-box">
+        <div class="building-tier-badge">Tier ${tier}</div>
+        <div class="building-box-header">
+          <span class="building-box-title">⚒️ Taller del Herrero #${idx + 1}</span>
+          <span class="building-box-prod">${smithy.isWarehouseFull ? '<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>' : (isWorking ? '🔨 Fabricando...' : '⏸️ Sin trabajador')}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.4rem;">
+          <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+          ${renderBuildingWorkerDropdowns('smithies', idx, tier)}
+          <div style="margin-top: 0.35rem;">
+            <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">🔧 Fabricar:</span>
+            <select id="smithy-tool-select-${idx}"
+              style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.3rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; outline: none; cursor: pointer; width: 100%; margin-top: 0.2rem;"
+              onchange="setSmithyTool(${idx}, this.value)">
+              ${optionsHtml}
+            </select>
+          </div>
+          ${isWorking ? `
+          <div style="margin-top: 0.3rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--color-text-muted); margin-bottom: 0.2rem;">
+              <span>Progreso fabricación</span><span>${elapsedPct}%</span>
+            </div>
+            <div class="progress-bar-container" style="height: 5px;">
+              <div class="progress-bar-fill" style="width: ${elapsedPct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
+            </div>
+          </div>` : ''}
+        </div>
+        <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+          <span style="font-size: 0.7rem; color: #a5b4fc;">Nivel ${tier}</span>
+          <div style="display: flex; gap: 0.25rem;">
+            <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #f87171;" onclick="destroyBuildingPrompt('smithies', ${idx})">🗑️</button>
+            ${tier < 2 ? `<button class="btn btn-secondary" id="smithy-upgrade-btn-${idx}" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" onclick="upgradeSmithy(${idx})">Mejorar</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  // Inventario de herramientas
+  const freeTools = tools.filter(t => t.assignedTo === null && t.durability > 0);
+  const brokenTools = tools.filter(t => t.durability <= 0);
+  if (tools.length > 0) {
+    html += `
+      <div class="building-box" style="width: 100%; min-width: 280px;">
+        <div class="building-box-header">
+          <span class="building-box-title">🧰 Inventario de Herramientas (${tools.length})</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; max-height: 220px; overflow-y: auto;">
+          ${tools.length === 0 ? '<span style="font-size:0.8rem;color:var(--color-text-muted);">Ninguna herramienta fabricada</span>' : ''}
+          ${tools.map(t => {
+            const pct = Math.max(0, t.durability || 0);
+            const barColor = pct > 60 ? '#4ade80' : pct > 25 ? '#facc15' : '#f87171';
+            const isBroken = pct <= 0;
+            return `
+            <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.5rem; border: 1px solid ${isBroken ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.05)'};">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.8rem; font-weight: 600; color: ${isBroken ? '#f87171' : '#fff'};">
+                  ${toolNames[t.type] || t.type} T${t.tier}
+                  ${isBroken ? '<span style="color:#f87171; font-size:0.7rem;"> (Rota)</span>' : ''}
+                  ${t.assignedTo ? `<span style="color:#a78bfa; font-size:0.7rem;"> (en uso)</span>` : ''}
+                </span>
+                <span style="font-size: 0.7rem; color: ${barColor}; font-weight: 700;">${pct.toFixed(0)}%</span>
+              </div>
+              <div style="height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin: 0.25rem 0;">
+                <div style="height: 100%; width: ${pct}%; background: ${barColor}; border-radius: 2px; transition: width 0.3s;"></div>
+              </div>
+              ${isBroken ? `<button class="btn btn-danger" style="font-size:0.65rem; padding: 0.15rem 0.4rem; margin-top: 0.15rem; width: 100%;" onclick="discardTool('${t.id}')">🗑️ Descartar</button>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+window.renderSmithies = renderSmithies;
+
+function setSmithyTool(idx, toolKey) {
+  if (!state.smithies || !state.smithies[idx]) return;
+  state.smithies[idx].selectedTool = toolKey;
+  state.smithies[idx].elapsed = 0; // reset progress on tool change
+  updateUI();
+}
+window.setSmithyTool = setSmithyTool;
+
+function discardTool(toolId) {
+  if (!Array.isArray(state.tools)) return;
+  const idx = state.tools.findIndex(t => t.id === toolId);
+  if (idx !== -1 && state.tools[idx].durability <= 0) {
+    state.tools.splice(idx, 1);
+    showToast("🗑️ Herramienta rota descartada", "info");
+    updateUI();
+  }
+}
+window.discardTool = discardTool;
 
 function claimMissionReward(idx) {
   if (state.availableMissions && state.availableMissions[idx]) {
@@ -4858,6 +5239,100 @@ function renderTechTree() {
 }
 
 window.renderTechTree = renderTechTree;
+
+let lastForgesStatus = '';
+function renderForges() {
+  const container = document.getElementById('active-forges-list');
+  if (!container) return;
+  const forges = Array.isArray(state.forges) ? state.forges : [];
+
+  const cacheKey = forges.map(f =>
+    `${f.isUnderConstruction ? 'C' : ''}${f.isUpgrading ? 'U' : ''}${f.tier}_${f.workerAssigned}_${f.elapsed?.toFixed(1)}_${f.isWarehouseFull ? 'W' : ''}`
+  ).join(',');
+
+  if (forges.length === 0) {
+    container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ninguna Forja construida</div>`;
+    lastForgesStatus = '';
+    return;
+  }
+  if (cacheKey === lastForgesStatus) return;
+  lastForgesStatus = cacheKey;
+
+  let html = '';
+  forges.forEach((forge, idx) => {
+    const tier = forge.tier || 1;
+    const isBuilding = forge.isUnderConstruction || forge.isUpgrading;
+    if (isBuilding) {
+      const pct = Math.min(100, ((forge.constructionElapsed || 0) / (forge.constructionDuration || 1)) * 100).toFixed(0);
+      const label = forge.isUpgrading ? 'Mejorando' : 'Construyendo';
+      html += `
+        <div class="building-box">
+          <div class="building-tier-badge">${label}</div>
+          <div class="building-box-header">
+            <span class="building-box-title">⚙️ Forja #${idx + 1}</span>
+            <span class="building-box-prod">${label}... (${pct}%)</span>
+          </div>
+          <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+            <div class="progress-bar-fill" style="width: ${pct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+            <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${forge.workerAssigned || 0} / 2 Constructores auto</span>
+            <div style="display: flex; gap: 0.25rem;">
+              <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #f87171;" onclick="destroyBuildingPrompt('forges', ${idx})">🗑️</button>
+              ${(() => {
+                const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'forges' && state.playerConstructing.index === idx;
+                const constructBtnText = isPlayerOnIt ? '⏸️ Pausar' : '🔨 Iniciar';
+                const constructBtnColor = isPlayerOnIt ? '#10b981' : '';
+                return `<button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; ${constructBtnColor ? `background: ${constructBtnColor}; border-color: ${constructBtnColor}; color: #fff;` : ''}" onclick="togglePlayerConstruct('forges', ${idx})">${constructBtnText}</button>`;
+              })()}
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+    // Activo
+    const recipeKey = `forge_iron_t${tier}`;
+    const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+    const craftTiming = CONFIG?.Timing?.[recipeKey]?.duration ?? recipe?.duration ?? (tier === 1 ? 3 : 2);
+    const elapsedPct = Math.min(100, ((forge.elapsed || 0) / craftTiming) * 100).toFixed(0);
+    const isWorking = (forge.workerAssigned || 0) > 0;
+
+    html += `
+      <div class="building-box">
+        <div class="building-tier-badge">Tier ${tier}</div>
+        <div class="building-box-header">
+          <span class="building-box-title">⚙️ Forja #${idx + 1}</span>
+          <span class="building-box-prod">${forge.isWarehouseFull ? '<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>' : (isWorking ? '🔥 Fundiendo...' : '⏸️ Sin trabajador')}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.4rem;">
+          <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+          ${renderBuildingWorkerDropdowns('forges', idx, tier)}
+          <div style="margin-top: 0.35rem; font-size: 0.75rem; color: var(--color-text-muted);">
+             <span>Receta: Fundir Lingotes (${recipe ? `Consume ${recipe.consume_amount} Mineral` : 'T1: Consume 5, T2: Consume 4'})</span>
+          </div>
+          ${isWorking ? `
+          <div style="margin-top: 0.3rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--color-text-muted); margin-bottom: 0.2rem;">
+              <span>Progreso de fundido</span><span>${elapsedPct}%</span>
+            </div>
+            <div class="progress-bar-container" style="height: 5px;">
+              <div class="progress-bar-fill" style="width: ${elapsedPct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
+            </div>
+          </div>` : ''}
+        </div>
+        <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+          <span style="font-size: 0.7rem; color: #a5b4fc;">Nivel ${tier}</span>
+          <div style="display: flex; gap: 0.25rem;">
+            <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #f87171;" onclick="destroyBuildingPrompt('forges', ${idx})">🗑️</button>
+            ${tier < 2 ? `<button class="btn btn-secondary" id="forge-upgrade-btn-${idx}" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" onclick="upgradeForge(${idx})">Mejorar</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+}
+window.renderForges = renderForges;
 
 
 

@@ -431,6 +431,26 @@
               </div>
             </section>
 
+            <!-- Talleres del Herrero -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>⚒️ Talleres del Herrero</span>
+              </div>
+              <div id="active-smithies-list" class="building-boxes-container">
+                <!-- Cajas dinámicas (renderSmithies) -->
+              </div>
+            </section>
+
+            <!-- Forjas Activas -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>⚙️ Forjas Activas</span>
+              </div>
+              <div id="active-forges-list" class="building-boxes-container">
+                <!-- Cajas dinámicas (renderForges) -->
+              </div>
+            </section>
+
           </div>
         </div>
 
@@ -616,6 +636,42 @@
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-granaries">Construidos: 0</span>
                 <button class="btn btn-secondary" id="btn-build-granary">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Taller del Herrero -->
+            <div class="building-item" id="build-smithy-card">
+              <div class="building-info">
+                <span class="building-name">⚒️ Taller del Herrero</span>
+                <span class="building-desc">Fabrica herramientas de madera (T1) o hierro (T2). Sin hacha un aserradero no produce. Sin pico una cantera no produce.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" data-resource="wood" id="cost-smithy-wood">🪵 30 Madera</span>
+                  <span class="cost-badge" data-resource="stone" id="cost-smithy-stone">🪨 20 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-smithies">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-smithy">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Forja -->
+            <div class="building-item" id="build-forge-card">
+              <div class="building-info">
+                <span class="building-name">⚙️ Forja</span>
+                <span class="building-desc">Funde mineral de hierro en lingotes para fabricar herramientas avanzadas.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" data-resource="wood" id="cost-forge-wood">🪵 40 Madera</span>
+                  <span class="cost-badge" data-resource="stone" id="cost-forge-stone">🪨 60 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-forges">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-forge">
                   Construir
                 </button>
               </div>

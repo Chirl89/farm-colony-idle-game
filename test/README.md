@@ -85,6 +85,7 @@ Los estados posibles para cada prueba son: `PASS` | `FAIL` | `SKIP` | `PENDING`.
 | [test_REC-DESC_20260701_090100.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_REC-DESC_20260701_090100.csv) | Descartar recursos en recolección (PASO J.1) | 2026-07-01 | 5 PASS, 0 FAIL |
 | [test_ALM-REFA_20260701_070716.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_ALM-REFA_20260701_070716.csv) | Almacenes de dos tipos únicos (PASO J.2) | 2026-07-01 | 6 PASS, 0 FAIL |
 | [test_COM-TRIP_20260701_140400.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_COM-TRIP_20260701_140400.csv) | Comercio con tres pueblos y caravanas temporales (PASO J.3) | 2026-07-01 | 7 PASS, 0 FAIL |
-
-
-
+| [test_TEC-ARBOL_20260702_064548.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_TEC-ARBOL_20260702_064548.csv) | Árbol de tecnología (PASO K) | 2026-07-02 | 8 PASS, 0 FAIL |
+| [test_MET-TALL_20260703_085202.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_MET-TALL_20260703_085202.csv) | Herramientas + Herrero (PASO L) | 2026-07-03 | 9 PASS, 0 FAIL |
+| [test_MET-FORJA_20260706_122200.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_MET-FORJA_20260706_122200.csv) | Mineral de hierro + Forja (PASO M) | 2026-07-06 | 6 PASS, 0 FAIL |
+| [test_WORK-PRIO_20260707_090100.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_WORK-PRIO_20260707_090100.csv) | Prioridades de colonos (PASO N) | 2026-07-07 | 9 PASS, 0 FAIL |

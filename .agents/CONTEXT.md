@@ -1,5 +1,5 @@
 # CONTEXT.md — Estado actual del juego Aetheria
-> Actualizado: 2026-06-25. Leer esto ANTES de tocar ningún fichero de código.
+> Actualizado: 2026-07-03. Leer esto ANTES de tocar ningún fichero de código.
 > **Plan completo y backlog en `docs/plan.md` y `docs/backlog.md` (en git)**
 
 ---
@@ -19,6 +19,8 @@ gold, wood, stone, food (calculado)
 wheat, potato, carrot, berries         ← sub-alimentos crudos
 cooked_wheat, cooked_potato, cooked_carrot, cooked_berries  ← cocinados
 seeds: { wheat, potato, carrot }       ← semillas para granjas
+iron_bar                               ← Lingotes (PASO L, producidos por Forja futura)
+tools[]  ← {id, type:'axe'|'pickaxe'|'hoe'|'weapon', tier:1|2, durability:0-100, assignedTo: null | 'lumbermills_0'}
 ```
 
 ### Edificios en `state` (todos con array de objetos)
@@ -30,6 +32,7 @@ farms[]        ← {id, tier, workerAssigned, crop, stage, stageElapsed, activeC
 bonfires[]     ← {id, tier:1/2/3, workerAssigned, selectedRecipe, elapsed, isRunning}
 markets[]      ← {id, tier, workerAssigned, elapsed, isRunning}
 granaries[]    ← {id, tier, workerAssigned, selectedCrop, elapsed, isRunning, isUnderConstruction, ...}
+smithies[]     ← {id, tier:1/2, workerAssigned, selectedTool, elapsed, isUnderConstruction, isUpgrading, ...}
 townHall       ← {built, tier:1/2/3, isUpgrading, isUnderConstruction, workerAssigned}
 ```
 
@@ -174,11 +177,11 @@ Ver plan completo: `docs/plan.md`
 
 - **Paso A**: Tablón de pedidos + `state.reputation` + `state.orders`
 - **Paso C**: Sistema de misiones + `src/data/missiondata.csv` + colonos especialistas
-- **Paso E**: Herramientas + Taller del Herrero + `state.tools[]` + `state.smithies[]`
-- **Paso G**: Mineral de hierro + Forja + `state.iron` + `state.iron_bars` + `state.forges[]`
+- **Paso E**: ~~Herramientas + Taller del Herrero~~ ✅ COMPLETADO (PASO L)
+- **Paso G**: Mineral de hierro + Forja + `state.iron` + `state.forges[]`
 - **Paso I**: Ganadería + `state.animals[]` + `state.eggs/feathers/skins/fertilizer`
 - **Paso K**: Molino + `state.flour` + `state.bread` + `state.mills[]`
-- **Paso L**: Armería + `state.armories[]` + `state.equipment{}`
+- **Paso M**: Armería + `state.armories[]` + `state.equipment{}`
 - **Paso N**: Bandidos + `state.raids[]` + `state.defensePoints`
 - **Paso Q**: Panel dev (Ctrl+Shift+D) + `devSpeedMultiplier`
 - **Paso V**: Tutorial de primera partida

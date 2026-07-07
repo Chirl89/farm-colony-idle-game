@@ -1,0 +1,10 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Colono P1=fogata asignado a fogata;1 fogata 1 colono P1=fogata;Tick;currentTask=fogata;El colono se asignó a la fogata activa;PASS;Correcto
+U02;Unit;Colono pasa a P2 si P1 llena;P1=fogata llena P2=granja;Tick;currentTask=granja;El colono pasó a trabajar en la granja;PASS;Correcto
+U03;Unit;Colono idle si todas prioridades llenas;Todas ocupadas;Tick;currentTask=null;El colono quedó libre (Idle);PASS;Correcto
+U04;Unit;Sin prioridades colono idle;priorities=[];Tick;currentTask=null;El colono quedó libre (Idle);PASS;Correcto
+U05;Unit;Tasas de produccion correctas;2 colonos fogata;Ver rates;foodRate x2 vs 1 colono;Tasa de alimento es del doble;PASS;Correcto
+I01;Integracion;Produccion colonia correcta con prioridades;5 colonos 3 edificios;10 dias;Produccion similar a antes;La producción es estable;PASS;Correcto
+R01;Regresion;INF-POZO sigue funcionando;Pozo activo;Colono P1=granja;Granja avanza con agua;La granja progresa con el agua del pozo;PASS;Correcto
+R02;Regresion;COL-HAMBRE sigue funcionando;isStarving=true;Anadir comida;Come inmediatamente;El colono consume comida inmediatamente;PASS;Correcto
+R03;Regresion;CON-OBRA sigue funcionando;playerBuilding set;Intentar recolectar;Toast de error;Toast de bloqueo mostrado correctamente;PASS;Correcto

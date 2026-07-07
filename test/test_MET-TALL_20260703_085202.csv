@@ -1,0 +1,18 @@
+ID_Caso;Descripción;Acción;Resultado_Esperado;Resultado_Obtenido;OK
+TC01;Sin hacha asignada - aserradero no produce;Construir aserradero T1 con trabajador asignado. NO asignar hacha. Verificar producción de madera.;Producción de madera = 0 (sin herramienta);Pendiente verificación manual;-
+TC02;Con hacha T1 asignada - aserradero produce;Asignar una hacha T1 al aserradero #0. Esperar 1 día.;Producción de madera > 0 según stats de lumbermill_t1;Pendiente verificación manual;-
+TC03;Sin pico asignado - cantera no produce;Construir cantera T1 con trabajador. NO asignar pico. Verificar producción de piedra.;Producción de piedra = 0;Pendiente verificación manual;-
+TC04;Con pico T1 asignado - cantera produce;Asignar un pico T1 a la cantera #0. Esperar 1 día.;Producción de piedra > 0 según stats de quarry_t1;Pendiente verificación manual;-
+TC05;Herramienta se desgasta con el uso;Asignar hacha T1. Dejar pasar ~67 días de juego.;Durabilidad baja de 100 a 0. Herramienta se desasigna automáticamente con toast.;Pendiente verificación manual;-
+TC06;Fabricación en Taller - hacha T1 de madera;Construir Taller del Herrero (requiere tech improved_tools). Asignar 1 trabajador. Seleccionar Hacha T1. Esperar 4 días de juego.;Nueva Hacha T1 en state.tools con durabilidad 100;Pendiente verificación manual;-
+TC07;Herramienta T2 requiere hierro;Seleccionar Hacha T2 en el Taller T2. Sin lingotes de hierro.;Toast de warning: Sin lingotes para fabricar;Pendiente verificación manual;-
+TC08;Migración de partida existente;Cargar partida antigua sin smithies/tools en localStorage.;state.smithies=[], state.tools=[], state.iron_bar=0 inicializados correctamente;Pendiente verificación manual;-
+
+FICHEROS_MODIFICADOS
+gamestate.js;Añadido smithies[], tools[], iron_bar a DEFAULT_STATE + TOOL_REQUIREMENTS + migraciones en loadGame
+buildings.js;Añadido buildSmithy(), upgradeSmithy(), assignTool(), unassignTool() + smithies en autoAssignBuilders + destroyBuildingPrompt + togglePlayerConstruct
+gameloop.js;Smithies en buildingTypes loop + tool check en lumbermills/quarries + smithy production tick + tool wear tick
+ui-render.js;Añadido renderSmithies() + iron_bar en renderDetailedResourcesInventory + renderSmithies() en updateUI + btn state en updateButtonStates
+ui-events.js;btn-build-smithy listener + smithies en fixColonistAllocation + changeColonistJobDirectly
+index.html;Taller del Herrero en pestaña Construcción + section active-smithies-list en pestaña Producción
+data-loader.js;Añadida normalización de categorías Crafting, Tool, Water, Storage, Colonist, Economy, Raid, SpecialistTitle, Village, TierMult

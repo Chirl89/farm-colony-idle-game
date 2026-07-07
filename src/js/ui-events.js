@@ -219,7 +219,7 @@ function moveFoodPriority(idx, dir) {
   state.foodPriority[idx] = state.foodPriority[newIdx];
   state.foodPriority[newIdx] = temp;
   recalculateRates();
-  renderFoodPriorityList();
+  if (typeof window.renderFoodPriorityList === 'function') window.renderFoodPriorityList();
   updateUI();
 
   showToast("Prioridad de alimentación actualizada", "info");
@@ -332,6 +332,10 @@ function changeColonistJobDirectly(colonistId, newJobValue) {
       const idx = parseInt(finalJob.split('_')[1]);
       const b = state.markets[idx];
       maxWorkers = (b.isUnderConstruction || b.isUpgrading) ? 0 : 1;
+    } else if (finalJob.startsWith('smithies_')) {
+      const idx = parseInt(finalJob.split('_')[1]);
+      const b = state.smithies && state.smithies[idx];
+      maxWorkers = b ? ((b.isUnderConstruction || b.isUpgrading) ? 0 : (b.tier || 1)) : 1;
     } else {
       maxWorkers = Infinity;
     }
@@ -723,6 +727,10 @@ function initEventHandlers() {
   if (btnBuildGranary) btnBuildGranary.addEventListener('click', buildGranary);
   const btnBuildWell = document.getElementById('btn-build-well');
   if (btnBuildWell) btnBuildWell.addEventListener('click', buildWell);
+  const btnBuildSmithy = document.getElementById('btn-build-smithy');
+  if (btnBuildSmithy) btnBuildSmithy.addEventListener('click', buildSmithy);
+  const btnBuildForge = document.getElementById('btn-build-forge');
+  if (btnBuildForge) btnBuildForge.addEventListener('click', buildForge);
 
   const btnBuildWarehouseWood = document.getElementById('btn-build-wood-warehouse'); // O bien con id genérico
   const btnBuildWarehouseWoodReal = document.getElementById('btn-build-warehouse-wood');
@@ -782,7 +790,9 @@ function fixColonistAllocation() {
     { array: 'markets', prefix: 'markets' },
     { array: 'bonfires', prefix: 'bonfires' },
     { array: 'granaries', prefix: 'granaries' },
-    { array: 'houses', prefix: 'houses' }
+    { array: 'houses', prefix: 'houses' },
+    { array: 'smithies', prefix: 'smithies' },
+    { array: 'forges', prefix: 'forges' }
   ];
   
   buildingTypes.forEach(bt => {
@@ -799,34 +809,40 @@ function fixColonistAllocation() {
 }
 
 function assignColonistToBuildingSlot(type, index, slotIdx, newColonistId) {
-  const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
+  const taskType = type === 'townHall' ? 'townHall' : type;
   const cid = newColonistId === "" ? null : parseInt(newColonistId);
   
-  // Find currently assigned colonists to this jobString
+  const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
   const assigned = state.colonists.filter(c => c.job === jobString);
   const currentOccupant = assigned[slotIdx] || null;
   
   if (cid === null) {
     if (currentOccupant) {
-      currentOccupant.job = null;
+      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === taskType));
+      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
       showToast("Aldeano retirado del puesto", "info");
     }
   } else {
     const targetCol = state.colonists.find(c => c.id === cid);
     if (!targetCol) return;
     
-    targetCol.job = jobString;
+    targetCol.priorities = targetCol.priorities || [];
+    targetCol.priorities = targetCol.priorities.filter(p => !(p.taskType === taskType));
+    targetCol.priorities.unshift({ taskType, buildingIdx: null, weight: 1 });
+    targetCol.priorities.forEach((p, idx) => p.weight = idx + 1);
     
     if (currentOccupant && currentOccupant.id !== cid) {
-      currentOccupant.job = null;
+      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === taskType));
+      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
     }
     
     showToast(`Aldeano ${targetCol.name} asignado al puesto`, "success");
   }
   
-  fixColonistAllocation();
+  if (typeof window.resolveColonistsPriorities === 'function') window.resolveColonistsPriorities();
   recalculateRates();
   updateUI();
+  saveGame();
 }
 
 function assignBasicJobSlot(jobType, slotIdx, newColonistId) {
@@ -836,7 +852,8 @@ function assignBasicJobSlot(jobType, slotIdx, newColonistId) {
 
   if (cid === null) {
     if (currentOccupant) {
-      currentOccupant.job = null;
+      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === jobType));
+      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
       const jobName = jobType === 'wood' ? 'Leñador' : jobType === 'stone' ? 'Cantero' : 'Recolector de Frutos';
       showToast(`Aldeano retirado de ${jobName}`, "info");
     }
@@ -844,17 +861,24 @@ function assignBasicJobSlot(jobType, slotIdx, newColonistId) {
     const targetCol = state.colonists.find(c => c.id === cid);
     if (!targetCol) return;
     
-    targetCol.job = jobType;
+    targetCol.priorities = targetCol.priorities || [];
+    targetCol.priorities = targetCol.priorities.filter(p => !(p.taskType === jobType));
+    targetCol.priorities.unshift({ taskType: jobType, buildingIdx: null, weight: 1 });
+    targetCol.priorities.forEach((p, idx) => p.weight = idx + 1);
+    
     if (currentOccupant && currentOccupant.id !== cid) {
-      currentOccupant.job = null;
+      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === jobType));
+      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
     }
+    
     const jobName = jobType === 'wood' ? 'Leñador' : jobType === 'stone' ? 'Cantero' : 'Recolector de Frutos';
     showToast(`Aldeano ${targetCol.name} asignado a ${jobName}`, "success");
   }
 
-  fixColonistAllocation();
+  if (typeof window.resolveColonistsPriorities === 'function') window.resolveColonistsPriorities();
   recalculateRates();
   updateUI();
+  saveGame();
 }
 
 function changeColonistHouseDirectly(colonistId, newHouseIdxValue) {
@@ -1050,6 +1074,71 @@ Object.defineProperty(window, 'devModeActive', {
   }
 });
 
+function addColonistPriority(colonistId, taskType, buildingIdx) {
+  if (!state.colonists) return;
+  const col = state.colonists.find(c => c.id === colonistId);
+  if (!col) return;
+  
+  col.priorities = col.priorities || [];
+  
+  const exists = col.priorities.some(p => p.taskType === taskType && p.buildingIdx === buildingIdx);
+  if (exists) {
+    showToast("Esta prioridad ya está en la lista de este colono", "warning");
+    return;
+  }
+  
+  const weight = col.priorities.length + 1;
+  col.priorities.push({ taskType, buildingIdx, weight });
+  
+  if (typeof window.resolveColonistsPriorities === 'function') window.resolveColonistsPriorities();
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+function removeColonistPriority(colonistId, index) {
+  if (!state.colonists) return;
+  const col = state.colonists.find(c => c.id === colonistId);
+  if (!col || !col.priorities) return;
+  
+  col.priorities.splice(index, 1);
+  col.priorities.forEach((p, idx) => {
+    p.weight = idx + 1;
+  });
+  
+  if (typeof window.resolveColonistsPriorities === 'function') window.resolveColonistsPriorities();
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+function moveColonistPriority(colonistId, index, direction) {
+  if (!state.colonists) return;
+  const col = state.colonists.find(c => c.id === colonistId);
+  if (!col || !col.priorities) return;
+  
+  const priorities = col.priorities;
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= priorities.length) return;
+  
+  const temp = priorities[index];
+  priorities[index] = priorities[targetIndex];
+  priorities[targetIndex] = temp;
+  
+  priorities.forEach((p, idx) => {
+    p.weight = idx + 1;
+  });
+  
+  if (typeof window.resolveColonistsPriorities === 'function') window.resolveColonistsPriorities();
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+window.addColonistPriority = addColonistPriority;
+window.removeColonistPriority = removeColonistPriority;
+window.moveColonistPriority = moveColonistPriority;
+
 // INICIALIZACIÓN PRINCIPAL DEL JUEGO
 window.onload = async function() {
   // Inicializar referencias DOM
@@ -1075,6 +1164,6 @@ window.onload = async function() {
   switchSubTab(state.currentSubTab || 'viviendas');
   switchColonistsSubTab(state.currentColonistsSubTab || 'hire');
   switchMissionsSubTab(state.currentMissionsSubTab || 'orders');
-  renderFoodPriorityList();
+  if (typeof window.renderFoodPriorityList === 'function') window.renderFoodPriorityList();
   recalculateRates();
 };

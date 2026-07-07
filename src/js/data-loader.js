@@ -617,6 +617,16 @@ function parseCSV(csvText, fileName = '') {
     else if (currentCatLower === 'efficiencypenalty') category = 'EfficiencyPenalty';
     else if (currentCatLower === 'order') category = 'Order';
     else if (currentCatLower === 'tech') category = 'Tech';
+    else if (currentCatLower === 'crafting') category = 'Crafting';
+    else if (currentCatLower === 'tiermult') category = 'TierMult';
+    else if (currentCatLower === 'tool') category = 'Tool';
+    else if (currentCatLower === 'water') category = 'Water';
+    else if (currentCatLower === 'storage') category = 'Storage';
+    else if (currentCatLower === 'colonist') category = 'Colonist';
+    else if (currentCatLower === 'economy') category = 'Economy';
+    else if (currentCatLower === 'raid') category = 'Raid';
+    else if (currentCatLower === 'specialisttitle') category = 'SpecialistTitle';
+    else if (currentCatLower === 'village') category = 'Village';
     
     const type = columns[idxType] || '';
     const name = columns[idxName] || '';

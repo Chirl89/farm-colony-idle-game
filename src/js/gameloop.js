@@ -90,7 +90,7 @@ function feedColonistsMorning() {
     showToast("☀️ Los aldeanos han desayunado correctamente.", "success");
   }
   recalculateRates();
-  updateUI();
+  if (typeof updateUI === 'function') updateUI();
 }
 
 // Alimentar a los colonos por la noche (Cena)
@@ -119,7 +119,7 @@ function feedColonistsEvening() {
     showToast("🌙 Los aldeanos han cenado y se preparan para dormir.", "success");
   }
   recalculateRates();
-  updateUI();
+  if (typeof updateUI === 'function') updateUI();
 }
 
 function syncStateDurationsFromConfig() {
@@ -189,9 +189,68 @@ function syncStateDurationsFromConfig() {
   }
 }
 
+function autoAssignTools() {
+  if (!Array.isArray(state.tools)) return false;
+
+  const buildingsNeedTools = [
+    { type: 'lumberMills', stateKey: 'lumberMills', assignPrefix: 'lumbermills', toolType: 'axe' },
+    { type: 'quarries', stateKey: 'quarries', assignPrefix: 'quarries', toolType: 'pickaxe' },
+    { type: 'farms', stateKey: 'farms', assignPrefix: 'farms', toolType: 'hoe' }
+  ];
+
+  let changed = false;
+
+  buildingsNeedTools.forEach(spec => {
+    const list = state[spec.stateKey];
+    if (Array.isArray(list)) {
+      list.forEach((building, idx) => {
+        const assignKey = `${spec.assignPrefix}_${idx}`;
+        if (!building.isUnderConstruction && !building.isUpgrading && building.workerAssigned > 0) {
+          // ¿Tiene ya herramienta asignada y viva?
+          const currentTool = state.tools.find(t => t.assignedTo === assignKey && t.durability > 0);
+          if (!currentTool) {
+            // Si hay una herramienta asignada rota, la liberamos
+            const brokenTool = state.tools.find(t => t.assignedTo === assignKey);
+            if (brokenTool) {
+              brokenTool.assignedTo = null;
+              changed = true;
+            }
+
+            // Buscamos la mejor herramienta libre de este tipo (mejor tier, y en caso de empate, mayor durabilidad)
+            const freeTools = state.tools.filter(t => t.type === spec.toolType && t.assignedTo === null && t.durability > 0);
+            if (freeTools.length > 0) {
+              freeTools.sort((a, b) => {
+                if (b.tier !== a.tier) return b.tier - a.tier;
+                return b.durability - a.durability;
+              });
+              const bestTool = freeTools[0];
+              bestTool.assignedTo = assignKey;
+              changed = true;
+              console.log(`[AUTO TOOL] Assigned Tool ID ${bestTool.id} (${bestTool.type} T${bestTool.tier}) to ${assignKey}`);
+            }
+          }
+        } else {
+          // Liberar herramientas asignadas a edificios inactivos o sin trabajadores
+          const currentTool = state.tools.find(t => t.assignedTo === assignKey);
+          if (currentTool) {
+            currentTool.assignedTo = null;
+            changed = true;
+            console.log(`[AUTO TOOL] Released Tool ID ${currentTool.id} from ${assignKey} (no workers or building in progress)`);
+          }
+        }
+      });
+    }
+  });
+
+  return changed;
+}
+
 // Recalcular la tasa de cambio diario de recursos basada en asignaciones y eficiencia
 function recalculateRates() {
   if (!CONFIG || Object.keys(CONFIG).length === 0) return;
+  autoAssignTools();
+
+
   syncStateDurationsFromConfig();
   const dayDuration = CONFIG.Timing && CONFIG.Timing.day_duration ? CONFIG.Timing.day_duration.duration : 30.0;
   const nightDuration = CONFIG.Timing && CONFIG.Timing.night_duration ? CONFIG.Timing.night_duration.duration : 20.0;
@@ -199,6 +258,8 @@ function recalculateRates() {
   // Inicialización de variables para tasas nominales (medias), mínimas y máximas
   let woodRate = 0, woodRateMin = 0, woodRateMax = 0;
   let stoneRate = 0, stoneRateMin = 0, stoneRateMax = 0;
+  let ironRate = 0, ironRateMin = 0, ironRateMax = 0;
+  let iron_barRate = 0, iron_barRateMin = 0, iron_barRateMax = 0;
   let wheatRate = 0, wheatRateMin = 0, wheatRateMax = 0;
   let potatoRate = 0, potatoRateMin = 0, potatoRateMax = 0;
   let carrotRate = 0, carrotRateMin = 0, carrotRateMax = 0;
@@ -226,6 +287,11 @@ function recalculateRates() {
   if (state.lumberMills) {
     state.lumberMills.forEach((m, idx) => {
       if (m.workerAssigned > 0 && !m.isUnderConstruction && !m.isUpgrading) {
+        // PASO L: verificar hacha asignada
+        const assignKey = `lumbermills_${idx}`;
+        const tool = Array.isArray(state.tools) ? state.tools.find(t => t.assignedTo === assignKey && t.durability > 0) : null;
+        if (!tool) return; // sin hacha: producción 0
+
         const workers = state.colonists ? state.colonists.filter(c => c.job === `lumbermills_${idx}`) : [];
         let mult = 0;
         workers.forEach(c => {
@@ -264,6 +330,11 @@ function recalculateRates() {
   if (state.quarries) {
     state.quarries.forEach((q, idx) => {
       if (q.workerAssigned > 0 && !q.isUnderConstruction && !q.isUpgrading) {
+        // PASO L: verificar pico asignado
+        const assignKey = `quarries_${idx}`;
+        const tool = Array.isArray(state.tools) ? state.tools.find(t => t.assignedTo === assignKey && t.durability > 0) : null;
+        if (!tool) return; // sin pico: producción 0
+
         const workers = state.colonists ? state.colonists.filter(c => c.job === `quarries_${idx}`) : [];
         let mult = 0;
         workers.forEach(c => {
@@ -280,6 +351,11 @@ function recalculateRates() {
         stoneRate += (yieldVal / durationVal) * mult;
         stoneRateMin += (yieldMin / durationVal) * mult;
         stoneRateMax += (yieldMax / durationVal) * mult;
+
+        const ironRatio = CONFIG?.Mining?.iron_ore_ratio?.value ?? 5;
+        ironRate += ((yieldVal / durationVal) * mult) / ironRatio;
+        ironRateMin += ((yieldMin / durationVal) * mult) / ironRatio;
+        ironRateMax += ((yieldMax / durationVal) * mult) / ironRatio;
       }
     });
   }
@@ -398,6 +474,45 @@ function recalculateRates() {
           if (cropKey === 'wheat') { wheatRate -= consumeRate; wheatRateMin -= consumeRate; wheatRateMax -= consumeRate; }
           else if (cropKey === 'potato') { potatoRate -= consumeRate; potatoRateMin -= consumeRate; potatoRateMax -= consumeRate; }
           else if (cropKey === 'carrot') { carrotRate -= consumeRate; carrotRateMin -= consumeRate; carrotRateMax -= consumeRate; }
+        }
+      }
+    });
+  }
+
+  // Forjas (Forges)
+  if (state.forges) {
+    state.forges.forEach((forge, idx) => {
+      if ((forge.workerAssigned > 0 || forge.isRunning) && !forge.isUnderConstruction && !forge.isUpgrading) {
+        const tier = forge.tier || 1;
+        const recipeKey = `forge_iron_t${tier}`;
+        const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+        if (recipe) {
+          let mult = 0;
+          if (forge.workerAssigned > 0) {
+            const workers = state.colonists ? state.colonists.filter(c => c.job === `forges_${idx}`) : [];
+            workers.forEach(c => {
+              const lvl = c.attributes.mining || 3;
+              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+            });
+          } else if (forge.isRunning) {
+            mult = 1;
+          }
+          const duration = recipe.duration || (tier === 1 ? 3.0 : 2.0);
+          const consumeRate = (recipe.consume_amount / duration) * mult;
+          
+          const yieldMin = recipe.output_min !== undefined ? recipe.output_min : recipe.yield;
+          const yieldMax = recipe.output_max !== undefined ? recipe.output_max : recipe.yield;
+          const produceRate = (recipe.yield / duration) * mult;
+          const produceRateMin = (yieldMin / duration) * mult;
+          const produceRateMax = (yieldMax / duration) * mult;
+
+          ironRate -= consumeRate;
+          ironRateMin -= consumeRate;
+          ironRateMax -= consumeRate;
+
+          iron_barRate += produceRate;
+          iron_barRateMin += produceRateMin;
+          iron_barRateMax += produceRateMax;
         }
       }
     });
@@ -624,6 +739,8 @@ function recalculateRates() {
   calculatedRates.cooked_carrot = cooked_carrotRate * dayDuration;
   calculatedRates.cooked_berries = cooked_berriesRate * dayDuration;
   calculatedRates.gold = goldRate * dayDuration;
+  calculatedRates.iron = ironRate * dayDuration;
+  calculatedRates.iron_bar = iron_barRate * dayDuration;
 
   // Tasas de comida globales nominales
   let totalFoodRate = 0;
@@ -652,6 +769,8 @@ function recalculateRates() {
   window.calculatedRatesMin.cooked_carrot = cooked_carrotRateMin * dayDuration;
   window.calculatedRatesMin.cooked_berries = cooked_berriesRateMin * dayDuration;
   window.calculatedRatesMin.gold = goldRateMin * dayDuration;
+  window.calculatedRatesMin.iron = ironRateMin * dayDuration;
+  window.calculatedRatesMin.iron_bar = iron_barRateMin * dayDuration;
 
   let totalFoodRateMin = 0;
   foodKeys.forEach(key => {
@@ -677,6 +796,8 @@ function recalculateRates() {
   window.calculatedRatesMax.cooked_carrot = cooked_carrotRateMax * dayDuration;
   window.calculatedRatesMax.cooked_berries = cooked_berriesRateMax * dayDuration;
   window.calculatedRatesMax.gold = goldRateMax * dayDuration;
+  window.calculatedRatesMax.iron = ironRateMax * dayDuration;
+  window.calculatedRatesMax.iron_bar = iron_barRateMax * dayDuration;
 
   let totalFoodRateMax = 0;
   foodKeys.forEach(key => {
@@ -692,9 +813,227 @@ function recalculateRates() {
   if (typeof recalculateWaterMax === 'function') recalculateWaterMax();
 }
 
+function resolveColonistsPriorities() {
+  if (!state.colonists || !Array.isArray(state.colonists)) return;
+  
+  const occupiedSlots = {};
+  
+  const getBuildingMaxWorkers = (type, idx) => {
+    const list = state[type];
+    if (!list || !list[idx]) return 0;
+    const b = list[idx];
+    if (b.isUnderConstruction || b.isUpgrading) {
+      return 2;
+    }
+    if (type === 'houses') return 0;
+    if (type === 'farms') return 1;
+    if (type === 'granaries') return 1;
+    if (type === 'forges') return 1;
+    if (type === 'smithies') return b.tier || 1;
+    if (type === 'markets') return b.tier || 1;
+    if (type === 'bonfires') return 1;
+    return b.tier || 1;
+  };
+
+  const prefixMapping = {
+    lumberMills: 'lumbermills',
+    quarries: 'quarries',
+    farms: 'farms',
+    markets: 'markets',
+    bonfires: 'bonfires',
+    granaries: 'granaries',
+    smithies: 'smithies',
+    forges: 'forges'
+  };
+
+  const isBasicResourceFull = (taskType) => {
+    if (taskType === 'wood') {
+      const cap = (state.storageCapacity && state.storageCapacity.wood) ?? Infinity;
+      return (state.wood || 0) >= cap;
+    }
+    if (taskType === 'stone') {
+      const cap = (state.storageCapacity && state.storageCapacity.stone) ?? Infinity;
+      return (state.stone || 0) >= cap;
+    }
+    if (taskType === 'berries') {
+      const cap = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
+      const currentVal = typeof window.getFoodOccupation === 'function' ? window.getFoodOccupation() : 0;
+      return currentVal >= cap;
+    }
+    return false;
+  };
+
+  const findFallbackJob = () => {
+    const foodQty = (state.food || 0) + (state.cookedFood || 0);
+    const isFoodFull = isBasicResourceFull('berries');
+    if (foodQty <= 0 && !isFoodFull) {
+      return { job: 'berries', taskType: 'berries', buildingIdx: null };
+    }
+    
+    const buildingTypesOrder = ['farms', 'bonfires', 'lumberMills', 'quarries', 'smithies', 'forges', 'granaries', 'markets'];
+    for (const bType of buildingTypesOrder) {
+      const prefix = prefixMapping[bType];
+      const list = state[bType] || [];
+      const available = [];
+      list.forEach((b, idx) => {
+        if (!b.isUnderConstruction && !b.isUpgrading && !b.isPaused) {
+          const key = `${prefix}_${idx}`;
+          if (typeof isWarehouseFullForJob === 'function' && !isWarehouseFullForJob(key)) {
+            const max = getBuildingMaxWorkers(bType, idx);
+            const currentCount = occupiedSlots[key] || 0;
+            if (currentCount < max) {
+              available.push({ idx, currentCount });
+            }
+          }
+        }
+      });
+      if (available.length > 0) {
+        available.sort((a, b) => a.currentCount - b.currentCount);
+        const bestIdx = available[0].idx;
+        const key = `${prefix}_${bestIdx}`;
+        occupiedSlots[key] = (occupiedSlots[key] || 0) + 1;
+        return { job: key, taskType: bType, buildingIdx: bestIdx };
+      }
+    }
+    
+    if (!isBasicResourceFull('wood')) {
+      return { job: 'wood', taskType: 'wood', buildingIdx: null };
+    }
+    if (!isBasicResourceFull('stone')) {
+      return { job: 'stone', taskType: 'stone', buildingIdx: null };
+    }
+    if (!isFoodFull) {
+      return { job: 'berries', taskType: 'berries', buildingIdx: null };
+    }
+    
+    return null;
+  };
+
+  state.colonists.forEach(c => {
+    if (c.onMission) {
+      return;
+    }
+    
+    const sorted = [...(c.priorities || [])].sort((a, b) => (a.weight || 1) - (b.weight || 1));
+    
+    let assigned = false;
+    for (const priority of sorted) {
+      const { taskType } = priority;
+      if (!taskType) continue;
+      
+      if (['wood', 'stone', 'berries', 'construction'].includes(taskType)) {
+        if (taskType !== 'construction' && isBasicResourceFull(taskType)) {
+          continue;
+        }
+        c.currentTask = priority;
+        c.job = taskType;
+        assigned = true;
+        break;
+      }
+      
+      if (prefixMapping[taskType]) {
+        const prefix = prefixMapping[taskType];
+        const list = state[taskType] || [];
+        const available = [];
+        
+        list.forEach((b, idx) => {
+          if (!b.isUnderConstruction && !b.isUpgrading && !b.isPaused) {
+            const key = `${prefix}_${idx}`;
+            if (typeof isWarehouseFullForJob === 'function' && !isWarehouseFullForJob(key)) {
+              const max = getBuildingMaxWorkers(taskType, idx);
+              const currentCount = occupiedSlots[key] || 0;
+              if (currentCount < max) {
+                available.push({ idx, currentCount });
+              }
+            }
+          }
+        });
+        
+        if (available.length > 0) {
+          available.sort((a, b) => a.currentCount - b.currentCount);
+          const bestIdx = available[0].idx;
+          const key = `${prefix}_${bestIdx}`;
+          
+          c.currentTask = priority;
+          c.job = key;
+          occupiedSlots[key] = (occupiedSlots[key] || 0) + 1;
+          assigned = true;
+          break;
+        }
+      }
+    }
+    
+    if (!assigned) {
+      const fallback = findFallbackJob();
+      if (fallback) {
+        c.currentTask = { taskType: fallback.taskType, buildingIdx: fallback.buildingIdx, isFallback: true };
+        c.job = fallback.job;
+      } else {
+        c.currentTask = null;
+        c.job = null;
+      }
+    }
+  });
+
+  const buildingTypes = [
+    { key: 'lumberMills', prefix: 'lumbermills' },
+    { key: 'quarries', prefix: 'quarries' },
+    { key: 'farms', prefix: 'farms' },
+    { key: 'markets', prefix: 'markets' },
+    { key: 'bonfires', prefix: 'bonfires' },
+    { key: 'granaries', prefix: 'granaries' },
+    { key: 'smithies', prefix: 'smithies' },
+    { key: 'forges', prefix: 'forges' }
+  ];
+  
+  buildingTypes.forEach(bt => {
+    if (Array.isArray(state[bt.key])) {
+      state[bt.key].forEach(b => {
+        if (!b.isUnderConstruction && !b.isUpgrading) {
+          b.workerAssigned = 0;
+        }
+      });
+    }
+  });
+  
+  if (state.townHall && !state.townHall.isUnderConstruction && !state.townHall.isUpgrading) {
+    state.townHall.workerAssigned = 0;
+  }
+  
+  state.colonists.forEach(c => {
+    if (c.job) {
+      if (c.job === 'townHall') {
+        state.townHall.workerAssigned = (state.townHall.workerAssigned || 0) + 1;
+      } else {
+        const parts = c.job.split('_');
+        if (parts.length === 2) {
+          const type = parts[0];
+          const idx = parseInt(parts[1]);
+          const bt = buildingTypes.find(b => b.prefix === type);
+          if (bt && state[bt.key] && state[bt.key][idx]) {
+            const b = state[bt.key][idx];
+            if (!b.isUnderConstruction && !b.isUpgrading) {
+              b.workerAssigned = (b.workerAssigned || 0) + 1;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+window.resolveColonistsPriorities = resolveColonistsPriorities;
+
 // Bucle principal de simulación (corre cada 100ms)
 function gameTick() {
   if (!CONFIG || Object.keys(CONFIG).length === 0) return;
+  
+  resolveColonistsPriorities();
+  
+  if (autoAssignTools()) {
+    recalculateRates();
+    if (typeof updateUI === 'function') updateUI();
+  }
+
   
   const now = Date.now();
   const delta = 0.1; // 100ms
@@ -835,14 +1174,16 @@ function gameTick() {
       // 0. Progreso de construcción/mejora del Ayuntamiento
       if (state.townHall && (state.townHall.isUnderConstruction || state.townHall.isUpgrading) && !state.townHall.isPaused) {
         const isPlayerOnTH = state.playerConstructing && state.playerConstructing.type === 'townHall';
-        const playerSpeed = isPlayerOnTH ? 0.25 : 0.0;
+        const playerBuildSpeedCfg = CONFIG.Efficiency && CONFIG.Efficiency.player_build_speed ? CONFIG.Efficiency.player_build_speed.value : 0.25;
+        const playerSpeed = isPlayerOnTH ? playerBuildSpeedCfg : 0.0;
         
         let workerSpeed = 0.0;
         if (isDay && state.townHall.builders && state.townHall.builders.length > 0) {
+          const workerBuildSpeedCfg = CONFIG.Efficiency && CONFIG.Efficiency.worker_build_speed ? CONFIG.Efficiency.worker_build_speed.value : 0.5;
           state.townHall.builders.forEach(bid => {
             const col = state.colonists.find(c => c.id === bid);
             const lvl = col ? (col.attributes.construction || 3) : 3;
-            workerSpeed += 0.5 * getAttributeMult(lvl) * getColonistEfficiency(col);
+            workerSpeed += workerBuildSpeedCfg * getAttributeMult(lvl) * getColonistEfficiency(col);
           });
         }
         
@@ -890,7 +1231,9 @@ function gameTick() {
         { key: 'markets', name: 'Puesto de Mercado', defaultDuration: 5 },
         { key: 'granaries', name: 'Granero', defaultDuration: 5 },
         { key: 'wells', name: 'Pozo', defaultDuration: 5 },
-        { key: 'warehouses', name: 'Almacén', defaultDuration: 20 }
+        { key: 'warehouses', name: 'Almacén', defaultDuration: 20 },
+        { key: 'smithies', name: 'Taller del Herrero', defaultDuration: 5040 },
+        { key: 'forges', name: 'Forja', defaultDuration: 5040 }
       ];
 
       buildingTypes.forEach(bt => {
@@ -898,14 +1241,16 @@ function gameTick() {
           state[bt.key].forEach((building, idx) => {
             if ((building.isUnderConstruction || building.isUpgrading) && !building.isPaused) {
               const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === bt.key && state.playerConstructing.index === idx;
-              const playerSpeed = isPlayerOnIt ? 0.25 : 0.0;
+              const playerBuildSpeedCfg = CONFIG.Efficiency && CONFIG.Efficiency.player_build_speed ? CONFIG.Efficiency.player_build_speed.value : 0.25;
+              const playerSpeed = isPlayerOnIt ? playerBuildSpeedCfg : 0.0;
               
               let workerSpeed = 0.0;
               if (isDay && building.builders && building.builders.length > 0) {
+                const workerBuildSpeedCfg = CONFIG.Efficiency && CONFIG.Efficiency.worker_build_speed ? CONFIG.Efficiency.worker_build_speed.value : 0.5;
                 building.builders.forEach(bid => {
                   const col = state.colonists.find(c => c.id === bid);
                   const lvl = col ? (col.attributes.construction || 3) : 3;
-                  workerSpeed += 0.5 * getAttributeMult(lvl) * getColonistEfficiency(col);
+                  workerSpeed += workerBuildSpeedCfg * getAttributeMult(lvl) * getColonistEfficiency(col);
                 });
               }
               
@@ -1018,7 +1363,17 @@ function gameTick() {
 
       if (Array.isArray(state.lumberMills)) {
         state.lumberMills.forEach((b, idx) => {
+          b.isWarehouseFull = false;
           if (b.workerAssigned > 0 && !b.isUnderConstruction && !b.isUpgrading) {
+            const assignKey = `lumbermills_${idx}`;
+            if (isWarehouseFullForJob(assignKey)) {
+              b.isWarehouseFull = true;
+              return;
+            }
+            // PASO L: verificar hacha asignada
+            const tool = Array.isArray(state.tools) ? state.tools.find(t => t.assignedTo === assignKey && t.durability > 0) : null;
+            if (!tool) return; // sin hacha: producción 0
+
             const workers = state.colonists ? state.colonists.filter(c => c.job === `lumbermills_${idx}`) : [];
             let mult = 0;
             workers.forEach(c => {
@@ -1042,7 +1397,17 @@ function gameTick() {
       
       if (Array.isArray(state.quarries)) {
         state.quarries.forEach((b, idx) => {
+          b.isWarehouseFull = false;
           if (b.workerAssigned > 0 && !b.isUnderConstruction && !b.isUpgrading) {
+            const assignKey = `quarries_${idx}`;
+            if (isWarehouseFullForJob(assignKey)) {
+              b.isWarehouseFull = true;
+              return;
+            }
+            // PASO L: verificar pico asignado
+            const tool = Array.isArray(state.tools) ? state.tools.find(t => t.assignedTo === assignKey && t.durability > 0) : null;
+            if (!tool) return; // sin pico: producción 0
+
             const workers = state.colonists ? state.colonists.filter(c => c.job === `quarries_${idx}`) : [];
             let mult = 0;
             workers.forEach(c => {
@@ -1060,17 +1425,109 @@ function gameTick() {
             const stonePassive = ((finalYield * mult) / quarryDuration) * effectiveDelta;
             const added = addResourceStock('stone', stonePassive);
             resourcesGeneratedThisSecond.stone += added;
+
+            const ironRatio = CONFIG?.Mining?.iron_ore_ratio?.value ?? 5;
+            const ironPassive = stonePassive / ironRatio;
+            const addedIron = addResourceStock('iron', ironPassive);
+            resourcesGeneratedThisSecond.iron = (resourcesGeneratedThisSecond.iron || 0) + addedIron;
           }
         });
       }
 
+      // PASO L - [MET-TALL]: Producción de herramientas en Talleres
+      if (Array.isArray(state.smithies)) {
+        state.smithies.forEach((smithy, idx) => {
+          smithy.isWarehouseFull = false;
+          if (smithy.isUnderConstruction || smithy.isUpgrading || !smithy.workerAssigned) return;
+          const assignKey = `smithies_${idx}`;
+          if (isWarehouseFullForJob(assignKey)) {
+            smithy.isWarehouseFull = true;
+            return;
+          }
+          const toolKey = smithy.selectedTool || 'axe_t1';
+          const timingKey = `smithy_${toolKey.replace('_t1','_t1').replace('_t2','_t2')}`;
+          // Map selectedTool → production timing key
+          const timingId = 'smithy_' + toolKey; // e.g. smithy_axe_t1
+          const craftDuration = CONFIG?.Timing?.[timingId]?.duration ?? 4;
+          const craftCfg = CONFIG?.Crafting?.[`smithy_${toolKey}`];
+          const woodCost = craftCfg ? (craftCfg.input_amt || craftCfg.consume_amount || 4) : 4;
+          const ironCost = toolKey.endsWith('_t2') ? (craftCfg ? (craftCfg.input_amt || 2) : 2) : 0;
 
+          smithy.elapsed = (smithy.elapsed || 0) + effectiveDelta / dayDuration;
 
+          if (smithy.elapsed >= craftDuration) {
+            smithy.elapsed = 0;
+            // Verificar materiales
+            const isT2 = toolKey.endsWith('_t2');
+            const matResource = isT2 ? 'iron_bar' : 'wood';
+            const matCost = isT2 ? ironCost : woodCost;
+            if ((state[matResource] || 0) < matCost) {
+              showToast(`⚠️ Sin ${matResource === 'wood' ? 'madera' : 'lingotes'} para fabricar en Taller #${idx + 1}`, "warning");
+              return;
+            }
+            state[matResource] -= matCost;
+            // Extraer tipo y tier de la herramienta
+            const parts = toolKey.split('_'); // e.g. ['axe', 't1']
+            const toolType = parts[0]; // 'axe', 'pickaxe', 'hoe', 'weapon'
+            const toolTier = parseInt((parts[1] || 't1').replace('t', '')) || 1;
+            const newTool = {
+              id: `tool_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+              type: toolType,
+              tier: toolTier,
+              durability: 100,
+              assignedTo: null
+            };
+            state.tools.push(newTool);
+            const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
+            showToast(`🔨 Nueva ${toolNames[toolType] || toolType} T${toolTier} fabricada en Taller #${idx + 1}!`, "success");
+            recalculateRates();
+            if (typeof updateUI === 'function') updateUI();
+          }
+        });
+      }
+
+      // PASO L - [MET-TALL]: Desgaste de herramientas asignadas
+      if (Array.isArray(state.tools)) {
+        const wearT1 = CONFIG?.Tool?.durability_loss_t1?.value ?? 1.5;
+        const wearT2 = CONFIG?.Tool?.durability_loss_t2?.value ?? 0.8;
+        let toolBroke = false;
+        state.tools.forEach(tool => {
+          if (tool.assignedTo !== null && tool.durability > 0) {
+            if (isWarehouseFullForJob(tool.assignedTo)) {
+              return;
+            }
+            const wearRate = (tool.tier || 1) >= 2 ? wearT2 : wearT1;
+            const deltaWear = wearRate * (effectiveDelta / dayDuration);
+            tool.durability -= deltaWear;
+            
+            // Log de depuración para ver el desgaste en consola
+            console.log(`[DEBUG WEAR] Tool ID: ${tool.id}, Type: ${tool.type}, Durability: ${tool.durability.toFixed(3)}% (-${deltaWear.toFixed(5)}%)`);
+            
+            if (tool.durability <= 0) {
+              tool.durability = 0;
+              tool.assignedTo = null;
+              toolBroke = true;
+              const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
+              showToast(`⚠️ ${toolNames[tool.type] || 'Herramienta'} T${tool.tier} rota y desasignada`, "warning");
+            }
+          }
+        });
+        if (toolBroke) {
+          recalculateRates();
+          if (typeof updateUI === 'function') updateUI();
+        }
+      }
 
     // 3b. Procesamiento en Hogueras/Ollas/Cocinas
     if (Array.isArray(state.bonfires)) {
       state.bonfires.forEach((bonfire, idx) => {
+        bonfire.isWarehouseFull = false;
         const hasWorker = bonfire.workerAssigned > 0;
+        const assignKey = `bonfires_${idx}`;
+        if (isWarehouseFullForJob(assignKey)) {
+          bonfire.isWarehouseFull = true;
+          return;
+        }
         
         let autoRec, manualRec;
         if (bonfire.tier === 1) {
@@ -1205,7 +1662,7 @@ function gameTick() {
             const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
             const seedType = runningCrop; 
             addResourceStock(seedType + '_seeds', produced);
-            updateUI();
+            if (typeof updateUI === 'function') updateUI();
             
             const cropNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
             showToast(`🌾 Granero #${idx + 1} produjo +${produced} Semillas de ${cropNames[seedType] || seedType}`, "success");
@@ -1219,10 +1676,83 @@ function gameTick() {
       });
     }
 
+    // PASO M - [MET-FORJA]: Procesamiento en Forjas
+    if (Array.isArray(state.forges)) {
+      state.forges.forEach((forge, idx) => {
+        forge.isWarehouseFull = false;
+        if (forge.isUnderConstruction || forge.isUpgrading) return;
+        const assignKey = `forges_${idx}`;
+        if (isWarehouseFullForJob(assignKey)) {
+          forge.isWarehouseFull = true;
+          return;
+        }
+
+        const hasWorker = forge.workerAssigned > 0;
+        const tier = forge.tier || 1;
+        const recipeKey = `forge_iron_t${tier}`;
+        const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+
+        if (!recipe) return;
+
+        // Auto-iniciar si tiene trabajadores y no está corriendo
+        if (!forge.isRunning && hasWorker) {
+          const minIron = recipe.consume_amount || recipe.input_amt || 5;
+          const consumeRes = recipe.consume_type || recipe.input || 'iron';
+          if ((state[consumeRes] || 0) >= minIron) {
+            state[consumeRes] -= minIron;
+            forge.elapsed = 0;
+            forge.isRunning = true;
+            forge.mode = 'auto';
+            recalculateRates();
+          }
+        }
+
+        // Progress ticking
+        if (forge.isRunning) {
+          let speedMultiplier = 1;
+          if (forge.mode === 'auto') {
+            const workers = state.colonists ? state.colonists.filter(c => c.job === `forges_${idx}`) : [];
+            let mult = 0;
+            workers.forEach(c => {
+              const lvl = c.attributes.mining || 3;
+              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+            });
+            speedMultiplier = mult;
+          }
+          forge.elapsed += (effectiveDelta / dayDuration) * speedMultiplier;
+
+          const craftTiming = CONFIG?.Timing?.[recipeKey]?.duration ?? recipe.duration ?? (tier === 1 ? 3 : 2);
+          if (forge.elapsed >= craftTiming) {
+            forge.isRunning = false;
+            forge.elapsed = 0;
+
+            const yieldMin = recipe.output_min !== undefined ? recipe.output_min : (recipe.yield || 1);
+            const yieldMax = recipe.output_max !== undefined ? recipe.output_max : (recipe.yield || 1);
+            const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+
+            const outRes = recipe.yield_type || recipe.output || 'iron_bar';
+            const addedIronBar = addResourceStock(outRes, produced);
+            resourcesGeneratedThisSecond.iron_bar = (resourcesGeneratedThisSecond.iron_bar || 0) + addedIronBar;
+
+            showToast(`🔩 Forja #${idx + 1} produjo +${produced} Lingote de Hierro`, "success");
+
+            forge.mode = 'none';
+            recalculateRates();
+            if (typeof updateUI === 'function') updateUI();
+          }
+        }
+      });
+    }
+
   // Progreso de agricultura en Granjas (Corre de día y de noche)
-  if (Array.isArray(state.farms)) {
-    state.farms.forEach((farm, idx) => {
-      // Si el cultivo no empieza por falta de semillas, se inicia automáticamente cuando haya semillas disponibles
+    if (Array.isArray(state.farms)) {
+      state.farms.forEach((farm, idx) => {
+        farm.isWarehouseFull = false;
+        if (isWarehouseFullForJob(`farms_${idx}`)) {
+          farm.isWarehouseFull = true;
+          return;
+        }
+        // Si el cultivo no empieza por falta de semillas, se inicia automáticamente cuando haya semillas disponibles
       if (farm.stage === 'idle' && !farm.isUnderConstruction && farm.crop) {
         if (!state.seeds) state.seeds = { wheat: 0, potato: 0, carrot: 0 };
         const nextCropKey = farm.crop;

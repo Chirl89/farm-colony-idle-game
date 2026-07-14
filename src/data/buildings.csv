@@ -46,6 +46,11 @@ Building;granary;Granero;1;1;0;50;30;0;0;farming;0
 Upgrade;granary_t2;Mejorar Granero T2;2;2;80;80;50;0;0;farming;0
 Upgrade;granary_t3;Mejorar Granero T3;3;3;150;120;80;0;0;farming;0
 ;;;;;;;;;;;
+Building;corral;Corral de Ganado;1;1;0;40;60;0;0;farming;0
+Upgrade;corral_t2;Mejorar Corral T2;2;2;80;100;40;0;0;farming;0
+Upgrade;corral_t3;Mejorar Corral T3;3;3;150;180;80;0;0;farming;0
+;;;;;;;;;;;
+;;;;;;;;;;;
 Building;bonfire;Fogata;1;1;0;40;20;0;0;cooking;0
 Upgrade;bonfire_t2;Mejorar a Caldero;2;1;50;0;30;0;0;cooking;0
 Upgrade;bonfire_t3;Mejorar a Cocina de Taberna;3;2;100;50;0;0;0;cooking;0

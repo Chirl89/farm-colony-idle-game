@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+    window.errors = [];
+    window.onerror = function(message, source, lineno, colno, error) {
+        var errStr = message + ' at ' + source + ' line ' + lineno + ':' + colno;
+        window.errors.push(errStr);
+        return false;
+    };
+  </script>
+  <script src="src/js/utils.js"></script>
+  <script src="src/js/data-loader.js"></script>
+  <script src="src/js/gamestate.js"></script>
+  <script src="src/js/buildings.js"></script>
+  <script src="src/js/gameloop.js"></script>
+  <script src="src/js/ui-render.js"></script>
+  <script src="src/js/ui-events.js"></script>
+</head>
+<body>
+  <h1>Testing</h1>
+</body>
+</html>

@@ -132,6 +132,23 @@ SpecialistTitle;construction;Maestro Constructor,Edificador Experto,Veterano de 
 # MINERÍA — Parámetros de canteras;;;;
 # ============================================================;;;;
 Mining;iron_ore_ratio;Piedra por mineral de hierro;5;Cada 5 piedras producidas en canteras, se produce 1 mineral de hierro
+;;;;
+# ============================================================;;;;
+# SLOTS DE EDIFICIOS (Paso P) — Slots y bonus por tier;;;;
+# ============================================================;;;;
+BuildingSlots;bonfire_t1_slots;Slots Fogata T1;1;
+BuildingSlots;bonfire_t2_slots;Slots Caldero T2;2;
+BuildingSlots;bonfire_t3_slots;Slots Cocina T3;2;
+BuildingSlots;bonfire_t3_speed;Velocidad Cocina T3;0.3;+30% velocidad
+BuildingSlots;granary_t1_slots;Slots Granero T1;1;
+BuildingSlots;granary_t2_slots;Slots Granero T2;2;
+BuildingSlots;granary_t3_slots;Slots Granero T3;2;
+BuildingSlots;granary_t3_speed;Velocidad Granero T3;0.3;+30% velocidad
+BuildingSlots;smithy_t1_slots;Slots Taller T1;1;
+BuildingSlots;smithy_t2_slots;Slots Taller T2;2;
+BuildingSlots;mill_t1_slots;Slots Molino T1;1;
+BuildingSlots;mill_t2_slots;Slots Molino T2;2;
+BuildingSlots;armory_t1_slots;Slots Armeria T1;1;
 
 
 

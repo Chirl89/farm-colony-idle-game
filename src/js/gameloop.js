@@ -58,11 +58,40 @@ function tryFeedColonist(colonist) {
   return remainingValue <= 0;
 }
 
+function feedAnimalsDaily() {
+  if (!state.animals || state.animals.length === 0) return;
+  
+  let starvedCount = 0;
+  state.animals.forEach(a => {
+    const def = ANIMAL_TYPES[a.type];
+    if (!def) return;
+    const dailyCost = def.foodCost;
+    
+    if ((state.pienso || 0) >= dailyCost) {
+      state.pienso -= dailyCost;
+      a.fedToday = true;
+    } else {
+      a.fedToday = false;
+      starvedCount++;
+    }
+  });
+  
+  if (starvedCount > 0) {
+    showToast(`⚠️ ${starvedCount} animales no pudieron alimentarse hoy por falta de pienso.`, "warning");
+  } else {
+    showToast("🌾 Todos los animales han sido alimentados con pienso.", "success");
+  }
+}
+
 // Alimentar a los colonos por la mañana (Desayuno)
 function feedColonistsMorning() {
   state.waterToday = state.waterMax;
 
   const total = state.colonists ? state.colonists.length : 0;
+  
+  // Alimentar animales primero
+  feedAnimalsDaily();
+
   if (total <= 0) {
     state.fedCookedToday = 0;
     state.fedRawToday = 0;
@@ -96,6 +125,12 @@ function feedColonistsMorning() {
 // Alimentar a los colonos por la noche (Cena)
 function feedColonistsEvening() {
   const total = state.colonists ? state.colonists.length : 0;
+  
+  // Resetear alimentación de animales al anochecer
+  if (state.animals) {
+    state.animals.forEach(a => a.fedToday = false);
+  }
+
   if (total <= 0) {
     updateStarvingColonists(0);
     return;
@@ -268,6 +303,9 @@ function recalculateRates() {
   let cooked_potatoRate = 0, cooked_potatoRateMin = 0, cooked_potatoRateMax = 0;
   let cooked_carrotRate = 0, cooked_carrotRateMin = 0, cooked_carrotRateMax = 0;
   let cooked_berriesRate = 0, cooked_berriesRateMin = 0, cooked_berriesRateMax = 0;
+  let flourRate = 0, flourRateMin = 0, flourRateMax = 0;
+  let breadRate = 0, breadRateMin = 0, breadRateMax = 0;
+  let stewRate = 0, stewRateMin = 0, stewRateMax = 0;
 
   // 1. Madera (Wood)
   if (CONFIG.BasicGathering && CONFIG.BasicGathering.wood_auto) {
@@ -425,25 +463,109 @@ function recalculateRates() {
             mult = 1;
           }
           const recipe = b.isRunning ? (b.activeRecipe || b.selectedRecipe || 'wheat') : (b.selectedRecipe || 'wheat');
-          const cookedDish = 'cooked_' + recipe;
           
-          const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
-          const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
+          if (recipe === 'bread') {
+            const recipeCfg = CONFIG.Processing && CONFIG.Processing.recipe_bread;
+            if (recipeCfg) {
+              const consumeRate = (recipeCfg.input_amt / rec.duration) * mult;
+              const rMin = recipeCfg.output_min !== undefined ? recipeCfg.output_min : recipeCfg.yield;
+              const rMax = recipeCfg.output_max !== undefined ? recipeCfg.output_max : recipeCfg.yield;
+              const produceRate = (recipeCfg.yield / rec.duration) * mult;
+              const produceRateMin = (rMin / rec.duration) * mult;
+              const produceRateMax = (rMax / rec.duration) * mult;
 
-          const consumeRate = (rec.consume_amount / rec.duration) * mult;
-          const produceRate = (rec.yield / rec.duration) * mult;
-          const produceRateMin = (yieldMin / rec.duration) * mult;
-          const produceRateMax = (yieldMax / rec.duration) * mult;
+              flourRate -= consumeRate;
+              flourRateMin -= consumeRate;
+              flourRateMax -= consumeRate;
 
-          if (recipe === 'wheat') { wheatRate -= consumeRate; wheatRateMin -= consumeRate; wheatRateMax -= consumeRate; }
-          else if (recipe === 'potato') { potatoRate -= consumeRate; potatoRateMin -= consumeRate; potatoRateMax -= consumeRate; }
-          else if (recipe === 'carrot') { carrotRate -= consumeRate; carrotRateMin -= consumeRate; carrotRateMax -= consumeRate; }
-          else if (recipe === 'berries') { berriesRate -= consumeRate; berriesRateMin -= consumeRate; berriesRateMax -= consumeRate; }
+              breadRate += produceRate;
+              breadRateMin += produceRateMin;
+              breadRateMax += produceRateMax;
+            }
+          } else if (recipe === 'stew') {
+            const recipeCfg = CONFIG.Processing && CONFIG.Processing.recipe_stew;
+            if (recipeCfg) {
+              const consumeRate = (recipeCfg.input_amt / rec.duration) * mult;
+              const rMin = recipeCfg.output_min !== undefined ? recipeCfg.output_min : recipeCfg.yield;
+              const rMax = recipeCfg.output_max !== undefined ? recipeCfg.output_max : recipeCfg.yield;
+              const produceRate = (recipeCfg.yield / rec.duration) * mult;
+              const produceRateMin = (rMin / rec.duration) * mult;
+              const produceRateMax = (rMax / rec.duration) * mult;
 
-          if (cookedDish === 'cooked_wheat') { cooked_wheatRate += produceRate; cooked_wheatRateMin += produceRateMin; cooked_wheatRateMax += produceRateMax; }
-          else if (cookedDish === 'cooked_potato') { cooked_potatoRate += produceRate; cooked_potatoRateMin += produceRateMin; cooked_potatoRateMax += produceRateMax; }
-          else if (cookedDish === 'cooked_carrot') { cooked_carrotRate += produceRate; cooked_carrotRateMin += produceRateMin; cooked_carrotRateMax += produceRateMax; }
-          else if (cookedDish === 'cooked_berries') { cooked_berriesRate += produceRate; cooked_berriesRateMin += produceRateMin; cooked_berriesRateMax += produceRateMax; }
+              potatoRate -= consumeRate;
+              potatoRateMin -= consumeRate;
+              potatoRateMax -= consumeRate;
+
+              carrotRate -= consumeRate;
+              carrotRateMin -= consumeRate;
+              carrotRateMax -= consumeRate;
+
+              stewRate += produceRate;
+              stewRateMin += produceRateMin;
+              stewRateMax += produceRateMax;
+            }
+          } else {
+            const cookedDish = 'cooked_' + recipe;
+            const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
+            const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
+
+            const consumeRate = (rec.consume_amount / rec.duration) * mult;
+            const produceRate = (rec.yield / rec.duration) * mult;
+            const produceRateMin = (yieldMin / rec.duration) * mult;
+            const produceRateMax = (yieldMax / rec.duration) * mult;
+
+            if (recipe === 'wheat') { wheatRate -= consumeRate; wheatRateMin -= consumeRate; wheatRateMax -= consumeRate; }
+            else if (recipe === 'potato') { potatoRate -= consumeRate; potatoRateMin -= consumeRate; potatoRateMax -= consumeRate; }
+            else if (recipe === 'carrot') { carrotRate -= consumeRate; carrotRateMin -= consumeRate; carrotRateMax -= consumeRate; }
+            else if (recipe === 'berries') { berriesRate -= consumeRate; berriesRateMin -= consumeRate; berriesRateMax -= consumeRate; }
+
+            if (cookedDish === 'cooked_wheat') { cooked_wheatRate += produceRate; cooked_wheatRateMin += produceRateMin; cooked_wheatRateMax += produceRateMax; }
+            else if (cookedDish === 'cooked_potato') { cooked_potatoRate += produceRate; cooked_potatoRateMin += produceRateMin; cooked_potatoRateMax += produceRateMax; }
+            else if (cookedDish === 'cooked_carrot') { cooked_carrotRate += produceRate; cooked_carrotRateMin += produceRateMin; cooked_carrotRateMax += produceRateMax; }
+            else if (cookedDish === 'cooked_berries') { cooked_berriesRate += produceRate; cooked_berriesRateMin += produceRateMin; cooked_berriesRateMax += produceRateMax; }
+          }
+        }
+      }
+    });
+  }
+
+  // Molinos (Mills)
+  if (state.mills) {
+    state.mills.forEach((m, idx) => {
+      if ((m.workerAssigned > 0 || m.isRunning) && !m.isUnderConstruction && !m.isUpgrading) {
+        const tier = m.tier || 1;
+        const recipeKey = `mill_flour_t${tier}`;
+        const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+        if (recipe) {
+          let mult = 0;
+          if (m.workerAssigned > 0) {
+            const workers = state.colonists ? state.colonists.filter(c => c.job === `mills_${idx}`) : [];
+            workers.forEach(c => {
+              const lvl = c.attributes.farming || 3;
+              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+            });
+          } else if (m.isRunning) {
+            mult = 1;
+          }
+          
+          const timingKey = `mill_flour_t${tier}`;
+          const timing = CONFIG.Timing && CONFIG.Timing[timingKey];
+          const duration = timing ? timing.duration : 2.0;
+          
+          const consumeRate = (recipe.input_amt / duration) * mult;
+          const yieldMin = recipe.output_min !== undefined ? recipe.output_min : recipe.yield;
+          const yieldMax = recipe.output_max !== undefined ? recipe.output_max : recipe.yield;
+          const produceRate = (recipe.yield / duration) * mult;
+          const produceRateMin = (yieldMin / duration) * mult;
+          const produceRateMax = (yieldMax / duration) * mult;
+          
+          wheatRate -= consumeRate;
+          wheatRateMin -= consumeRate;
+          wheatRateMax -= consumeRate;
+          
+          flourRate += produceRate;
+          flourRateMin += produceRateMin;
+          flourRateMax += produceRateMax;
         }
       }
     });
@@ -727,6 +849,26 @@ function recalculateRates() {
     }
   }
 
+  // 13. Ganadería (Livestock)
+  let eggsRate = 0, feathersRate = 0, skinsRate = 0, fertilizerRate = 0;
+  if (Array.isArray(state.animals)) {
+    state.animals.forEach(a => {
+      if (!a.fedToday) return;
+      const def = ANIMAL_TYPES[a.type];
+      if (!def) return;
+      if (a.type === 'chicken') {
+        eggsRate += def.outputRate / dayDuration;
+        feathersRate += 0.1 / dayDuration;
+      } else if (a.type === 'pig') {
+        skinsRate += def.outputRate / dayDuration;
+        fertilizerRate += 0.1 / dayDuration;
+      } else if (a.type === 'cow') {
+        skinsRate += def.outputRate / dayDuration;
+        fertilizerRate += 0.1 / dayDuration;
+      }
+    });
+  }
+
   // Establecer tasas en calculatedRates
   calculatedRates.wood = woodRate * dayDuration;
   calculatedRates.stone = stoneRate * dayDuration;
@@ -741,20 +883,38 @@ function recalculateRates() {
   calculatedRates.gold = goldRate * dayDuration;
   calculatedRates.iron = ironRate * dayDuration;
   calculatedRates.iron_bar = iron_barRate * dayDuration;
+  calculatedRates.eggs = eggsRate * dayDuration;
+  calculatedRates.feathers = feathersRate * dayDuration;
+  calculatedRates.skins = skinsRate * dayDuration;
+  calculatedRates.fertilizer = fertilizerRate * dayDuration;
+  calculatedRates.flour = flourRate * dayDuration;
+  calculatedRates.bread = breadRate * dayDuration;
+  calculatedRates.stew = stewRate * dayDuration;
 
   // Tasas de comida globales nominales
   let totalFoodRate = 0;
-  const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread', 'stew'];
   foodKeys.forEach(key => {
     if (state.allowConsume && state.allowConsume[key] !== false) {
       const eqObj = CONFIG.FoodEquivalence[key];
       const mult = eqObj ? eqObj.yield : 1;
-      let rateVal = key === 'wheat' ? wheatRate : (key === 'potato' ? potatoRate : (key === 'carrot' ? carrotRate : (key === 'berries' ? berriesRate : (key === 'cooked_wheat' ? cooked_wheatRate : (key === 'cooked_potato' ? cooked_potatoRate : (key === 'cooked_carrot' ? cooked_carrotRate : cooked_berriesRate))))));
+      let rateVal = 0;
+      if (key === 'wheat') rateVal = wheatRate;
+      else if (key === 'potato') rateVal = potatoRate;
+      else if (key === 'carrot') rateVal = carrotRate;
+      else if (key === 'berries') rateVal = berriesRate;
+      else if (key === 'cooked_wheat') rateVal = cooked_wheatRate;
+      else if (key === 'cooked_potato') rateVal = cooked_potatoRate;
+      else if (key === 'cooked_carrot') rateVal = cooked_carrotRate;
+      else if (key === 'cooked_berries') rateVal = cooked_berriesRate;
+      else if (key === 'eggs') rateVal = eggsRate;
+      else if (key === 'bread') rateVal = breadRate;
+      else if (key === 'stew') rateVal = stewRate;
       totalFoodRate += rateVal * mult;
     }
   });
   calculatedRates.food = totalFoodRate * dayDuration;
-  calculatedRates.cooked = (cooked_wheatRate + cooked_potatoRate + cooked_carrotRate + cooked_berriesRate) * dayDuration;
+  calculatedRates.cooked = (cooked_wheatRate + cooked_potatoRate + cooked_carrotRate + cooked_berriesRate + breadRate + stewRate) * dayDuration;
 
   // Rellenar window.calculatedRatesMin
   if (typeof window.calculatedRatesMin === 'undefined') window.calculatedRatesMin = {};
@@ -771,13 +931,32 @@ function recalculateRates() {
   window.calculatedRatesMin.gold = goldRateMin * dayDuration;
   window.calculatedRatesMin.iron = ironRateMin * dayDuration;
   window.calculatedRatesMin.iron_bar = iron_barRateMin * dayDuration;
+  window.calculatedRatesMin.eggs = eggsRate * dayDuration;
+  window.calculatedRatesMin.feathers = feathersRate * dayDuration;
+  window.calculatedRatesMin.skins = skinsRate * dayDuration;
+  window.calculatedRatesMin.fertilizer = fertilizerRate * dayDuration;
+
+  window.calculatedRatesMin.flour = flourRateMin * dayDuration;
+  window.calculatedRatesMin.bread = breadRateMin * dayDuration;
+  window.calculatedRatesMin.stew = stewRateMin * dayDuration;
 
   let totalFoodRateMin = 0;
   foodKeys.forEach(key => {
     if (state.allowConsume && state.allowConsume[key] !== false) {
       const eqObj = CONFIG.FoodEquivalence[key];
       const mult = eqObj ? eqObj.yield : 1;
-      let rateValMin = key === 'wheat' ? wheatRateMin : (key === 'potato' ? potatoRateMin : (key === 'carrot' ? carrotRateMin : (key === 'berries' ? berriesRateMin : (key === 'cooked_wheat' ? cooked_wheatRateMin : (key === 'cooked_potato' ? cooked_potatoRateMin : (key === 'cooked_carrot' ? cooked_carrotRateMin : cooked_berriesRateMin))))));
+      let rateValMin = 0;
+      if (key === 'wheat') rateValMin = wheatRateMin;
+      else if (key === 'potato') rateValMin = potatoRateMin;
+      else if (key === 'carrot') rateValMin = carrotRateMin;
+      else if (key === 'berries') rateValMin = berriesRateMin;
+      else if (key === 'cooked_wheat') rateValMin = cooked_wheatRateMin;
+      else if (key === 'cooked_potato') rateValMin = cooked_potatoRateMin;
+      else if (key === 'cooked_carrot') rateValMin = cooked_carrotRateMin;
+      else if (key === 'cooked_berries') rateValMin = cooked_berriesRateMin;
+      else if (key === 'eggs') rateValMin = eggsRate;
+      else if (key === 'bread') rateValMin = breadRateMin;
+      else if (key === 'stew') rateValMin = stewRateMin;
       totalFoodRateMin += rateValMin * mult;
     }
   });
@@ -798,13 +977,31 @@ function recalculateRates() {
   window.calculatedRatesMax.gold = goldRateMax * dayDuration;
   window.calculatedRatesMax.iron = ironRateMax * dayDuration;
   window.calculatedRatesMax.iron_bar = iron_barRateMax * dayDuration;
+  window.calculatedRatesMax.eggs = eggsRate * dayDuration;
+  window.calculatedRatesMax.feathers = feathersRate * dayDuration;
+  window.calculatedRatesMax.skins = skinsRate * dayDuration;
+  window.calculatedRatesMax.fertilizer = fertilizerRate * dayDuration;
+  window.calculatedRatesMax.flour = flourRateMax * dayDuration;
+  window.calculatedRatesMax.bread = breadRateMax * dayDuration;
+  window.calculatedRatesMax.stew = stewRateMax * dayDuration;
 
   let totalFoodRateMax = 0;
   foodKeys.forEach(key => {
     if (state.allowConsume && state.allowConsume[key] !== false) {
       const eqObj = CONFIG.FoodEquivalence[key];
       const mult = eqObj ? eqObj.yield : 1;
-      let rateValMax = key === 'wheat' ? wheatRateMax : (key === 'potato' ? potatoRateMax : (key === 'carrot' ? carrotRateMax : (key === 'berries' ? berriesRateMax : (key === 'cooked_wheat' ? cooked_wheatRateMax : (key === 'cooked_potato' ? cooked_potatoRateMax : (key === 'cooked_carrot' ? cooked_carrotRateMax : cooked_berriesRateMax))))));
+      let rateValMax = 0;
+      if (key === 'wheat') rateValMax = wheatRateMax;
+      else if (key === 'potato') rateValMax = potatoRateMax;
+      else if (key === 'carrot') rateValMax = carrotRateMax;
+      else if (key === 'berries') rateValMax = berriesRateMax;
+      else if (key === 'cooked_wheat') rateValMax = cooked_wheatRateMax;
+      else if (key === 'cooked_potato') rateValMax = cooked_potatoRateMax;
+      else if (key === 'cooked_carrot') rateValMax = cooked_carrotRateMax;
+      else if (key === 'cooked_berries') rateValMax = cooked_berriesRateMax;
+      else if (key === 'eggs') rateValMax = eggsRate;
+      else if (key === 'bread') rateValMax = breadRateMax;
+      else if (key === 'stew') rateValMax = stewRateMax;
       totalFoodRateMax += rateValMax * mult;
     }
   });
@@ -827,11 +1024,17 @@ function resolveColonistsPriorities() {
     }
     if (type === 'houses') return 0;
     if (type === 'farms') return 1;
-    if (type === 'granaries') return 1;
     if (type === 'forges') return 1;
-    if (type === 'smithies') return b.tier || 1;
     if (type === 'markets') return b.tier || 1;
-    if (type === 'bonfires') return 1;
+    
+    if (['bonfires', 'granaries', 'smithies', 'mills'].includes(type)) {
+      const typeKey = type === 'smithies' ? 'smithy' : (type === 'bonfires' ? 'bonfire' : (type === 'mills' ? 'mill' : 'granary'));
+      const slotsKey = `${typeKey}_t${b.tier || 1}_slots`;
+      if (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) {
+        return parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1;
+      }
+      return b.tier || 1;
+    }
     return b.tier || 1;
   };
 
@@ -843,7 +1046,9 @@ function resolveColonistsPriorities() {
     bonfires: 'bonfires',
     granaries: 'granaries',
     smithies: 'smithies',
-    forges: 'forges'
+    forges: 'forges',
+    mills: 'mills',
+    corrals: 'corrals'
   };
 
   const isBasicResourceFull = (taskType) => {
@@ -863,14 +1068,61 @@ function resolveColonistsPriorities() {
     return false;
   };
 
-  const findFallbackJob = () => {
-    const foodQty = (state.food || 0) + (state.cookedFood || 0);
+  const hasActiveConstructionProjects = () => {
+    if (state.townHall && (state.townHall.isUnderConstruction || state.townHall.isUpgrading) && !state.townHall.isPaused) {
+      return true;
+    }
+    const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries', 'smithies', 'forges', 'mills', 'corrals', 'wells', 'warehouses'];
+    for (const type of typesToCheck) {
+      if (Array.isArray(state[type])) {
+        for (const building of state[type]) {
+          if ((building.isUnderConstruction || building.isUpgrading) && !building.isPaused) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  const findFallbackJob = (c) => {
     const isFoodFull = isBasicResourceFull('berries');
-    if (foodQty <= 0 && !isFoodFull) {
+    if (!isFoodFull) {
       return { job: 'berries', taskType: 'berries', buildingIdx: null };
     }
     
-    const buildingTypesOrder = ['farms', 'bonfires', 'lumberMills', 'quarries', 'smithies', 'forges', 'granaries', 'markets'];
+    const isWoodFull = isBasicResourceFull('wood');
+    const isStoneFull = isBasicResourceFull('stone');
+    
+    if (!isWoodFull && !isStoneFull) {
+      const woodQty = state.wood || 0;
+      const stoneQty = state.stone || 0;
+      let targetJob = 'wood';
+      if (woodQty > stoneQty) {
+        if (woodQty - stoneQty >= 5) {
+          targetJob = 'stone';
+        } else {
+          const prevJob = c ? c.job : null;
+          if (prevJob === 'stone') {
+            targetJob = 'stone';
+          } else {
+            targetJob = 'wood';
+          }
+        }
+      } else if (stoneQty > woodQty) {
+        targetJob = 'wood';
+      }
+      return { job: targetJob, taskType: targetJob, buildingIdx: null };
+    }
+    if (!isWoodFull) {
+      return { job: 'wood', taskType: 'wood', buildingIdx: null };
+    }
+    if (!isStoneFull) {
+      return { job: 'stone', taskType: 'stone', buildingIdx: null };
+    }
+    
+    // Si todo lo básico está lleno, intentar trabajar en edificios
+    const buildingTypesOrder = ['farms', 'bonfires', 'lumberMills', 'quarries', 'smithies', 'forges', 'granaries', 'mills', 'markets'];
     for (const bType of buildingTypesOrder) {
       const prefix = prefixMapping[bType];
       const list = state[bType] || [];
@@ -896,18 +1148,25 @@ function resolveColonistsPriorities() {
       }
     }
     
-    if (!isBasicResourceFull('wood')) {
-      return { job: 'wood', taskType: 'wood', buildingIdx: null };
-    }
-    if (!isBasicResourceFull('stone')) {
-      return { job: 'stone', taskType: 'stone', buildingIdx: null };
-    }
-    if (!isFoodFull) {
-      return { job: 'berries', taskType: 'berries', buildingIdx: null };
-    }
-    
     return null;
   };
+
+  let totalConstructionSlots = 0;
+  if (state.townHall && (state.townHall.isUnderConstruction || state.townHall.isUpgrading) && !state.townHall.isPaused) {
+    totalConstructionSlots += 2;
+  }
+  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries', 'smithies', 'forges', 'mills', 'corrals', 'wells', 'warehouses'];
+  for (const type of typesToCheck) {
+    if (Array.isArray(state[type])) {
+      state[type].forEach(building => {
+        if ((building.isUnderConstruction || building.isUpgrading) && !building.isPaused) {
+          totalConstructionSlots += 2;
+        }
+      });
+    }
+  }
+
+  let assignedBuildersCount = 0;
 
   state.colonists.forEach(c => {
     if (c.onMission) {
@@ -922,11 +1181,19 @@ function resolveColonistsPriorities() {
       if (!taskType) continue;
       
       if (['wood', 'stone', 'berries', 'construction'].includes(taskType)) {
+        if (taskType === 'construction') {
+          if (!hasActiveConstructionProjects() || assignedBuildersCount >= totalConstructionSlots) {
+            continue;
+          }
+        }
         if (taskType !== 'construction' && isBasicResourceFull(taskType)) {
           continue;
         }
         c.currentTask = priority;
         c.job = taskType;
+        if (taskType === 'construction') {
+          assignedBuildersCount++;
+        }
         assigned = true;
         break;
       }
@@ -937,6 +1204,11 @@ function resolveColonistsPriorities() {
         const available = [];
         
         list.forEach((b, idx) => {
+          if (taskType === 'mills') {
+            console.log("[MILL DEBUG] Evaluating mill index", idx, "isUnderConstruction:", b.isUnderConstruction, "isUpgrading:", b.isUpgrading, "isPaused:", b.isPaused);
+            console.log("[MILL DEBUG] Warehouse full for mills:", isWarehouseFullForJob(`${prefix}_${idx}`));
+            console.log("[MILL DEBUG] Max workers:", getBuildingMaxWorkers(taskType, idx), "Current count:", occupiedSlots[`${prefix}_${idx}`]);
+          }
           if (!b.isUnderConstruction && !b.isUpgrading && !b.isPaused) {
             const key = `${prefix}_${idx}`;
             if (typeof isWarehouseFullForJob === 'function' && !isWarehouseFullForJob(key)) {
@@ -964,7 +1236,7 @@ function resolveColonistsPriorities() {
     }
     
     if (!assigned) {
-      const fallback = findFallbackJob();
+      const fallback = findFallbackJob(c);
       if (fallback) {
         c.currentTask = { taskType: fallback.taskType, buildingIdx: fallback.buildingIdx, isFallback: true };
         c.job = fallback.job;
@@ -983,7 +1255,9 @@ function resolveColonistsPriorities() {
     { key: 'bonfires', prefix: 'bonfires' },
     { key: 'granaries', prefix: 'granaries' },
     { key: 'smithies', prefix: 'smithies' },
-    { key: 'forges', prefix: 'forges' }
+    { key: 'forges', prefix: 'forges' },
+    { key: 'mills', prefix: 'mills' },
+    { key: 'corrals', prefix: 'corrals' }
   ];
   
   buildingTypes.forEach(bt => {
@@ -1020,6 +1294,65 @@ function resolveColonistsPriorities() {
       }
     }
   });
+
+  // Sincronizar arreglos de slots individuales para edificios de producción
+  buildingTypes.forEach(bt => {
+    if (['bonfires', 'granaries', 'smithies', 'mills'].includes(bt.key)) {
+      if (Array.isArray(state[bt.key])) {
+        state[bt.key].forEach((b, idx) => {
+          if (!b.isUnderConstruction && !b.isUpgrading) {
+            const prefix = bt.prefix;
+            const key = `${prefix}_${idx}`;
+            const maxSlots = getBuildingMaxWorkers(bt.key, idx);
+            
+            b.workers = b.workers || [];
+            while (b.workers.length < maxSlots) {
+              b.workers.push(null);
+            }
+            if (b.workers.length > maxSlots) {
+              b.workers = b.workers.slice(0, maxSlots);
+            }
+            
+            const currentAssigns = state.colonists
+              ? state.colonists.filter(c => c.job === key).map(c => c.id)
+              : [];
+            
+            // Eliminar ocupantes desasignados
+            for (let i = 0; i < b.workers.length; i++) {
+              if (b.workers[i] !== null && !currentAssigns.includes(b.workers[i].colonistId)) {
+                b.workers[i] = null;
+              }
+            }
+            
+            // Añadir nuevos ocupantes en slots vacíos
+            currentAssigns.forEach(cId => {
+              const alreadyOccupying = b.workers.some(w => w !== null && w.colonistId === cId);
+              if (!alreadyOccupying) {
+                const emptySlot = b.workers.findIndex(w => w === null);
+                if (emptySlot !== -1) {
+                  b.workers[emptySlot] = {
+                    colonistId: cId,
+                    selectedRecipe: bt.key === 'bonfires' ? (b.selectedRecipe || 'wheat') : undefined,
+                    selectedCrop: bt.key === 'granaries' ? (b.selectedCrop || 'wheat') : undefined,
+                    selectedTool: bt.key === 'smithies' ? (b.selectedTool || 'axe_t1') : undefined,
+                    elapsed: 0,
+                    isRunning: false
+                  };
+                }
+              }
+            });
+            
+            // Sincronizar workerAssigned
+            b.workerAssigned = b.workers.filter(w => w !== null).length;
+          }
+        });
+      }
+    }
+  });
+
+  if (typeof autoAssignBuilders === 'function') {
+    autoAssignBuilders();
+  }
 }
 window.resolveColonistsPriorities = resolveColonistsPriorities;
 
@@ -1232,6 +1565,8 @@ function gameTick() {
         { key: 'granaries', name: 'Granero', defaultDuration: 5 },
         { key: 'wells', name: 'Pozo', defaultDuration: 5 },
         { key: 'warehouses', name: 'Almacén', defaultDuration: 20 },
+        { key: 'mills', name: 'Molino de Harina', defaultDuration: 5 },
+        { key: 'corrals', name: 'Corral', defaultDuration: 5 },
         { key: 'smithies', name: 'Taller del Herrero', defaultDuration: 5040 },
         { key: 'forges', name: 'Forja', defaultDuration: 5040 }
       ];
@@ -1267,9 +1602,27 @@ function gameTick() {
                     building.tier = building.upgradingToTier || (building.tier + 1);
                     delete building.upgradingToTier;
                     building.constructionElapsed = 0;
+
+                    if (['bonfires', 'granaries', 'smithies', 'mills'].includes(bt.key)) {
+                      const typeKey = bt.key === 'smithies' ? 'smithy' : (bt.key === 'bonfires' ? 'bonfire' : (bt.key === 'mills' ? 'mill' : 'granary'));
+                      const slotsKey = `${typeKey}_t${building.tier}_slots`;
+                      const maxSlots = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) ? (parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1) : 1;
+                      building.workers = building.workers || [];
+                      while (building.workers.length < maxSlots) {
+                        building.workers.push(null);
+                      }
+                    }
                   } else {
                     building.isUnderConstruction = false;
                     building.constructionElapsed = 0;
+
+                    if (['bonfires', 'granaries', 'smithies', 'mills'].includes(bt.key)) {
+                      const typeKey = bt.key === 'smithies' ? 'smithy' : (bt.key === 'bonfires' ? 'bonfire' : (bt.key === 'mills' ? 'mill' : 'granary'));
+                      const slotsKey = `${typeKey}_t${building.tier}_slots`;
+                      const maxSlots = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) ? (parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1) : 1;
+                      building.workers = Array(maxSlots).fill(null);
+                      building.workerAssigned = 0;
+                    }
                   }
                   
                   if (isPlayerOnIt) {
@@ -1361,6 +1714,32 @@ function gameTick() {
         updateGlobalFood();
       }
 
+      // PASO Q - [FOOD-GRAN] Animal Production
+      if (Array.isArray(state.animals)) {
+        let pigsAndCowsFed = 0;
+        state.animals.forEach(a => {
+          if (!a.fedToday) return;
+          const def = ANIMAL_TYPES[a.type];
+          if (!def) return;
+          
+          const amt = def.outputRate * (effectiveDelta / dayDuration);
+          if (def.output === 'eggs') {
+            addResourceStock('eggs', amt);
+            addResourceStock('feathers', 0.1 * (effectiveDelta / dayDuration));
+          } else if (def.output === 'skins') {
+            addResourceStock('skins', amt);
+          }
+          
+          if (a.type === 'pig' || a.type === 'cow') {
+            pigsAndCowsFed++;
+          }
+        });
+        
+        if (pigsAndCowsFed > 0) {
+          addResourceStock('fertilizer', 0.1 * (effectiveDelta / dayDuration) * pigsAndCowsFed);
+        }
+      }
+
       if (Array.isArray(state.lumberMills)) {
         state.lumberMills.forEach((b, idx) => {
           b.isWarehouseFull = false;
@@ -1438,50 +1817,64 @@ function gameTick() {
       if (Array.isArray(state.smithies)) {
         state.smithies.forEach((smithy, idx) => {
           smithy.isWarehouseFull = false;
-          if (smithy.isUnderConstruction || smithy.isUpgrading || !smithy.workerAssigned) return;
+          if (smithy.isUnderConstruction || smithy.isUpgrading) return;
           const assignKey = `smithies_${idx}`;
           if (isWarehouseFullForJob(assignKey)) {
             smithy.isWarehouseFull = true;
             return;
           }
-          const toolKey = smithy.selectedTool || 'axe_t1';
-          const timingKey = `smithy_${toolKey.replace('_t1','_t1').replace('_t2','_t2')}`;
-          // Map selectedTool → production timing key
-          const timingId = 'smithy_' + toolKey; // e.g. smithy_axe_t1
-          const craftDuration = CONFIG?.Timing?.[timingId]?.duration ?? 4;
-          const craftCfg = CONFIG?.Crafting?.[`smithy_${toolKey}`];
-          const woodCost = craftCfg ? (craftCfg.input_amt || craftCfg.consume_amount || 4) : 4;
-          const ironCost = toolKey.endsWith('_t2') ? (craftCfg ? (craftCfg.input_amt || 2) : 2) : 0;
 
-          smithy.elapsed = (smithy.elapsed || 0) + effectiveDelta / dayDuration;
+          const maxSlots = smithy.workers ? smithy.workers.length : 1;
+          smithy.workers = smithy.workers || Array(maxSlots).fill(null);
 
-          if (smithy.elapsed >= craftDuration) {
-            smithy.elapsed = 0;
-            // Verificar materiales
-            const isT2 = toolKey.endsWith('_t2');
-            const matResource = isT2 ? 'iron_bar' : 'wood';
-            const matCost = isT2 ? ironCost : woodCost;
-            if ((state[matResource] || 0) < matCost) {
-              showToast(`⚠️ Sin ${matResource === 'wood' ? 'madera' : 'lingotes'} para fabricar en Taller #${idx + 1}`, "warning");
-              return;
+          smithy.workers.forEach((worker, slotIdx) => {
+            if (worker === null) return;
+
+            const toolKey = worker.selectedTool || smithy.selectedTool || 'axe_t1';
+            const timingId = 'smithy_' + toolKey;
+            const craftDuration = CONFIG?.Timing?.[timingId]?.duration ?? 4;
+            const craftCfg = CONFIG?.Crafting?.[`smithy_${toolKey}`];
+            const woodCost = craftCfg ? (craftCfg.input_amt || craftCfg.consume_amount || 4) : 4;
+            const ironCost = toolKey.endsWith('_t2') ? (craftCfg ? (craftCfg.input_amt || 2) : 2) : 0;
+
+            worker.elapsed = (worker.elapsed || 0) + effectiveDelta / dayDuration;
+
+            if (worker.elapsed >= craftDuration) {
+              worker.elapsed = 0;
+              // Verificar materiales
+              const isT2 = toolKey.endsWith('_t2');
+              const matResource = isT2 ? 'iron_bar' : 'wood';
+              const matCost = isT2 ? ironCost : woodCost;
+              if ((state[matResource] || 0) < matCost) {
+                showToast(`⚠️ Sin ${matResource === 'wood' ? 'madera' : 'lingotes'} para fabricar en Taller #${idx + 1} (Slot ${slotIdx + 1})`, "warning");
+                return;
+              }
+              state[matResource] -= matCost;
+              // Extraer tipo y tier de la herramienta
+              const parts = toolKey.split('_'); // e.g. ['axe', 't1']
+              const toolType = parts[0]; // 'axe', 'pickaxe', 'hoe', 'weapon'
+              const toolTier = parseInt((parts[1] || 't1').replace('t', '')) || 1;
+              const newTool = {
+                id: `tool_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                type: toolType,
+                tier: toolTier,
+                durability: 100,
+                assignedTo: null
+              };
+              state.tools.push(newTool);
+              const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
+              showToast(`🔨 Nueva ${toolNames[toolType] || toolType} T${toolTier} fabricada en Taller #${idx + 1} (Slot ${slotIdx + 1})!`, "success");
+              recalculateRates();
+              if (typeof updateUI === 'function') updateUI();
             }
-            state[matResource] -= matCost;
-            // Extraer tipo y tier de la herramienta
-            const parts = toolKey.split('_'); // e.g. ['axe', 't1']
-            const toolType = parts[0]; // 'axe', 'pickaxe', 'hoe', 'weapon'
-            const toolTier = parseInt((parts[1] || 't1').replace('t', '')) || 1;
-            const newTool = {
-              id: `tool_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-              type: toolType,
-              tier: toolTier,
-              durability: 100,
-              assignedTo: null
-            };
-            state.tools.push(newTool);
-            const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
-            showToast(`🔨 Nueva ${toolNames[toolType] || toolType} T${toolTier} fabricada en Taller #${idx + 1}!`, "success");
-            recalculateRates();
-            if (typeof updateUI === 'function') updateUI();
+          });
+
+          const firstWorker = smithy.workers[0];
+          if (firstWorker) {
+            smithy.elapsed = firstWorker.elapsed;
+            smithy.selectedTool = firstWorker.selectedTool;
+          } else {
+            smithy.elapsed = 0;
           }
         });
       }
@@ -1521,8 +1914,8 @@ function gameTick() {
     // 3b. Procesamiento en Hogueras/Ollas/Cocinas
     if (Array.isArray(state.bonfires)) {
       state.bonfires.forEach((bonfire, idx) => {
+        if (bonfire.isUnderConstruction || bonfire.isUpgrading) return;
         bonfire.isWarehouseFull = false;
-        const hasWorker = bonfire.workerAssigned > 0;
         const assignKey = `bonfires_${idx}`;
         if (isWarehouseFullForJob(assignKey)) {
           bonfire.isWarehouseFull = true;
@@ -1543,60 +1936,159 @@ function gameTick() {
 
         if (!autoRec || !manualRec) return;
 
-        if (!bonfire.isUnderConstruction && !bonfire.isRunning && hasWorker) {
-          const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
-          const totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
-          const foodCapacity = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
-          if (totalFood < foodCapacity) {
-            const recipe = bonfire.selectedRecipe || 'wheat';
-            const minFood = autoRec.consume_amount;
-            if ((state[recipe] || 0) >= minFood) {
-              state[recipe] -= minFood;
-              updateGlobalFood();
-              bonfire.elapsed = 0;
-              bonfire.isRunning = true;
-              bonfire.mode = 'auto';
-              bonfire.activeRecipe = recipe;
-              recalculateRates();
-            }
-          }
+        let speedBonus = 0;
+        if (bonfire.tier === 3) {
+          speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.bonfire_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.bonfire_t3_speed.value) || 0.3) : 0.3;
         }
 
-        if (!bonfire.isUnderConstruction && bonfire.isRunning) {
-          let speedMultiplier = 1;
-          if (bonfire.mode === 'auto') {
-            const workers = state.colonists ? state.colonists.filter(c => c.job === `bonfires_${idx}`) : [];
-            let mult = 0;
-            workers.forEach(c => {
-              const lvl = c.attributes.cooking || 3;
-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
-            });
-            speedMultiplier = mult;
+        const maxSlots = bonfire.workers ? bonfire.workers.length : 1;
+        bonfire.workers = bonfire.workers || Array(maxSlots).fill(null);
+
+        bonfire.workers.forEach((worker, slotIdx) => {
+          if (worker === null) return;
+
+          if (worker.isRunning) {
+            worker.cookingRecipeNow = worker.activeRecipe || worker.selectedRecipe || bonfire.selectedRecipe || 'wheat';
           }
-          bonfire.elapsed += effectiveDelta * speedMultiplier;
-          const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
+
+          const hasWorker = true;
+          const recipe = worker.selectedRecipe || bonfire.selectedRecipe || 'wheat';
           
-          if (bonfire.elapsed >= targetDuration) {
-            const rec = bonfire.mode === 'manual' ? manualRec : autoRec;
-            const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
-            const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
-            const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
-            const recipe = bonfire.activeRecipe || bonfire.selectedRecipe || 'wheat';
-            const cookedDish = 'cooked_' + recipe;
-            const added = addResourceStock(cookedDish, produced);
-            updateGlobalFood();
-            
-            resourcesGeneratedThisSecond.cooked = (resourcesGeneratedThisSecond.cooked || 0) + produced;
-            
-            let bName = bonfire.tier === 1 ? 'Fogata' : (bonfire.tier === 2 ? 'Caldero' : 'Cocina de Taberna');
-            const cookedNames = { cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada' };
-            showToast(`🔥 ${bName} #${idx + 1} completó un lote de ${produced} ${cookedNames[cookedDish] || cookedDish}`, "success");
-            bonfire.isRunning = false;
-            bonfire.activeRecipe = null;
-            bonfire.mode = 'none';
-            recalculateRates();
-            if (typeof updateUI === 'function') updateUI();
+          let inputResources = {};
+          if (recipe === 'bread') {
+            const recipeCfg = CONFIG.Processing && CONFIG.Processing.recipe_bread;
+            const flourAmt = recipeCfg ? (recipeCfg.input_amt || 2) : 2;
+            inputResources.flour = flourAmt;
+          } else if (recipe === 'stew') {
+            const recipeCfg = CONFIG.Processing && CONFIG.Processing.recipe_stew;
+            const potAmt = recipeCfg ? (recipeCfg.input_amt || 1) : 1;
+            inputResources.potato = potAmt;
+            inputResources.carrot = 1;
+          } else {
+            inputResources[recipe] = autoRec.consume_amount || 1;
           }
+
+          if (!worker.isRunning && hasWorker) {
+            const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread'];
+            const totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
+            const foodCapacity = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
+            if (totalFood < foodCapacity) {
+              let hasInputs = true;
+              for (const [k, amt] of Object.entries(inputResources)) {
+                if ((state[k] || 0) < amt) {
+                  hasInputs = false;
+                  break;
+                }
+              }
+              
+              if (hasInputs) {
+                for (const [k, amt] of Object.entries(inputResources)) {
+                  state[k] -= amt;
+                }
+                updateGlobalFood();
+                worker.elapsed = 0;
+                worker.isRunning = true;
+                worker.mode = 'auto';
+                worker.activeRecipe = recipe;
+                worker.cookingRecipeNow = recipe;
+                recalculateRates();
+              } else {
+                const priorities = bonfire.recipePriorities || ['carrot', 'wheat', 'potato', 'berries'];
+                let fallbackFound = false;
+                for (const r of priorities) {
+                  const minFood = autoRec.consume_amount || 1;
+                  if ((state[r] || 0) >= minFood) {
+                    state[r] -= minFood;
+                    updateGlobalFood();
+                    worker.elapsed = 0;
+                    worker.isRunning = true;
+                    worker.mode = 'auto';
+                    worker.activeRecipe = r;
+                    worker.cookingRecipeNow = r;
+                    fallbackFound = true;
+                    recalculateRates();
+                    break;
+                  }
+                }
+                if (!fallbackFound) {
+                  worker.cookingRecipeNow = null;
+                }
+              }
+            } else {
+              worker.cookingRecipeNow = null;
+            }
+          }
+
+          if (worker.isRunning) {
+            let speedMultiplier = 1;
+            if (worker.mode === 'auto') {
+              const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+              if (colonist) {
+                const lvl = colonist.attributes.cooking || 3;
+                speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+              }
+            }
+            speedMultiplier *= (1 + speedBonus);
+
+            worker.elapsed = (worker.elapsed || 0) + effectiveDelta * speedMultiplier;
+            const targetDuration = worker.mode === 'manual' ? manualRec.duration : autoRec.duration;
+            
+            if (worker.elapsed >= targetDuration) {
+              const rec = worker.mode === 'manual' ? manualRec : autoRec;
+              const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
+              const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
+              let produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+              const activeRecKey = worker.activeRecipe || recipe;
+              
+              let outputRes = 'cooked_' + activeRecKey;
+              if (activeRecKey === 'bread' || activeRecKey === 'stew') {
+                const recipeCfg = CONFIG.Processing && CONFIG.Processing['recipe_' + activeRecKey];
+                if (recipeCfg) {
+                  outputRes = recipeCfg.yield_type || activeRecKey;
+                  const rMin = recipeCfg.output_min !== undefined ? recipeCfg.output_min : (recipeCfg.yield || 1);
+                  const rMax = recipeCfg.output_max !== undefined ? recipeCfg.output_max : (recipeCfg.yield || 1);
+                  produced = Math.round(rMin + Math.random() * (rMax - rMin));
+                }
+              }
+              
+              addResourceStock(outputRes, produced);
+              updateGlobalFood();
+              
+              resourcesGeneratedThisSecond.cooked = (resourcesGeneratedThisSecond.cooked || 0) + produced;
+              
+              let bName = bonfire.tier === 1 ? 'Fogata' : (bonfire.tier === 2 ? 'Caldero' : 'Cocina de Taberna');
+              const cookedNames = { 
+                cooked_wheat: 'Pan', 
+                cooked_potato: 'Patata Asada', 
+                cooked_carrot: 'Zanahoria Asada', 
+                cooked_berries: 'Mermelada',
+                bread: 'Pan Artesano',
+                stew: 'Guiso'
+              };
+              showToast(`🔥 ${bName} #${idx + 1} (Slot ${slotIdx + 1}) completó un lote de ${produced} ${cookedNames[outputRes] || outputRes}`, "success");
+              worker.isRunning = false;
+              worker.activeRecipe = null;
+              worker.mode = 'none';
+              recalculateRates();
+              if (typeof updateUI === 'function') updateUI();
+            }
+          }
+        });
+
+        // Retrocompatibilidad: Sincronizar campos principales de bonfire con slot 0
+        const firstWorker = bonfire.workers[0];
+        if (firstWorker) {
+          bonfire.cookingRecipeNow = firstWorker.cookingRecipeNow;
+          bonfire.isRunning = firstWorker.isRunning;
+          bonfire.elapsed = firstWorker.elapsed;
+          bonfire.activeRecipe = firstWorker.activeRecipe;
+          bonfire.mode = firstWorker.mode;
+        } else {
+          bonfire.cookingRecipeNow = null;
+          bonfire.isRunning = false;
+          bonfire.elapsed = 0;
+          bonfire.activeRecipe = null;
+          bonfire.mode = 'none';
         }
       });
     }
@@ -1606,72 +2098,225 @@ function gameTick() {
       state.granaries.forEach((granary, idx) => {
         if (granary.isUnderConstruction || granary.isUpgrading) return;
 
-        const hasWorker = granary.workerAssigned > 0;
-        const cropKey = granary.selectedCrop || 'wheat';
         const tier = granary.tier || 1;
-        const recipeKey = `granary_${cropKey}_t${tier}`;
-        const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
 
-        if (!recipe) return;
-
-        // Auto-iniciar si tiene trabajadores y no está corriendo
-        if (!granary.isRunning && hasWorker) {
-          const seedKeys = ['wheat', 'potato', 'carrot'];
-          const totalSeeds = state.seeds ? seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0) : 0;
-          const seedsCapacity = (state.storageCapacity && state.storageCapacity.seeds) ?? Infinity;
-          if (totalSeeds < seedsCapacity) {
-            const minFood = recipe.consume_amount || 5;
-            const consumeRes = recipe.consume_type || cropKey;
-            if ((state[consumeRes] || 0) >= minFood) {
-              state[consumeRes] -= minFood;
-              updateGlobalFood();
-              granary.elapsed = 0;
-              granary.isRunning = true;
-              granary.mode = 'auto';
-              granary.activeCrop = cropKey;
-              recalculateRates();
-            }
-          }
+        let speedBonus = 0;
+        if (granary.tier === 3) {
+          speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.granary_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.granary_t3_speed.value) || 0.3) : 0.3;
         }
 
-        // Ticking del progreso de procesamiento
-        if (granary.isRunning) {
-          let speedMultiplier = 1;
-          if (granary.mode === 'auto') {
-            const workers = state.colonists ? state.colonists.filter(c => c.job === `granaries_${idx}`) : [];
-            let mult = 0;
-            workers.forEach(c => {
-              const lvl = c.attributes.farming || 3;
-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
-            });
-            speedMultiplier = mult;
-          }
-          granary.elapsed += effectiveDelta * speedMultiplier;
-          
-          const runningCrop = granary.activeCrop || granary.selectedCrop || 'wheat';
-          const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
-          const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
-          const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
+        const maxSlots = granary.workers ? granary.workers.length : 1;
+        granary.workers = granary.workers || Array(maxSlots).fill(null);
 
-          if (granary.elapsed >= targetDuration) {
-            granary.isRunning = false;
-            granary.elapsed = 0;
-            
-            const yieldMin = runningRecipe && runningRecipe.output_min !== undefined ? runningRecipe.output_min : (runningRecipe ? runningRecipe.yield : 1);
-            const yieldMax = runningRecipe && runningRecipe.output_max !== undefined ? runningRecipe.output_max : (runningRecipe ? runningRecipe.yield : 1);
-            const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
-            const seedType = runningCrop; 
-            addResourceStock(seedType + '_seeds', produced);
-            if (typeof updateUI === 'function') updateUI();
-            
-            const cropNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
-            showToast(`🌾 Granero #${idx + 1} produjo +${produced} Semillas de ${cropNames[seedType] || seedType}`, "success");
-            
-            granary.activeCrop = null;
-            granary.mode = 'none';
-            recalculateRates();
-            if (typeof updateUI === 'function') updateUI();
+        granary.workers.forEach((worker, slotIdx) => {
+          if (worker === null) return;
+
+          if (worker.isRunning) {
+            worker.cookingRecipeNow = worker.activeCrop || worker.selectedCrop || granary.selectedCrop || 'wheat';
           }
+
+          const cropKey = worker.selectedCrop || granary.selectedCrop || 'wheat';
+          const recipeKey = `granary_${cropKey}_t${tier}`;
+          const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+          if (!recipe) return;
+
+          const hasWorker = true;
+          const minFood = recipe.consume_amount || 5;
+          const consumeRes = recipe.consume_type || cropKey;
+
+          if (!worker.isRunning && hasWorker) {
+            const seedKeys = ['wheat', 'potato', 'carrot'];
+            const totalSeeds = state.seeds ? seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0) : 0;
+            const seedsCapacity = (state.storageCapacity && state.storageCapacity.seeds) ?? Infinity;
+            if (totalSeeds < seedsCapacity) {
+              if ((state[consumeRes] || 0) >= minFood) {
+                state[consumeRes] -= minFood;
+                updateGlobalFood();
+                worker.elapsed = 0;
+                worker.isRunning = true;
+                worker.mode = 'auto';
+                worker.activeCrop = cropKey;
+                worker.cookingRecipeNow = cropKey;
+                recalculateRates();
+              } else {
+                const priorities = granary.seedsPriorities || ['wheat', 'potato', 'carrot'];
+                let fallbackFound = false;
+                for (const crop of priorities) {
+                  const rKey = `granary_${crop}_t${tier}`;
+                  const r = CONFIG.Processing && CONFIG.Processing[rKey];
+                  if (r) {
+                    const fallbackMin = r.consume_amount || 5;
+                    const fallbackRes = r.consume_type || crop;
+                    if ((state[fallbackRes] || 0) >= fallbackMin) {
+                      state[fallbackRes] -= fallbackMin;
+                      updateGlobalFood();
+                      worker.elapsed = 0;
+                      worker.isRunning = true;
+                      worker.mode = 'auto';
+                      worker.activeCrop = crop;
+                      worker.cookingRecipeNow = crop;
+                      fallbackFound = true;
+                      recalculateRates();
+                      break;
+                    }
+                  }
+                }
+                if (!fallbackFound) {
+                  worker.cookingRecipeNow = null;
+                }
+              }
+            } else {
+              worker.cookingRecipeNow = null;
+            }
+          }
+
+          if (worker.isRunning) {
+            let speedMultiplier = 1;
+            if (worker.mode === 'auto') {
+              const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+              if (colonist) {
+                const lvl = colonist.attributes.farming || 3;
+                speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+              }
+            }
+            speedMultiplier *= (1 + speedBonus);
+
+            worker.elapsed = (worker.elapsed || 0) + effectiveDelta * speedMultiplier;
+            const runningCrop = worker.activeCrop || cropKey;
+            const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
+            const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
+            const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
+
+            if (worker.elapsed >= targetDuration) {
+              worker.isRunning = false;
+              worker.elapsed = 0;
+
+              const yieldMin = runningRecipe && runningRecipe.output_min !== undefined ? runningRecipe.output_min : (runningRecipe ? runningRecipe.yield : 1);
+              const yieldMax = runningRecipe && runningRecipe.output_max !== undefined ? runningRecipe.output_max : (runningRecipe ? runningRecipe.yield : 1);
+              const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+              const seedType = runningCrop;
+              const outputRes = (runningRecipe && runningRecipe.yield_type) ? runningRecipe.yield_type : (seedType + '_seeds');
+              addResourceStock(outputRes, produced);
+              if (typeof updateUI === 'function') updateUI();
+
+              const cropNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', pienso: 'Pienso' };
+              const outputName = outputRes === 'pienso' ? 'Pienso' : `Semillas de ${cropNames[seedType] || seedType}`;
+              showToast(`🌾 Granero #${idx + 1} (Slot ${slotIdx + 1}) produjo +${produced} ${outputName}`, "success");
+
+              worker.activeCrop = null;
+              worker.mode = 'none';
+              recalculateRates();
+              if (typeof updateUI === 'function') updateUI();
+            }
+          }
+        });
+
+        const firstWorker = granary.workers[0];
+        if (firstWorker) {
+          granary.cookingRecipeNow = firstWorker.cookingRecipeNow;
+          granary.isRunning = firstWorker.isRunning;
+          granary.elapsed = firstWorker.elapsed;
+          granary.activeCrop = firstWorker.activeCrop;
+          granary.mode = firstWorker.mode;
+        } else {
+          granary.cookingRecipeNow = null;
+          granary.isRunning = false;
+          granary.elapsed = 0;
+          granary.activeCrop = null;
+          granary.mode = 'none';
+        }
+      });
+    }
+
+    // 3d. Procesamiento en Molinos
+    if (Array.isArray(state.mills)) {
+      state.mills.forEach((mill, idx) => {
+        if (mill.isUnderConstruction || mill.isUpgrading) return;
+
+        const tier = mill.tier || 1;
+        const maxSlots = mill.workers ? mill.workers.length : 1;
+        mill.workers = mill.workers || Array(maxSlots).fill(null);
+
+        mill.workers.forEach((worker, slotIdx) => {
+          if (worker === null) return;
+
+          if (worker.isRunning) {
+            worker.cookingRecipeNow = 'wheat';
+          }
+
+          const recipeKey = `mill_flour_t${tier}`;
+          const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+          if (!recipe) return;
+
+          const hasWorker = true;
+          const minWheat = recipe.input_amt || 5;
+
+          if (!worker.isRunning && hasWorker) {
+            const totalFlour = state.flour || 0;
+            const flourCapacity = (state.storageCapacity && state.storageCapacity.flour) ?? Infinity;
+            if (totalFlour < flourCapacity) {
+              if ((state.wheat || 0) >= minWheat) {
+                state.wheat -= minWheat;
+                updateGlobalFood();
+                worker.elapsed = 0;
+                worker.isRunning = true;
+                worker.mode = 'auto';
+                worker.cookingRecipeNow = 'wheat';
+                recalculateRates();
+              } else {
+                worker.cookingRecipeNow = null;
+              }
+            } else {
+              worker.cookingRecipeNow = null;
+            }
+          }
+
+          if (worker.isRunning) {
+            let speedMultiplier = 1;
+            if (worker.mode === 'auto') {
+              const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+              if (colonist) {
+                const lvl = colonist.attributes.farming || 3;
+                speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+              }
+            }
+
+            worker.elapsed = (worker.elapsed || 0) + effectiveDelta * speedMultiplier;
+            const timingKey = `mill_flour_t${tier}`;
+            const timing = CONFIG.Timing && CONFIG.Timing[timingKey];
+            const targetDuration = timing ? timing.duration : 2.0;
+
+            if (worker.elapsed >= targetDuration) {
+              worker.isRunning = false;
+              worker.elapsed = 0;
+
+              const yieldMin = recipe.output_min !== undefined ? recipe.output_min : recipe.yield;
+              const yieldMax = recipe.output_max !== undefined ? recipe.output_max : recipe.yield;
+              const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+              
+              addResourceStock('flour', produced);
+              if (typeof updateUI === 'function') updateUI();
+
+              showToast(`🌾 Molino #${idx + 1} (Slot ${slotIdx + 1}) produjo +${produced} Harina`, "success");
+
+              worker.mode = 'none';
+              recalculateRates();
+              if (typeof updateUI === 'function') updateUI();
+            }
+          }
+        });
+
+        const firstWorker = mill.workers[0];
+        if (firstWorker) {
+          mill.cookingRecipeNow = firstWorker.cookingRecipeNow;
+          mill.isRunning = firstWorker.isRunning;
+          mill.elapsed = firstWorker.elapsed;
+          mill.mode = firstWorker.mode;
+        } else {
+          mill.cookingRecipeNow = null;
+          mill.isRunning = false;
+          mill.elapsed = 0;
+          mill.mode = 'none';
         }
       });
     }
@@ -1961,10 +2606,12 @@ function getAttrForJob(job) {
   if (job === 'wood' || job.startsWith('lumbermills_')) return 'woodcutting';
   if (job === 'stone' || job.startsWith('quarries_')) return 'mining';
   if (job === 'berries') return 'exploration';
-  if (job.startsWith('farms_') || job.startsWith('granaries_')) return 'farming';
+  if (job.startsWith('farms_') || job.startsWith('granaries_') || job.startsWith('mills_')) return 'farming';
   if (job.startsWith('bonfires_')) return 'cooking';
   if (job.startsWith('markets_')) return 'trading';
   if (job === 'construction') return 'construction';
+  if (job.startsWith('smithies_')) return 'woodcutting';
+  if (job.startsWith('forges_')) return 'mining';
   return null;
 }
 

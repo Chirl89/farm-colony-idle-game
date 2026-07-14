@@ -26,6 +26,9 @@ Processing;granary_potato_t3;Granero T3 Semillas Patata;potato_seeds;2;2;2;potat
 Processing;granary_carrot_t1;Granero T1 Semillas Zanahoria;carrot_seeds;1;1;1;carrot;5;farming;
 Processing;granary_carrot_t2;Granero T2 Semillas Zanahoria;carrot_seeds;1;1;1;carrot;5;farming;
 Processing;granary_carrot_t3;Granero T3 Semillas Zanahoria;carrot_seeds;2;2;2;carrot;10;farming;
+Processing;granary_pienso_t1;Granero T1 Pienso;pienso;5;5;5;wheat;3;farming;
+Processing;granary_pienso_t2;Granero T2 Pienso;pienso;5;5;5;wheat;3;farming;
+Processing;granary_pienso_t3;Granero T3 Pienso;pienso;10;10;10;wheat;6;farming;
 Crafting;smithy_pickaxe_t1;Taller Pico Madera T1;pickaxe_t1;1;1;1;wood;5;none;
 Crafting;smithy_axe_t1;Taller Hacha Madera T1;axe_t1;1;1;1;wood;4;none;
 Crafting;smithy_hoe_t1;Taller Azada Madera T1;hoe_t1;1;1;1;wood;3;none;

@@ -72,20 +72,28 @@ function getBuildingAttributeDetails(type) {
     markets: { key: 'trading', name: 'Mercader', emoji: '📈' },
     houses: { key: 'construction', name: 'Constructor', emoji: '🔨' },
     townhall: { key: 'construction', name: 'Constructor', emoji: '🔨' },
-    townHall: { key: 'construction', name: 'Constructor', emoji: '🔨' }
+    townHall: { key: 'construction', name: 'Constructor', emoji: '🔨' },
+    mills: { key: 'farming', name: 'Agricultor', emoji: '🌾' }
   };
   return attrMap[type] || { key: 'woodcutting', name: 'Trabajador', emoji: '👷' };
 }
 
 function renderBuildingWorkerDropdowns(type, index, maxWorkers) {
   const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
-  const assigned = state.colonists ? state.colonists.filter(c => c.job === jobString) : [];
   const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null) : [];
   const attrInfo = getBuildingAttributeDetails(type);
+  const isSlotBased = ['bonfires', 'granaries', 'smithies', 'mills'].includes(type);
+  const b = state[type] && state[type][index];
 
   let html = '<div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%; margin-top: 0.35rem;">';
   for (let slotIdx = 0; slotIdx < maxWorkers; slotIdx++) {
-    const currentOccupant = assigned[slotIdx] || null;
+    let currentOccupant = null;
+    if (isSlotBased && b && b.workers && b.workers[slotIdx]) {
+      currentOccupant = state.colonists.find(c => c.id === b.workers[slotIdx].colonistId) || null;
+    } else if (!isSlotBased) {
+      const assigned = state.colonists ? state.colonists.filter(c => c.job === jobString) : [];
+      currentOccupant = assigned[slotIdx] || null;
+    }
     
     let selectHtml = `<select class="worker-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer;" onchange="assignColonistToBuildingSlot('${type}', ${index}, ${slotIdx}, this.value)">`;
     selectHtml += `<option value="">[Sin Asignar]</option>`;
@@ -111,6 +119,35 @@ function renderBuildingWorkerDropdowns(type, index, maxWorkers) {
   }
   html += '</div>';
   return html;
+}
+
+function renderSingleWorkerDropdown(type, index, slotIdx) {
+  const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
+  const freeColonists = state.colonists ? state.colonists.filter(c => c.job === null) : [];
+  const attrInfo = getBuildingAttributeDetails(type);
+  const isSlotBased = ['bonfires', 'granaries', 'smithies', 'mills'].includes(type);
+  const b = state[type] && state[type][index];
+
+  let currentOccupant = null;
+  if (isSlotBased && b && b.workers && b.workers[slotIdx]) {
+    currentOccupant = state.colonists.find(c => c.id === b.workers[slotIdx].colonistId) || null;
+  }
+  
+  let selectHtml = `<select class="worker-select" style="width: 100%; font-size: 0.75rem; padding: 0.2rem; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; outline: none; cursor: pointer;" onchange="assignColonistToBuildingSlot('${type}', ${index}, ${slotIdx}, this.value)">`;
+  selectHtml += `<option value="">[Sin Asignar]</option>`;
+  
+  if (currentOccupant) {
+    const val = currentOccupant.attributes[attrInfo.key] || 3;
+    selectHtml += `<option value="${currentOccupant.id}" selected>${currentOccupant.name} (${attrInfo.emoji} ${val})</option>`;
+  }
+  
+  freeColonists.forEach(c => {
+    const val = c.attributes[attrInfo.key] || 3;
+    selectHtml += `<option value="${c.id}">${c.name} (${attrInfo.emoji} ${val})</option>`;
+  });
+  
+  selectHtml += `</select>`;
+  return selectHtml;
 }
 
 const basicJobAttrMap = {
@@ -266,14 +303,14 @@ function renderLumberMills() {
           `Cabaña de Leñador #${idx + 1} (En construcción)`;
         const statusTextVal = mill.isUpgrading ? 'Mejorando...' : 'En construcción';
         html += `
-          <div class="building-box" id="mill-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="mill-tier-badge-${idx}">${badgeText}</div>
+          <div class="building-box" id="lumbermill-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="lumbermill-tier-badge-${idx}">${badgeText}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="mill-title-${idx}">🏗️ ${titleText}</span>
-              <span class="building-box-prod" id="mill-prod-${idx}">${statusTextVal}</span>
+              <span class="building-box-title" id="lumbermill-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="lumbermill-prod-${idx}">${statusTextVal}</span>
             </div>
             <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
-              <div class="progress-bar-fill" id="mill-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
+              <div class="progress-bar-fill" id="lumbermill-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -285,7 +322,7 @@ function renderLumberMills() {
                   <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('lumberMills', ${idx})">
                     ${pauseBtnText}
                   </button>
-                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="mill-btn-${idx}" onclick="togglePlayerConstruct('lumberMills', ${idx})">
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="lumbermill-btn-${idx}" onclick="togglePlayerConstruct('lumberMills', ${idx})">
                     🔨 Iniciar Construcción
                   </button>
                 </div>
@@ -295,11 +332,11 @@ function renderLumberMills() {
         `;
       } else {
         html += `
-          <div class="building-box" id="mill-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="mill-tier-badge-${idx}">Tier ${mill.tier || 1}</div>
+          <div class="building-box" id="lumbermill-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="lumbermill-tier-badge-${idx}">Tier ${mill.tier || 1}</div>
             <div class="building-box-header">
-              <span class="building-box-title" id="mill-title-${idx}">🪵 Cabaña de Leñador #${idx + 1}</span>
-              <span class="building-box-prod" id="mill-prod-${idx}">0 Madera/día</span>
+              <span class="building-box-title" id="lumbermill-title-${idx}">🪵 Cabaña de Leñador #${idx + 1}</span>
+              <span class="building-box-prod" id="lumbermill-prod-${idx}">0 Madera/día</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.25rem;">
               <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
@@ -323,12 +360,12 @@ function renderLumberMills() {
               })()}
             </div>
             <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
+              <span id="lumbermill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1</span>
               <div style="display: flex; gap: 0.25rem;">
                 <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('lumberMills', ${idx})">
                   🗑️
                 </button>
-                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
+                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="lumbermill-upgrade-btn-${idx}" onclick="upgradeLumberMill(${idx})">
                   Mejorar
                 </button>
               </div>
@@ -344,22 +381,22 @@ function renderLumberMills() {
     state.lumberMills.forEach((mill, idx) => {
       if (mill.isUnderConstruction || mill.isUpgrading) {
         const isUpgrading = mill.isUpgrading;
-        const pBar = document.getElementById(`mill-progress-${idx}`);
+        const pBar = document.getElementById(`lumbermill-progress-${idx}`);
         const duration = mill.constructionDuration || 5;
         const pct = Math.min(100, (mill.constructionElapsed / duration) * 100);
         if (pBar) pBar.style.width = `${pct}%`;
         
-        const statusText = document.getElementById(`mill-prod-${idx}`);
+        const statusText = document.getElementById(`lumbermill-prod-${idx}`);
         if (statusText) {
           statusText.innerText = isUpgrading ? `Mejorando a Tier ${mill.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
         }
 
-        const titleText = document.getElementById(`mill-title-${idx}`);
+        const titleText = document.getElementById(`lumbermill-title-${idx}`);
         if (titleText) {
           titleText.innerHTML = isUpgrading ? `🪵 Cabaña de Leñador #${idx + 1} (Mejorando...)` : `🪵 Cabaña de Leñador #${idx + 1} (En construcción)`;
         }
         
-        const btn = document.getElementById(`mill-btn-${idx}`);
+        const btn = document.getElementById(`lumbermill-btn-${idx}`);
         const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'lumberMills' && state.playerConstructing.index === idx;
         if (btn) {
           if (isPlayerOnIt) {
@@ -401,11 +438,11 @@ function renderLumberMills() {
           displayYield = yieldMin.toFixed(yieldMin % 1 === 0 ? 0 : 2);
         }
         
-        const titleText = document.getElementById(`mill-title-${idx}`);
-        const prodText = document.getElementById(`mill-prod-${idx}`);
-        const tierBadge = document.getElementById(`mill-tier-badge-${idx}`);
-        const tierText = document.getElementById(`mill-tier-text-${idx}`);
-        const upgradeBtn = document.getElementById(`mill-upgrade-btn-${idx}`);
+        const titleText = document.getElementById(`lumbermill-title-${idx}`);
+        const prodText = document.getElementById(`lumbermill-prod-${idx}`);
+        const tierBadge = document.getElementById(`lumbermill-tier-badge-${idx}`);
+        const tierText = document.getElementById(`lumbermill-tier-text-${idx}`);
+        const upgradeBtn = document.getElementById(`lumbermill-upgrade-btn-${idx}`);
         
         let bName = tier === 1 ? 'Cabaña de Leñador' : (tier === 2 ? 'Aserradero' : 'Gremio de Leñadores');
         
@@ -656,7 +693,7 @@ function renderFarms() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('farms_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0') + '_' + (f.isPaused ? '1' : '0') + '_' + (f.workerAssigned || 0) + '_' + (f.isWarehouseFull ? '1' : '0')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.farms ? state.farms.map(f => (f.isUnderConstruction ? '1' : '0') + '_' + f.stage + '_' + (f.needsWatering ? '1' : '0') + '_' + (f.isPaused ? '1' : '0') + '_' + (f.workerAssigned || 0) + '_' + (f.isWarehouseFull ? '1' : '0')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}_fert:${state.fertilizer || 0}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastFarmsConstructionStatus) {
     lastFarmsConstructionStatus = currentStatus;
@@ -750,6 +787,21 @@ function renderFarms() {
               <button class="btn btn-danger" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('farms', ${idx})">
                 🗑️
               </button>
+              ${(() => {
+                let fertilizeBtnHtml = '';
+                if (farm.stage === 'grow' || farm.stage === 'grow2') {
+                  const hasFert = (state.fertilizer || 0) >= 1;
+                  const btnClass = hasFert ? 'btn btn-primary' : 'btn btn-secondary';
+                  const btnText = hasFert ? '🌿 Fertilizar' : 'Sin fertilizante';
+                  const disabledAttr = hasFert ? '' : 'disabled';
+                  fertilizeBtnHtml = `
+                    <button class="${btnClass}" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1; margin-right: 0.25rem;" onclick="fertilizeFarm(${idx})" ${disabledAttr}>
+                      ${btnText}
+                    </button>
+                  `;
+                }
+                return fertilizeBtnHtml;
+              })()}
               <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1;" id="farm-btn-${idx}" onclick="startFarmCycle(${idx})">
                 Sembrar
               </button>
@@ -1152,7 +1204,7 @@ function renderBonfires() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('bonfires_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.bonfires ? state.bonfires.map(b => (b.isUnderConstruction ? '1' : '0') + '_' + (b.isUpgrading ? '1' : '0') + '_' + (b.tier || 1) + '_' + (b.selectedRecipe || 'wheat') + '_' + (b.isPaused ? '1' : '0') + '_' + (b.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.bonfires ? state.bonfires.map(b => (b.isUnderConstruction ? '1' : '0') + '_' + (b.isUpgrading ? '1' : '0') + '_' + (b.tier || 1) + '_' + (b.selectedRecipe || 'wheat') + '_' + (b.isPaused ? '1' : '0') + '_' + (b.workerAssigned || 0) + '_' + (b.recipePriorities || []).join('-')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastBonfiresConstructionStatus) {
     lastBonfiresConstructionStatus = currentStatus;
@@ -1197,53 +1249,174 @@ function renderBonfires() {
           </div>
         `;
       } else {
+        const tier = bonfire.tier || 1;
         const recipe = bonfire.selectedRecipe || 'wheat';
-        html += `
-          <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${bonfire.tier || 1}</div>
-            <div class="building-box-header">
-              <span class="building-box-title" id="bonfire-title-${idx}">🔥 Fogata #${idx + 1}</span>
-              <span class="building-box-prod" id="bonfire-status-${idx}">Inactiva</span>
-            </div>
-            
-            <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-              <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
-            </div>
- 
-            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente receta (próxima iteración):</span>
-              <select id="bonfire-recipe-${idx}" onchange="changeBonfireRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
-                <option value="wheat" ${recipe === 'wheat' ? 'selected' : ''}>🍞 Trigo -> Pan</option>
-                <option value="potato" ${recipe === 'potato' ? 'selected' : ''}>🥔 Patata -> Patata Asada</option>
-                <option value="carrot" ${recipe === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Zanahoria Asada</option>
-                <option value="berries" ${recipe === 'berries' ? 'selected' : ''}>🍯 Frutos -> Mermelada</option>
-              </select>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
-              ${renderBuildingWorkerDropdowns('bonfires', idx, maxWorkers)}
-            </div>
- 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
-                Cocinar Manual
-              </button>
-            </div>
- 
-            <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-              <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
-              <div style="display: flex; gap: 0.25rem;">
-                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('bonfires', ${idx})">
-                  🗑️
-                </button>
-                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
-                  Mejorar
+        
+        if (tier === 1) {
+          html += `
+            <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${bonfire.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="bonfire-title-${idx}">🔥 Fogata #${idx + 1}</span>
+                <span class="building-box-prod" id="bonfire-status-${idx}">Inactiva</span>
+              </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="bonfire-progress-${idx}" style="background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
+              </div>
+   
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente receta (próxima iteración):</span>
+                <select id="bonfire-recipe-${idx}" onchange="changeBonfireRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
+                  <option value="wheat" ${recipe === 'wheat' ? 'selected' : ''}>🍞 Trigo -> Pan</option>
+                  <option value="potato" ${recipe === 'potato' ? 'selected' : ''}>🥔 Patata -> Patata Asada</option>
+                  <option value="carrot" ${recipe === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Zanahoria Asada</option>
+                  <option value="berries" ${recipe === 'berries' ? 'selected' : ''}>🍯 Frutos -> Mermelada</option>
+                  ${tier >= 2 ? `
+                    <option value="bread" ${recipe === 'bread' ? 'selected' : ''}>🍞 Harina -> Pan Artesano</option>
+                    <option value="stew" ${recipe === 'stew' ? 'selected' : ''}>🍲 Zanahoria + Patata -> Guiso</option>
+                  ` : ''}
+                </select>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.2rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 600;">Prioridades de Recetas (Fallback):</span>
+                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                  ${(bonfire.recipePriorities || ['carrot', 'wheat', 'potato', 'berries']).map((r, pIdx) => {
+                    const names = { carrot: '🥕 Zanahoria', wheat: '🍞 Trigo', potato: '🥔 Patata', berries: '🍯 Frutos' };
+                    const isFirst = pIdx === 0;
+                    const isLast = pIdx === 3;
+                    return `
+                      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.7rem;">
+                        <span>#${pIdx + 1} - ${names[r] || r}</span>
+                        <div style="display: flex; gap: 0.2rem;">
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isFirst ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveBonfireRecipePriority(${idx}, ${pIdx}, -1)">▲</button>
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isLast ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveBonfireRecipePriority(${idx}, ${pIdx}, 1)">▼</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+                ${renderBuildingWorkerDropdowns('bonfires', idx, maxWorkers)}
+              </div>
+   
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="bonfire-btn-${idx}" onclick="cookManually(${idx})">
+                  Cocinar Manual
                 </button>
               </div>
+   
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Fogata)</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('bonfires', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
+                    Mejorar
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          const maxSlots = bonfire.workers ? bonfire.workers.length : 2;
+          bonfire.workers = bonfire.workers || Array(maxSlots).fill(null);
+          
+          let slotsHtml = '';
+          for (let slotIdx = 0; slotIdx < maxSlots; slotIdx++) {
+            const worker = bonfire.workers[slotIdx];
+            const slotRecipe = worker ? (worker.selectedRecipe || recipe) : recipe;
+            slotsHtml += `
+              <div style="border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.4rem; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.3rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                  <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">Puesto #${slotIdx + 1}:</span>
+                  <div style="flex: 1; max-width: 140px;">
+                    ${renderSingleWorkerDropdown('bonfires', idx, slotIdx)}
+                  </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.2rem;">
+                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">Receta:</span>
+                  <select id="bonfire-recipe-${idx}-${slotIdx}" onchange="changeBonfireSlotRecipe(${idx}, ${slotIdx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.15rem; font-family: var(--font-primary); font-size: 0.7rem; outline: none; cursor: pointer; max-width: 140px;">
+                    <option value="wheat" ${slotRecipe === 'wheat' ? 'selected' : ''}>🍞 Pan</option>
+                    <option value="potato" ${slotRecipe === 'potato' ? 'selected' : ''}>🥔 Patata Asada</option>
+                    <option value="carrot" ${slotRecipe === 'carrot' ? 'selected' : ''}>🥕 Zanahoria Asada</option>
+                    <option value="berries" ${slotRecipe === 'berries' ? 'selected' : ''}>🍯 Mermelada</option>
+                    ${tier >= 2 ? `
+                      <option value="bread" ${slotRecipe === 'bread' ? 'selected' : ''}>🍞 Pan Artesano</option>
+                      <option value="stew" ${slotRecipe === 'stew' ? 'selected' : ''}>🍲 Guiso</option>
+                    ` : ''}
+                  </select>
+                </div>
+
+                <div style="margin-top: 0.2rem;">
+                  <div class="progress-bar-container" style="height: 5px;">
+                    <div class="progress-bar-fill" id="bonfire-progress-${idx}-${slotIdx}" style="width: 0%; background: linear-gradient(90deg, hsl(20, 90%, 60%) 0%, #f97316 100%);"></div>
+                  </div>
+                  <div id="bonfire-status-${idx}-${slotIdx}" style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: 0.15rem;">Inactiva</div>
+                </div>
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="building-box" id="bonfire-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="bonfire-tier-badge-${idx}">Tier ${tier}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="bonfire-title-${idx}">🔥 Fogata #${idx + 1}</span>
+                <span class="building-box-prod" id="bonfire-status-${idx}">${bonfire.isWarehouseFull ? '<span style="color:#f59e0b; font-weight:bold;">⚠️ Almacén lleno</span>' : 'Inactiva'}</span>
+              </div>
+              
+              <div style="margin-top: 0.4rem;">
+                <details open style="outline: none;">
+                  <summary style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600; cursor: pointer; user-select: none; outline: none; margin-bottom: 0.2rem;">
+                    Slots de producción (${bonfire.workerAssigned || 0}/${maxSlots})
+                  </summary>
+                  <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                    ${slotsHtml}
+                  </div>
+                </details>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.2rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 600;">Prioridades de Recetas (Fallback):</span>
+                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                  ${(bonfire.recipePriorities || ['carrot', 'wheat', 'potato', 'berries']).map((r, pIdx) => {
+                    const names = { carrot: '🥕 Zanahoria', wheat: '🍞 Trigo', potato: '🥔 Patata', berries: '🍯 Frutos' };
+                    const isFirst = pIdx === 0;
+                    const isLast = pIdx === 3;
+                    return `
+                      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.7rem;">
+                        <span>#${pIdx + 1} - ${names[r] || r}</span>
+                        <div style="display: flex; gap: 0.25rem;">
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isFirst ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveBonfireRecipePriority(${idx}, ${pIdx}, -1)">▲</button>
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isLast ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveBonfireRecipePriority(${idx}, ${pIdx}, 1)">▼</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="bonfire-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel ${tier}</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('bonfires', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="bonfire-upgrade-btn-${idx}" onclick="upgradeBonfire(${idx})">
+                    Mejorar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
       }
     });
     container.innerHTML = html;
@@ -1272,14 +1445,10 @@ function renderBonfires() {
           }
         }
       } else {
-        const pBar = document.getElementById(`bonfire-progress-${idx}`);
-        const btn = document.getElementById(`bonfire-btn-${idx}`);
-        const statusText = document.getElementById(`bonfire-status-${idx}`);
         const titleText = document.getElementById(`bonfire-title-${idx}`);
         const tierText = document.getElementById(`bonfire-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`bonfire-upgrade-btn-${idx}`);
         const tierBadge = document.getElementById(`bonfire-tier-badge-${idx}`);
-        const recipeSelect = document.getElementById(`bonfire-recipe-${idx}`);
         
         let autoRec, manualRec;
         if (bonfire.tier === 1) {
@@ -1314,50 +1483,133 @@ function renderBonfires() {
           }
         }
 
-        const recipe = bonfire.selectedRecipe || 'wheat';
-        if (recipeSelect) {
-          if (document.activeElement !== recipeSelect && recipeSelect.value !== recipe) {
-            recipeSelect.value = recipe;
-          }
-          recipeSelect.disabled = false;
-        }
-
         const minFood = autoRec ? autoRec.consume_amount : 1;
-        if (btn) btn.disabled = bonfire.isRunning || (state[recipe] || 0) < minFood;
 
-        if (bonfire.isRunning) {
-          const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
-          const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
-          if (pBar) pBar.style.width = `${pct}%`;
-          
-          let speedMultiplier = 1.0;
-          if (bonfire.mode === 'auto') {
-            const workers = state.colonists ? state.colonists.filter(c => c.job === `bonfires_${idx}`) : [];
-            let mult = 0;
-            workers.forEach(c => {
-              const lvl = c.attributes.cooking || 3;
-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
-            });
-            speedMultiplier = mult;
+        if (bonfire.tier === 1) {
+          const pBar = document.getElementById(`bonfire-progress-${idx}`);
+          const btn = document.getElementById(`bonfire-btn-${idx}`);
+          const statusText = document.getElementById(`bonfire-status-${idx}`);
+          const recipeSelect = document.getElementById(`bonfire-recipe-${idx}`);
+
+          const recipe = bonfire.selectedRecipe || 'wheat';
+          if (recipeSelect) {
+            if (document.activeElement !== recipeSelect && recipeSelect.value !== recipe) {
+              recipeSelect.value = recipe;
+            }
+            recipeSelect.disabled = false;
           }
-          
-          const rem = (speedMultiplier > 0) ? Math.max((targetDuration - bonfire.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
-          const runningRecipe = bonfire.activeRecipe || recipe;
-          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
-          const ingredientName = rawNames[runningRecipe] || runningRecipe;
-          if (statusText) {
-            if (bonfire.mode === 'auto' && bonfire.workerAssigned === 0) {
-              const progressRem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
-              statusText.innerText = `Cocinando ${ingredientName} (Pausado: Sin Cocinero) (${progressRem}s)`;
-            } else {
-              statusText.innerText = `Cocinando ${ingredientName} (Faltan ${rem}s)`;
+
+          if (btn) btn.disabled = bonfire.isRunning || (state[recipe] || 0) < minFood;
+
+          if (bonfire.isRunning) {
+            const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
+            const pct = Math.min(100, (bonfire.elapsed / targetDuration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            
+            let speedMultiplier = 1.0;
+            if (bonfire.mode === 'auto') {
+              const workers = state.colonists ? state.colonists.filter(c => c.job === `bonfires_${idx}`) : [];
+              let mult = 0;
+              workers.forEach(c => {
+                const lvl = c.attributes.cooking || 3;
+                mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+              });
+              speedMultiplier = mult;
+            }
+            
+            const rem = (speedMultiplier > 0) ? Math.max((targetDuration - bonfire.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+            const runningRecipe = bonfire.activeRecipe || recipe;
+            const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+            const ingredientName = rawNames[runningRecipe] || runningRecipe;
+            if (statusText) {
+              if (bonfire.mode === 'auto' && bonfire.workerAssigned === 0) {
+                const progressRem = Math.max(targetDuration - bonfire.elapsed, 0).toFixed(0);
+                statusText.innerText = `Cocinando ${ingredientName} (Pausado: Sin Cocinero) (${progressRem}s)`;
+              } else {
+                if (runningRecipe !== recipe) {
+                  statusText.innerHTML = `<span style="color:#facc15; font-weight:bold;">Cocinando ${ingredientName} (Alternativo) (sin ${rawNames[recipe] || recipe})</span> (Faltan ${rem}s)`;
+                } else {
+                  statusText.innerText = `Cocinando ${ingredientName} (Faltan ${rem}s)`;
+                }
+              }
+            }
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+            const ingredientName = rawNames[recipe] || recipe;
+            if (statusText) {
+              if (bonfire.workerAssigned > 0 && bonfire.cookingRecipeNow === null) {
+                statusText.innerHTML = `<span style="color:#f87171; font-weight:bold;">⚠️ Sin ingredientes</span>`;
+              } else {
+                statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactiva';
+              }
             }
           }
         } else {
-          if (pBar) pBar.style.width = `0%`;
-          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
-          const ingredientName = rawNames[recipe] || recipe;
-          if (statusText) statusText.innerText = bonfire.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactiva';
+          const maxSlots = bonfire.workers ? bonfire.workers.length : 2;
+          bonfire.workers = bonfire.workers || Array(maxSlots).fill(null);
+          
+          let speedBonus = 0;
+          if (bonfire.tier === 3) {
+            speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.bonfire_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.bonfire_t3_speed.value) || 0.3) : 0.3;
+          }
+
+          bonfire.workers.forEach((worker, slotIdx) => {
+            const slotPBar = document.getElementById(`bonfire-progress-${idx}-${slotIdx}`);
+            const slotStatusText = document.getElementById(`bonfire-status-${idx}-${slotIdx}`);
+            const slotRecipeSelect = document.getElementById(`bonfire-recipe-${idx}-${slotIdx}`);
+
+            const recipe = worker ? (worker.selectedRecipe || bonfire.selectedRecipe || 'wheat') : (bonfire.selectedRecipe || 'wheat');
+            if (slotRecipeSelect) {
+              if (document.activeElement !== slotRecipeSelect && slotRecipeSelect.value !== recipe) {
+                slotRecipeSelect.value = recipe;
+              }
+            }
+
+            if (worker) {
+              if (worker.isRunning) {
+                const targetDuration = worker.mode === 'manual' ? manualRec.duration : autoRec.duration;
+                const pct = Math.min(100, (worker.elapsed / targetDuration) * 100);
+                if (slotPBar) slotPBar.style.width = `${pct}%`;
+                
+                let speedMultiplier = 1.0;
+                if (worker.mode === 'auto') {
+                  const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+                  if (colonist) {
+                    const lvl = colonist.attributes.cooking || 3;
+                    speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+                  }
+                }
+                speedMultiplier *= (1 + speedBonus);
+
+                const rem = (speedMultiplier > 0) ? Math.max((targetDuration - worker.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+                const runningRecipe = worker.activeRecipe || recipe;
+                const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+                const ingredientName = rawNames[runningRecipe] || runningRecipe;
+                if (slotStatusText) {
+                  if (runningRecipe !== recipe) {
+                    slotStatusText.innerHTML = `<span style="color:#facc15; font-weight:bold;">Cocinando ${ingredientName} (Alt)</span> (Faltan ${rem}s)`;
+                  } else {
+                    slotStatusText.innerText = `Cocinando ${ingredientName} (Faltan ${rem}s)`;
+                  }
+                }
+              } else {
+                if (slotPBar) slotPBar.style.width = `0%`;
+                const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos' };
+                const ingredientName = rawNames[recipe] || recipe;
+                if (slotStatusText) {
+                  if (worker.cookingRecipeNow === null) {
+                    slotStatusText.innerHTML = `<span style="color:#f87171; font-weight:bold;">⚠️ Sin ingredientes</span>`;
+                  } else {
+                    slotStatusText.innerText = `Esperando ${ingredientName} (Mín. ${minFood})...`;
+                  }
+                }
+              }
+            } else {
+              if (slotPBar) slotPBar.style.width = `0%`;
+              if (slotStatusText) slotStatusText.innerText = 'Inactivo (Sin Trabajador)';
+            }
+          });
         }
       }
     });
@@ -1365,6 +1617,162 @@ function renderBonfires() {
 }
 
 let lastGranariesConstructionStatus = '';
+let lastMillsConstructionStatus = '';
+function renderMills() {
+  const container = document.getElementById('active-mills-list');
+  if (!container) return;
+  const count = state.mills ? state.mills.length : 0;
+  const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+  
+  const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('mills_')).map(c => `${c.id}:${c.job}`).join(',') : '';
+  const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
+  const currentStatus = (state.mills ? state.mills.map(m => (m.isUnderConstruction ? '1' : '0') + '_' + (m.isUpgrading ? '1' : '0') + '_' + (m.tier || 1) + '_' + (m.isPaused ? '1' : '0') + '_' + (m.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  
+  if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastMillsConstructionStatus) {
+    lastMillsConstructionStatus = currentStatus;
+    if (count === 0) {
+      if (!container.querySelector('.placeholder-text')) {
+        container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Molino construido</div>`;
+      }
+      return;
+    }
+    let html = '';
+    state.mills.forEach((mill, idx) => {
+      const maxWorkers = mill.isUnderConstruction || mill.isUpgrading ? 2 : (mill.tier || 1);
+      if (mill.isUnderConstruction || mill.isUpgrading) {
+        const badgeText = mill.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = mill.isUpgrading ? 
+          `Molino #${idx + 1} (Mejorando...)` : 
+          `Molino #${idx + 1} (En construcción)`;
+        const statusTextVal = mill.isUpgrading ? 'Mejorando...' : 'En construcción';
+        const isPaused = mill.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
+        html += `
+          <div class="building-box" id="mill-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="mill-tier-badge-${idx}">${badgeText}</div>
+            <div class="building-box-header">
+              <span class="building-box-title" id="mill-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="mill-status-${idx}">${statusTextVal}</span>
+            </div>
+            <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+              <div class="progress-bar-fill" id="mill-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${mill.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('mills', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('mills', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="mill-construct-btn-${idx}" onclick="togglePlayerConstruct('mills', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const tier = mill.tier || 1;
+        
+        if (tier === 1) {
+          html += `
+            <div class="building-box" id="mill-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="mill-tier-badge-${idx}">Tier ${mill.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="mill-title-${idx}">🌾 Molino #${idx + 1}</span>
+                <span class="building-box-prod" id="mill-status-${idx}">Inactivo</span>
+              </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="mill-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+              </div>
+   
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.75rem; color: #34d399; font-weight: 500;">Molienda: 🌾 Trigo (5) ➔ 📦 Harina</span>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+                ${renderBuildingWorkerDropdowns('mills', idx, maxWorkers)}
+              </div>
+   
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Molino)</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('mills', ${idx})">
+                    🗑️ Demoler
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="mill-upgrade-btn-${idx}" onclick="upgradeMill(${idx})">
+                    Mejorar (🪙100, 🪵150, 🪨100)
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          const maxSlots = mill.workers ? mill.workers.length : 2;
+          mill.workers = mill.workers || Array(maxSlots).fill(null);
+          
+          let slotsHtml = '';
+          for (let slotIdx = 0; slotIdx < maxSlots; slotIdx++) {
+            slotsHtml += `
+              <div style="border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.4rem; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.3rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                  <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">Puesto #${slotIdx + 1}:</span>
+                  <div style="flex: 1; max-width: 160px;">
+                    ${renderSingleWorkerDropdown('mills', idx, slotIdx)}
+                  </div>
+                </div>
+                
+                <div style="margin-top: 0.2rem;">
+                  <div class="progress-bar-container" style="height: 5px;">
+                    <div class="progress-bar-fill" id="mill-progress-${idx}-${slotIdx}" style="width: 0%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+                  </div>
+                  <div id="mill-status-${idx}-${slotIdx}" style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: 0.15rem;">Inactiva</div>
+                </div>
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="building-box" id="mill-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="mill-tier-badge-${idx}">Tier ${tier}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="mill-title-${idx}">🌾 Molino #${idx + 1}</span>
+                <span class="building-box-prod" id="mill-status-${idx}">Inactivo</span>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.75rem; color: #34d399; font-weight: 500;">Molienda: 🌾 Trigo (5) ➔ 📦 Harina</span>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Puestos de Trabajo:</span>
+                ${slotsHtml}
+              </div>
+   
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="mill-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 2 (Gran Molino)</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('mills', ${idx})">
+                    🗑️ Demoler
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+    });
+    container.innerHTML = html;
+  }
+}
+window.renderMills = renderMills;
+
 function renderGranaries() {
   const container = document.getElementById('active-granaries-list');
   if (!container) return;
@@ -1373,7 +1781,7 @@ function renderGranaries() {
   
   const assignedIds = state.colonists ? state.colonists.filter(c => c.job && c.job.startsWith('granaries_')).map(c => `${c.id}:${c.job}`).join(',') : '';
   const freeColonistsStr = state.colonists ? state.colonists.filter(c => c.job === null).map(c => c.id).join(',') : '';
-  const currentStatus = (state.granaries ? state.granaries.map(g => (g.isUnderConstruction ? '1' : '0') + '_' + (g.isUpgrading ? '1' : '0') + '_' + (g.tier || 1) + '_' + (g.selectedCrop || 'wheat') + '_' + (g.isPaused ? '1' : '0') + '_' + (g.workerAssigned || 0)).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
+  const currentStatus = (state.granaries ? state.granaries.map(g => (g.isUnderConstruction ? '1' : '0') + '_' + (g.isUpgrading ? '1' : '0') + '_' + (g.tier || 1) + '_' + (g.selectedCrop || 'wheat') + '_' + (g.isPaused ? '1' : '0') + '_' + (g.workerAssigned || 0) + '_' + (g.seedsPriorities || []).join('-')).join(',') : '') + `_assigned:${assignedIds}_free:${freeColonistsStr}`;
   
   if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastGranariesConstructionStatus) {
     lastGranariesConstructionStatus = currentStatus;
@@ -1424,51 +1832,165 @@ function renderGranaries() {
         `;
       } else {
         const crop = granary.selectedCrop || 'wheat';
-        html += `
-          <div class="building-box" id="granary-box-${idx}" style="position: relative;">
-            <div class="building-tier-badge" id="granary-tier-badge-${idx}">Tier ${granary.tier || 1}</div>
-            <div class="building-box-header">
-              <span class="building-box-title" id="granary-title-${idx}">🌾 Granero #${idx + 1}</span>
-              <span class="building-box-prod" id="granary-status-${idx}">Inactivo</span>
-            </div>
-            
-            <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
-              <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
-            </div>
- 
-            <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente semilla (próxima iteración):</span>
-              <select id="granary-crop-${idx}" onchange="changeGranaryRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
-                <option value="wheat" ${crop === 'wheat' ? 'selected' : ''}>🌾 Trigo -> Semillas Trigo</option>
-                <option value="potato" ${crop === 'potato' ? 'selected' : ''}>🥔 Patata -> Semillas Patata</option>
-                <option value="carrot" ${crop === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Semillas Zanahoria</option>
-              </select>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
-              ${renderBuildingWorkerDropdowns('granaries', idx, maxWorkers)}
-            </div>
- 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
-              <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
-                Procesar Manual
-              </button>
-            </div>
- 
-            <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-              <span id="granary-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Granero)</span>
-              <div style="display: flex; gap: 0.25rem;">
-                <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('granaries', ${idx})">
-                  🗑️
-                </button>
-                <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
-                  Mejorar
+        const tier = granary.tier || 1;
+        
+        if (tier === 1) {
+          html += `
+            <div class="building-box" id="granary-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="granary-tier-badge-${idx}">Tier ${granary.tier || 1}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="granary-title-${idx}">🌾 Granero #${idx + 1}</span>
+                <span class="building-box-prod" id="granary-status-${idx}">Inactivo</span>
+              </div>
+              
+              <div class="progress-bar-container" style="height: 6px; margin: 0.2rem 0;">
+                <div class="progress-bar-fill" id="granary-progress-${idx}" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+              </div>
+   
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500;">Siguiente semilla (próxima iteración):</span>
+                <select id="granary-crop-${idx}" onchange="changeGranaryRecipe(${idx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.25rem; font-family: var(--font-primary); font-size: 0.75rem; outline: none; cursor: pointer;">
+                  <option value="wheat" ${crop === 'wheat' ? 'selected' : ''}>🌾 Trigo -> Semillas Trigo</option>
+                  <option value="potato" ${crop === 'potato' ? 'selected' : ''}>🥔 Patata -> Semillas Patata</option>
+                  <option value="carrot" ${crop === 'carrot' ? 'selected' : ''}>🥕 Zanahoria -> Semillas Zanahoria</option>
+                  <option value="pienso" ${crop === 'pienso' ? 'selected' : ''}>📦 Trigo -> Pienso</option>
+                </select>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.2rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 600;">Prioridades de Semillas (Fallback):</span>
+                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                  ${(granary.seedsPriorities || ['wheat', 'potato', 'carrot']).map((r, pIdx) => {
+                    const names = { wheat: '🌾 Trigo', potato: '🥔 Patata', carrot: '🥕 Zanahoria' };
+                    const isFirst = pIdx === 0;
+                    const isLast = pIdx === 2;
+                    return `
+                      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.7rem;">
+                        <span>#${pIdx + 1} - ${names[r] || r}</span>
+                        <div style="display: flex; gap: 0.2rem;">
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isFirst ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveGranaryCropPriority(${idx}, ${pIdx}, -1)">▲</button>
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isLast ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveGranaryCropPriority(${idx}, ${pIdx}, 1)">▼</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+  
+              <div style="display: flex; flex-direction: column; gap: 0.25rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
+                ${renderBuildingWorkerDropdowns('granaries', idx, maxWorkers)}
+              </div>
+   
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; width: 100%;" id="granary-btn-${idx}" onclick="processGranaryManually(${idx})">
+                  Procesar Manual
                 </button>
               </div>
+   
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="granary-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel 1 (Granero)</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('granaries', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
+                    Mejorar
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          const maxSlots = granary.workers ? granary.workers.length : 2;
+          granary.workers = granary.workers || Array(maxSlots).fill(null);
+          
+          let slotsHtml = '';
+          for (let slotIdx = 0; slotIdx < maxSlots; slotIdx++) {
+            const worker = granary.workers[slotIdx];
+            const slotCrop = worker ? (worker.selectedCrop || crop) : crop;
+            slotsHtml += `
+              <div style="border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.4rem; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.3rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                  <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">Puesto #${slotIdx + 1}:</span>
+                  <div style="flex: 1; max-width: 140px;">
+                    ${renderSingleWorkerDropdown('granaries', idx, slotIdx)}
+                  </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.2rem;">
+                  <span style="font-size: 0.7rem; color: var(--color-text-muted);">Semilla:</span>
+                  <select id="granary-crop-${idx}-${slotIdx}" onchange="changeGranarySlotCrop(${idx}, ${slotIdx}, this.value)" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.15rem; font-family: var(--font-primary); font-size: 0.7rem; outline: none; cursor: pointer; max-width: 140px;">
+                    <option value="wheat" ${slotCrop === 'wheat' ? 'selected' : ''}>🌾 Trigo</option>
+                    <option value="potato" ${slotCrop === 'potato' ? 'selected' : ''}>🥔 Patata</option>
+                    <option value="carrot" ${slotCrop === 'carrot' ? 'selected' : ''}>🥕 Zanahoria</option>
+                    <option value="pienso" ${slotCrop === 'pienso' ? 'selected' : ''}>📦 Pienso</option>
+                  </select>
+                </div>
+
+                <div style="margin-top: 0.2rem;">
+                  <div class="progress-bar-container" style="height: 5px;">
+                    <div class="progress-bar-fill" id="granary-progress-${idx}-${slotIdx}" style="width: 0%; background: linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
+                  </div>
+                  <div id="granary-status-${idx}-${slotIdx}" style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: 0.15rem;">Inactiva</div>
+                </div>
+              </div>
+            `;
+          }
+
+          html += `
+            <div class="building-box" id="granary-box-${idx}" style="position: relative;">
+              <div class="building-tier-badge" id="granary-tier-badge-${idx}">Tier ${tier}</div>
+              <div class="building-box-header">
+                <span class="building-box-title" id="granary-title-${idx}">🌾 Granero #${idx + 1}</span>
+                <span class="building-box-prod" id="granary-status-${idx}">Inactivo</span>
+              </div>
+              
+              <div style="margin-top: 0.4rem;">
+                <details open style="outline: none;">
+                  <summary style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600; cursor: pointer; user-select: none; outline: none; margin-bottom: 0.2rem;">
+                    Slots de producción (${granary.workerAssigned || 0}/${maxSlots})
+                  </summary>
+                  <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                    ${slotsHtml}
+                  </div>
+                </details>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.2rem; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 0.4rem; margin-top: 0.4rem; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); font-weight: 600;">Prioridades de Semillas (Fallback):</span>
+                <div style="display: flex; flex-direction: column; gap: 0.15rem;">
+                  ${(granary.seedsPriorities || ['wheat', 'potato', 'carrot']).map((r, pIdx) => {
+                    const names = { wheat: '🌾 Trigo', potato: '🥔 Patata', carrot: '🥕 Zanahoria' };
+                    const isFirst = pIdx === 0;
+                    const isLast = pIdx === 2;
+                    return `
+                      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.7rem;">
+                        <span>#${pIdx + 1} - ${names[r] || r}</span>
+                        <div style="display: flex; gap: 0.25rem;">
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isFirst ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveGranaryCropPriority(${idx}, ${pIdx}, -1)">▲</button>
+                          <button class="btn btn-secondary" style="font-size: 0.55rem; padding: 0.05rem 0.15rem; min-width: 15px; line-height: 1;" ${isLast ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''} onclick="moveGranaryCropPriority(${idx}, ${pIdx}, 1)">▼</button>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <div style="margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                <span id="granary-tier-text-${idx}" style="font-size: 0.7rem; color: #a5b4fc; font-weight: 500;">Nivel ${tier}</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.65rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('granaries', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.4rem;" id="granary-upgrade-btn-${idx}" onclick="upgradeGranary(${idx})">
+                    Mejorar
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
       }
     });
     container.innerHTML = html;
@@ -1508,19 +2030,12 @@ function renderGranaries() {
           }
         }
       } else {
-        const pBar = document.getElementById(`granary-progress-${idx}`);
-        const btn = document.getElementById(`granary-btn-${idx}`);
-        const statusText = document.getElementById(`granary-status-${idx}`);
         const titleText = document.getElementById(`granary-title-${idx}`);
         const tierText = document.getElementById(`granary-tier-text-${idx}`);
         const upgradeBtn = document.getElementById(`granary-upgrade-btn-${idx}`);
         const tierBadge = document.getElementById(`granary-tier-badge-${idx}`);
-        const cropSelect = document.getElementById(`granary-crop-${idx}`);
         
-        const cropKey = granary.selectedCrop || 'wheat';
         const tier = granary.tier || 1;
-        const recipeKey = `granary_${cropKey}_t${tier}`;
-        const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
         
         let bName = tier === 1 ? 'Granero' : (tier === 2 ? 'Mejorar Granero T2' : 'Mejorar Granero T3');
         bName = tier === 1 ? 'Granero T1' : (tier === 2 ? 'Granero T2' : 'Granero T3');
@@ -1543,52 +2058,261 @@ function renderGranaries() {
             upgradeBtn.style.display = 'none';
           }
         }
-        
-        if (cropSelect) {
-          if (document.activeElement !== cropSelect && cropSelect.value !== cropKey) {
-            cropSelect.value = cropKey;
-          }
-          cropSelect.disabled = false;
-        }
-        
-        const minFood = recipe ? recipe.consume_amount : 5;
-        if (btn) btn.disabled = granary.isRunning || (state[cropKey] || 0) < minFood;
-        
-        if (granary.isRunning) {
-          const runningCrop = granary.activeCrop || cropKey;
-          const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
-          const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
-          const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
-          const pct = Math.min(100, (granary.elapsed / targetDuration) * 100);
-          if (pBar) pBar.style.width = `${pct}%`;
-          
-          let speedMultiplier = 1.0;
-          if (granary.mode === 'auto') {
-            const workers = state.colonists ? state.colonists.filter(c => c.job === `granaries_${idx}`) : [];
-            let mult = 0;
-            workers.forEach(c => {
-              const lvl = c.attributes.farming || 3;
-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
-            });
-            speedMultiplier = mult;
+
+        if (tier === 1) {
+          const pBar = document.getElementById(`granary-progress-${idx}`);
+          const btn = document.getElementById(`granary-btn-${idx}`);
+          const statusText = document.getElementById(`granary-status-${idx}`);
+          const cropSelect = document.getElementById(`granary-crop-${idx}`);
+
+          const cropKey = granary.selectedCrop || 'wheat';
+          const recipeKey = `granary_${cropKey}_t${tier}`;
+          const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+
+          if (cropSelect) {
+            if (document.activeElement !== cropSelect && cropSelect.value !== cropKey) {
+              cropSelect.value = cropKey;
+            }
+            cropSelect.disabled = false;
           }
           
-          const rem = (speedMultiplier > 0) ? Math.max((targetDuration - granary.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
-          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
-          const ingredientName = rawNames[runningCrop] || runningCrop;
-          if (statusText) {
-            if (granary.mode === 'auto' && granary.workerAssigned === 0) {
-              const progressRem = Math.max(targetDuration - granary.elapsed, 0).toFixed(0);
-              statusText.innerText = `Procesando ${ingredientName} (Pausado: Sin Trabajador) (${progressRem}s)`;
-            } else {
-              statusText.innerText = `Procesando ${ingredientName} (Faltan ${rem}s)`;
+          const minFood = recipe ? recipe.consume_amount : 5;
+          if (btn) btn.disabled = granary.isRunning || (state[cropKey] || 0) < minFood;
+          
+          if (granary.isRunning) {
+            const runningCrop = granary.activeCrop || cropKey;
+            const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
+            const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
+            const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
+            const pct = Math.min(100, (granary.elapsed / targetDuration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            
+            let speedMultiplier = 1.0;
+            if (granary.mode === 'auto') {
+              const workers = state.colonists ? state.colonists.filter(c => c.job === `granaries_${idx}`) : [];
+              let mult = 0;
+              workers.forEach(c => {
+                const lvl = c.attributes.farming || 3;
+                mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+              });
+              speedMultiplier = mult;
+            }
+            
+            const rem = (speedMultiplier > 0) ? Math.max((targetDuration - granary.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+            const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+            const ingredientName = rawNames[runningCrop] || runningCrop;
+            if (statusText) {
+              if (granary.mode === 'auto' && granary.workerAssigned === 0) {
+                const progressRem = Math.max(targetDuration - granary.elapsed, 0).toFixed(0);
+                statusText.innerText = `Procesando ${ingredientName} (Pausado: Sin Trabajador) (${progressRem}s)`;
+              } else {
+                if (runningCrop !== cropKey) {
+                  statusText.innerHTML = `<span style="color:#facc15; font-weight:bold;">Procesando ${ingredientName} (Alternativo) (sin ${rawNames[cropKey] || cropKey})</span> (Faltan ${rem}s)`;
+                } else {
+                  statusText.innerText = `Procesando ${ingredientName} (Faltan ${rem}s)`;
+                }
+              }
+            }
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+            const ingredientName = rawNames[cropKey] || cropKey;
+            if (statusText) {
+              if (granary.workerAssigned > 0 && granary.cookingRecipeNow === null) {
+                statusText.innerHTML = `<span style="color:#f87171; font-weight:bold;">⚠️ Sin ingredientes</span>`;
+              } else {
+                statusText.innerText = granary.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactivo';
+              }
             }
           }
         } else {
-          if (pBar) pBar.style.width = `0%`;
-          const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
-          const ingredientName = rawNames[cropKey] || cropKey;
-          if (statusText) statusText.innerText = granary.workerAssigned > 0 ? `Esperando ${ingredientName} (Mín. ${minFood})...` : 'Inactivo';
+          const maxSlots = granary.workers ? granary.workers.length : 2;
+          granary.workers = granary.workers || Array(maxSlots).fill(null);
+          
+          let speedBonus = 0;
+          if (granary.tier === 3) {
+            speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.granary_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.granary_t3_speed.value) || 0.3) : 0.3;
+          }
+
+          granary.workers.forEach((worker, slotIdx) => {
+            const slotPBar = document.getElementById(`granary-progress-${idx}-${slotIdx}`);
+            const slotStatusText = document.getElementById(`granary-status-${idx}-${slotIdx}`);
+            const slotCropSelect = document.getElementById(`granary-crop-${idx}-${slotIdx}`);
+
+            const cropKey = worker ? (worker.selectedCrop || granary.selectedCrop || 'wheat') : (granary.selectedCrop || 'wheat');
+            if (slotCropSelect) {
+              if (document.activeElement !== slotCropSelect && slotCropSelect.value !== cropKey) {
+                slotCropSelect.value = cropKey;
+              }
+            }
+
+            const recipeKey = `granary_${cropKey}_t${tier}`;
+            const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+            const minFood = recipe ? recipe.consume_amount : 5;
+
+            if (worker) {
+              if (worker.isRunning) {
+                const runningCrop = worker.activeCrop || cropKey;
+                const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
+                const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
+                const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
+                const pct = Math.min(100, (worker.elapsed / targetDuration) * 100);
+                if (slotPBar) slotPBar.style.width = `${pct}%`;
+                
+                let speedMultiplier = 1.0;
+                if (worker.mode === 'auto') {
+                  const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+                  if (colonist) {
+                    const lvl = colonist.attributes.farming || 3;
+                    speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+                  }
+                }
+                speedMultiplier *= (1 + speedBonus);
+
+                const rem = (speedMultiplier > 0) ? Math.max((targetDuration - worker.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+                const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+                const ingredientName = rawNames[runningCrop] || runningCrop;
+                if (slotStatusText) {
+                  if (runningCrop !== cropKey) {
+                    slotStatusText.innerHTML = `<span style="color:#facc15; font-weight:bold;">Procesando ${ingredientName} (Alt)</span> (Faltan ${rem}s)`;
+                  } else {
+                    slotStatusText.innerText = `Procesando ${ingredientName} (Faltan ${rem}s)`;
+                  }
+                }
+              } else {
+                if (slotPBar) slotPBar.style.width = `0%`;
+                const rawNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+                const ingredientName = rawNames[cropKey] || cropKey;
+                if (slotStatusText) {
+                  if (worker.cookingRecipeNow === null) {
+                    slotStatusText.innerHTML = `<span style="color:#f87171; font-weight:bold;">⚠️ Sin ingredientes</span>`;
+                  } else {
+                    slotStatusText.innerText = `Esperando ${ingredientName} (Mín. ${minFood})...`;
+                  }
+                }
+              }
+            } else {
+              if (slotPBar) slotPBar.style.width = `0%`;
+              if (slotStatusText) slotStatusText.innerText = 'Inactivo (Sin Trabajador)';
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // Actualizar y pintar Molinos Activos (progress bars)
+  if (state.mills) {
+    state.mills.forEach((mill, idx) => {
+      if (mill.isUnderConstruction || mill.isUpgrading) {
+        const isUpgrading = mill.isUpgrading;
+        const duration = mill.constructionDuration || 5;
+        const pct = Math.min(100, (mill.constructionElapsed / duration) * 100);
+        
+        const pBar = document.getElementById(`mill-progress-${idx}`);
+        if (pBar) pBar.style.width = `${pct}%`;
+        
+        const statusText = document.getElementById(`mill-status-${idx}`);
+        if (statusText) statusText.innerText = isUpgrading ? `Mejorando a Tier ${mill.upgradingToTier || 2} (${pct.toFixed(0)}%)` : `Construyendo (${pct.toFixed(0)}%)`;
+        
+        const btn = document.getElementById(`mill-construct-btn-${idx}`);
+        const isPlayerOnIt = state.playerConstructing && state.playerConstructing.type === 'mills' && state.playerConstructing.index === idx;
+        if (btn) {
+          if (isPlayerOnIt) {
+            btn.innerText = '🔨 Construyendo...';
+            btn.className = 'btn btn-primary';
+          } else {
+            btn.innerText = '🔨 Iniciar Construcción';
+            btn.className = 'btn btn-secondary';
+          }
+        }
+      } else {
+        const titleText = document.getElementById(`mill-title-${idx}`);
+        const tierText = document.getElementById(`mill-tier-text-${idx}`);
+        const upgradeBtn = document.getElementById(`mill-upgrade-btn-${idx}`);
+        const tierBadge = document.getElementById(`mill-tier-badge-${idx}`);
+        
+        const tier = mill.tier || 1;
+        const bName = tier === 1 ? 'Molino T1' : 'Molino T2';
+        if (titleText) titleText.innerHTML = `🌾 ${bName} #${idx + 1}`;
+        if (tierText) tierText.innerText = `Nivel ${tier} (${tier === 1 ? 'Molino' : 'Gran Molino'})`;
+        if (tierBadge) tierBadge.innerText = `Tier ${tier}`;
+        
+        if (upgradeBtn) {
+          const canAfford = state.gold >= 100 && state.wood >= 150 && state.stone >= 100;
+          upgradeBtn.disabled = !canAfford;
+        }
+
+        const recipeKey = `mill_flour_t${tier}`;
+        const recipe = CONFIG.Crafting && CONFIG.Crafting[recipeKey];
+        const minWheat = recipe ? recipe.input_amt : 5;
+
+        if (tier === 1) {
+          const pBar = document.getElementById(`mill-progress-${idx}`);
+          const statusText = document.getElementById(`mill-status-${idx}`);
+          
+          if (mill.isRunning) {
+            const targetDuration = 2.0;
+            const pct = Math.min(100, (mill.elapsed / targetDuration) * 100);
+            if (pBar) pBar.style.width = `${pct}%`;
+            
+            let speedMultiplier = 1.0;
+            if (mill.mode === 'auto') {
+              const workers = state.colonists ? state.colonists.filter(c => c.job === `mills_${idx}`) : [];
+              let mult = 0;
+              workers.forEach(c => {
+                const lvl = c.attributes.farming || 3;
+                mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+              });
+              speedMultiplier = mult;
+            }
+            const rem = (speedMultiplier > 0) ? Math.max((targetDuration - mill.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+            if (statusText) statusText.innerText = `Moliendo trigo (Faltan ${rem}s)`;
+          } else {
+            if (pBar) pBar.style.width = `0%`;
+            if (statusText) {
+              if (mill.workerAssigned > 0) {
+                statusText.innerHTML = (state.wheat || 0) < minWheat ? `<span style="color:#f87171; font-weight:bold;">⚠️ Sin Trigo</span>` : `Esperando Trigo...`;
+              } else {
+                statusText.innerText = 'Inactivo';
+              }
+            }
+          }
+        } else {
+          const maxSlots = mill.workers ? mill.workers.length : 2;
+          mill.workers = mill.workers || Array(maxSlots).fill(null);
+          
+          mill.workers.forEach((worker, slotIdx) => {
+            const slotPBar = document.getElementById(`mill-progress-${idx}-${slotIdx}`);
+            const slotStatusText = document.getElementById(`mill-status-${idx}-${slotIdx}`);
+            
+            if (worker) {
+              if (worker.isRunning) {
+                const targetDuration = 1.0;
+                const pct = Math.min(100, (worker.elapsed / targetDuration) * 100);
+                if (slotPBar) slotPBar.style.width = `${pct}%`;
+                
+                let speedMultiplier = 1.0;
+                if (worker.mode === 'auto') {
+                  const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
+                  if (colonist) {
+                    const lvl = colonist.attributes.farming || 3;
+                    speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
+                  }
+                }
+                const rem = (speedMultiplier > 0) ? Math.max((targetDuration - worker.elapsed) / speedMultiplier, 0).toFixed(0) : '—';
+                if (slotStatusText) slotStatusText.innerText = `Moliendo (Faltan ${rem}s)`;
+              } else {
+                if (slotPBar) slotPBar.style.width = `0%`;
+                if (slotStatusText) {
+                  slotStatusText.innerHTML = (state.wheat || 0) < minWheat ? `<span style="color:#f87171; font-weight:bold;">⚠️ Sin Trigo</span>` : `Esperando trigo (Mín. ${minWheat})...`;
+                }
+              }
+            } else {
+              if (slotPBar) slotPBar.style.width = `0%`;
+              if (slotStatusText) slotStatusText.innerText = 'Inactivo (Sin Trabajador)';
+            }
+          });
         }
       }
     });
@@ -1904,10 +2628,13 @@ function updateUI() {
   renderFarms();
   renderBonfires();
   renderGranaries();
+  renderMills();
+  renderCorrals();
   renderWells();
   renderMarketBuildingUI();
   renderSmithies();
   renderForges();
+  renderLivestock();
 
   // Actualizar display de Agua Diaria
   const cardWater = document.getElementById('card-water');
@@ -1937,6 +2664,10 @@ function updateUI() {
   const countMarketsEl = document.getElementById('count-markets');
   if (countMarketsEl) countMarketsEl.innerText = `Construidos: ${state.markets ? state.markets.length : 0}`;
   if (DOM.countGranaries) DOM.countGranaries.innerText = `Construidos: ${state.granaries ? state.granaries.length : 0}`;
+  const countMillsEl = document.getElementById('count-mills');
+  if (countMillsEl) countMillsEl.innerText = `Construidos: ${state.mills ? state.mills.length : 0}`;
+  const countCorralsEl = document.getElementById('count-corrals');
+  if (countCorralsEl) countCorralsEl.innerText = `Construidos: ${state.corrals ? state.corrals.length : 0}`;
   const countWellsEl = document.getElementById('count-wells');
   if (countWellsEl) countWellsEl.innerText = `Construidos: ${state.wells ? state.wells.length : 0}`;
   const countSmithiesEl = document.getElementById('count-smithies');
@@ -2276,6 +3007,9 @@ function updateButtonStates() {
   if (CONFIG.Building.forge) {
     updateBtnState('btn-build-forge', CONFIG.Building.forge, true, 'forge');
   }
+  if (CONFIG.Building.mill) {
+    updateBtnState('btn-build-mill', CONFIG.Building.mill, true, 'mill');
+  }
   
   if (!state.townHall.built) {
     updateBtnState('btn-build-townhall', CONFIG.Building.townhall, false);
@@ -2608,6 +3342,9 @@ function updateStaticTextsFromConfig() {
   updateBuildingCostDisplays('btn-build-market', CONFIG.Building.market);
   updateBuildingCostDisplays('btn-build-granary', CONFIG.Building.granary);
   updateBuildingCostDisplays('btn-build-well', CONFIG.Building.well);
+  if (CONFIG.Building.mill) {
+    updateBuildingCostDisplays('btn-build-mill', CONFIG.Building.mill);
+  }
   
   if (!state.townHall.built) {
     updateBuildingCostDisplays('btn-build-townhall', CONFIG.Building.townhall);
@@ -2663,12 +3400,14 @@ function updateStaticTextsFromConfig() {
   const rawNames = {
     wood: 'Madera', stone: 'Piedra', wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
     cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
-    wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria'
+    wheat_seeds: 'Semillas de Trigo', potato_seeds: 'Semillas de Patata', carrot_seeds: 'Semillas de Zanahoria',
+    flour: 'Harina', bread: 'Pan Artesano', stew: 'Guiso', eggs: 'Huevos'
   };
   const icons = {
     wood: '🪵', stone: '🪨', wheat: '🌾', potato: '🥔', carrot: '🥕', berries: '🍓',
     cooked_wheat: '🍞', cooked_potato: '🥔', cooked_carrot: '🥕', cooked_berries: '🍯',
-    wheat_seeds: '🌾🌱', potato_seeds: '🥔🌱', carrot_seeds: '🥕🌱'
+    wheat_seeds: '🌾🌱', potato_seeds: '🥔🌱', carrot_seeds: '🥕🌱',
+    flour: '📦', bread: '🍞', stew: '🍲', eggs: '🥚'
   };
 
   // Descartar Recursos - Inicialización del selector
@@ -2676,7 +3415,7 @@ function updateStaticTextsFromConfig() {
   if (sellSelect) {
     const prevVal = sellSelect.value;
     sellSelect.innerHTML = '';
-    const discardable = ['wood', 'stone', 'wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat_seeds', 'potato_seeds', 'carrot_seeds'];
+    const discardable = ['wood', 'stone', 'wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat_seeds', 'potato_seeds', 'carrot_seeds', 'flour', 'bread', 'stew', 'eggs'];
     discardable.forEach(type => {
       const opt = document.createElement('option');
       opt.value = type;
@@ -2699,11 +3438,13 @@ function renderFoodPriorityList() {
   
   const rawNames = {
     wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria', berries: 'Frutos',
-    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada'
+    cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada',
+    bread: 'Pan Artesano', stew: 'Guiso', eggs: 'Huevos'
   };
   const icons = {
     wheat: '🌾', potato: '🥔', carrot: '🥕', berries: '🍓',
-    cooked_wheat: '🍞', cooked_potato: '🥔', cooked_carrot: '🥕', cooked_berries: '🍯'
+    cooked_wheat: '🍞', cooked_potato: '🥔', cooked_carrot: '🥕', cooked_berries: '🍯',
+    bread: '🍞', stew: '🍲', eggs: '🥚'
   };
   
   let html = '';
@@ -2740,10 +3481,13 @@ function renderDetailedFoodInventory() {
       { key: 'potato', name: 'Patata', icon: '🥔', color: '#a8a29e' },
       { key: 'carrot', name: 'Zanahoria', icon: '🥕', color: '#f97316' },
       { key: 'berries', name: 'Frutos', icon: '🍓', color: '#ef4444' },
+      { key: 'eggs', name: 'Huevos', icon: '🥚', color: '#fbcfe8' },
       { key: 'cooked_wheat', name: 'Pan', icon: '🍞', color: '#fbbf24' },
       { key: 'cooked_potato', name: 'Patata Asada', icon: '🥔', color: '#d6d3d1' },
       { key: 'cooked_carrot', name: 'Zan. Asada', icon: '🥕', color: '#fdba74' },
-      { key: 'cooked_berries', name: 'Mermelada', icon: '🍯', color: '#f43f5e' }
+      { key: 'cooked_berries', name: 'Mermelada', icon: '🍯', color: '#f43f5e' },
+      { key: 'bread', name: 'Pan Artesano', icon: '🍞', color: '#facc15' },
+      { key: 'stew', name: 'Guiso', icon: '🍲', color: '#fdba74' }
     ];
     let html = '';
     foods.forEach(f => {
@@ -2780,7 +3524,7 @@ function renderDetailedFoodInventory() {
   }
   
   // Update quantities and values
-  const list = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  const list = ['wheat', 'potato', 'carrot', 'berries', 'eggs', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'bread', 'stew'];
   list.forEach(key => {
     const qty = state[key] || 0;
     const eqObj = CONFIG.FoodEquivalence && CONFIG.FoodEquivalence[key];
@@ -2964,6 +3708,11 @@ function renderDetailedResourcesInventory() {
       { key: 'stone', name: 'Piedra', icon: '🪨', color: '#94a3b8', isSeed: false },
       { key: 'iron', name: 'Mineral', icon: '⚙️', color: '#fb7185', isSeed: false },
       { key: 'iron_bar', name: 'Lingotes', icon: '🔩', color: '#a78bfa', isSeed: false },
+      { key: 'flour', name: 'Harina', icon: '📦', color: '#cbd5e1', isSeed: false },
+      { key: 'skins', name: 'Pieles', icon: '🐾', color: '#fb923c', isSeed: false },
+      { key: 'feathers', name: 'Plumas', icon: '🪶', color: '#38bdf8', isSeed: false },
+      { key: 'fertilizer', name: 'Fertilizante', icon: '💩', color: '#a78bfa', isSeed: false },
+      { key: 'pienso', name: 'Pienso', icon: '📦', color: '#10b981', isSeed: false },
       { key: 'tools', name: 'Herramientas', icon: '🔧', color: '#60a5fa', isSeed: false, isTool: true },
       { key: 'wheat_seeds', name: 'Sem. Trigo', icon: '🌾', color: '#fbbf24', isSeed: true },
       { key: 'potato_seeds', name: 'Sem. Patata', icon: '🥔', color: '#a8a29e', isSeed: true },
@@ -3000,6 +3749,11 @@ function renderDetailedResourcesInventory() {
     { key: 'stone', stateKey: 'stone', isSeed: false },
     { key: 'iron', stateKey: 'iron', isSeed: false },
     { key: 'iron_bar', stateKey: 'iron_bar', isSeed: false },
+    { key: 'flour', stateKey: 'flour', isSeed: false },
+    { key: 'skins', stateKey: 'skins', isSeed: false },
+    { key: 'feathers', stateKey: 'feathers', isSeed: false },
+    { key: 'fertilizer', stateKey: 'fertilizer', isSeed: false },
+    { key: 'pienso', stateKey: 'pienso', isSeed: false },
     { key: 'tools', stateKey: 'tools', isSeed: false, isTool: true },
     { key: 'wheat_seeds', stateKey: 'wheat', isSeed: true },
     { key: 'potato_seeds', stateKey: 'potato', isSeed: true },
@@ -3083,6 +3837,7 @@ function renderDetailedResourcesInventory() {
 var lastRenderedCandidatesKey = null;
 var lastRenderedColonistsDetailKey = null;
 var lastRenderedColonistsSummaryKey = null;
+var lastRenderedMissionsSummaryKey = null;
 var expandedSummaryJobs = new Set();
 
 function getHouseForColonist(colonistIdx) {
@@ -3410,7 +4165,9 @@ function renderColonistsDetailList() {
         bonfires: '🔥 Cocinero/Hoguera',
         granaries: '🌾 Granero',
         smithies: '⚒️ Herrero',
-        forges: '⚙️ Forja'
+        forges: '⚙️ Forja',
+        mills: '🌾 Molino',
+        corrals: '🐄 Corral'
       };
       return `${names[type] || type} #${idx}`;
     }
@@ -3423,7 +4180,9 @@ function renderColonistsDetailList() {
       bonfires: '🔥 Cocinero/Hoguera (General)',
       granaries: '🌾 Granero (General)',
       smithies: '⚒️ Herrero (General)',
-      forges: '⚙️ Forja (General)'
+      forges: '⚙️ Forja (General)',
+      mills: '🌾 Molino (General)',
+      corrals: '🐄 Corral (General)'
     };
     return genericNames[job] || job;
   };
@@ -3454,6 +4213,8 @@ function renderColonistsDetailList() {
   checkAndPushGenericOpt('granaries', '🌾 Granero (General)', 'granaries');
   checkAndPushGenericOpt('smithies', '⚒️ Herrero (General)', 'smithies');
   checkAndPushGenericOpt('forges', '⚙️ Forja (General)', 'forges');
+  checkAndPushGenericOpt('mills', '🌾 Molino (General)', 'mills');
+  checkAndPushGenericOpt('corrals', '🐄 Corral (General)', 'corrals');
 
   const optionsHtml = addOptions.map(opt => `
     <option value="${opt.value}">${opt.label}</option>
@@ -4140,41 +4901,66 @@ function renderSmithies() {
       return;
     }
     // Activo
-    const availOpts = tier >= 2 ? [...toolOptions_t1, ...toolOptions_t2] : toolOptions_t1;
-    const optionsHtml = availOpts.map(o =>
-      `<option value="${o.key}" ${smithy.selectedTool === o.key ? 'selected' : ''}>${o.label}</option>`
-    ).join('');
-    const craftTiming = CONFIG?.Timing?.['smithy_' + (smithy.selectedTool || 'axe_t1')]?.duration ?? 4;
-    const elapsedPct = Math.min(100, ((smithy.elapsed || 0) / craftTiming) * 100).toFixed(0);
-    const isWorking = (smithy.workerAssigned || 0) > 0;
+    const maxSlots = smithy.workers ? smithy.workers.length : 1;
+    smithy.workers = smithy.workers || Array(maxSlots).fill(null);
+
+    let slotsHtml = '';
+    for (let slotIdx = 0; slotIdx < maxSlots; slotIdx++) {
+      const worker = smithy.workers[slotIdx] || null;
+      const toolKey = worker ? (worker.selectedTool || smithy.selectedTool || 'axe_t1') : (smithy.selectedTool || 'axe_t1');
+      
+      const availOpts = tier >= 2 ? [...toolOptions_t1, ...toolOptions_t2] : toolOptions_t1;
+      const optionsHtml = availOpts.map(o =>
+        `<option value="${o.key}" ${toolKey === o.key ? 'selected' : ''}>${o.label}</option>`
+      ).join('');
+      
+      const craftTiming = CONFIG?.Timing?.['smithy_' + toolKey]?.duration ?? 4;
+      const elapsedPct = worker ? Math.min(100, ((worker.elapsed || 0) / craftTiming) * 100).toFixed(0) : '0';
+      const isWorkingSlot = worker !== null;
+
+      slotsHtml += `
+        <div style="border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 0.4rem; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.3rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">Puesto #${slotIdx + 1}:</span>
+            <div style="flex: 1; max-width: 140px;">
+              ${renderSingleWorkerDropdown('smithies', idx, slotIdx)}
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.2rem;">
+            <span style="font-size: 0.7rem; color: var(--color-text-muted);">Fabricar:</span>
+            <select id="smithy-tool-select-${idx}-${slotIdx}"
+              style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 0.15rem; font-family: var(--font-primary); font-size: 0.7rem; outline: none; cursor: pointer; max-width: 140px;"
+              onchange="changeSmithySlotTool(${idx}, ${slotIdx}, this.value)">
+              ${optionsHtml}
+            </select>
+          </div>
+
+          ${isWorkingSlot ? `
+            <div style="margin-top: 0.2rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--color-text-muted); margin-bottom: 0.15rem;">
+                <span>Progreso fabricación</span><span>${elapsedPct}%</span>
+              </div>
+              <div class="progress-bar-container" style="height: 5px;">
+                <div class="progress-bar-fill" style="width: ${elapsedPct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
+              </div>
+            </div>
+          ` : `
+            <span style="font-size: 0.65rem; color: var(--color-text-muted); font-style: italic;">⏸️ Sin trabajador asignado</span>
+          `}
+        </div>
+      `;
+    }
 
     html += `
       <div class="building-box">
         <div class="building-tier-badge">Tier ${tier}</div>
         <div class="building-box-header">
           <span class="building-box-title">⚒️ Taller del Herrero #${idx + 1}</span>
-          <span class="building-box-prod">${smithy.isWarehouseFull ? '<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>' : (isWorking ? '🔨 Fabricando...' : '⏸️ Sin trabajador')}</span>
+          <span class="building-box-prod">${smithy.isWarehouseFull ? '<span style="color: #f59e0b; font-weight: bold;">⚠️ Almacén lleno</span>' : ((smithy.workerAssigned || 0) > 0 ? '🔨 Fabricando...' : '⏸️ Sin trabajador')}</span>
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.4rem;">
-          <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600;">Trabajadores:</span>
-          ${renderBuildingWorkerDropdowns('smithies', idx, tier)}
-          <div style="margin-top: 0.35rem;">
-            <span style="font-size: 0.75rem; color: #a5b4fc; font-weight: 600;">🔧 Fabricar:</span>
-            <select id="smithy-tool-select-${idx}"
-              style="background: rgba(0,0,0,0.5); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.3rem 0.5rem; font-family: var(--font-primary); font-size: 0.8rem; outline: none; cursor: pointer; width: 100%; margin-top: 0.2rem;"
-              onchange="setSmithyTool(${idx}, this.value)">
-              ${optionsHtml}
-            </select>
-          </div>
-          ${isWorking ? `
-          <div style="margin-top: 0.3rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--color-text-muted); margin-bottom: 0.2rem;">
-              <span>Progreso fabricación</span><span>${elapsedPct}%</span>
-            </div>
-            <div class="progress-bar-container" style="height: 5px;">
-              <div class="progress-bar-fill" style="width: ${elapsedPct}%; background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);"></div>
-            </div>
-          </div>` : ''}
+          ${slotsHtml}
         </div>
         <div style="margin-top: 0.4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.4rem;">
           <span style="font-size: 0.7rem; color: #a5b4fc;">Nivel ${tier}</span>
@@ -4227,11 +5013,50 @@ window.renderSmithies = renderSmithies;
 
 function setSmithyTool(idx, toolKey) {
   if (!state.smithies || !state.smithies[idx]) return;
-  state.smithies[idx].selectedTool = toolKey;
-  state.smithies[idx].elapsed = 0; // reset progress on tool change
+  const smithy = state.smithies[idx];
+  smithy.selectedTool = toolKey;
+  smithy.elapsed = 0; // reset progress on tool change
+  
+  // Sincronizar slot 0
+  smithy.workers = smithy.workers || [];
+  if (smithy.workers[0]) {
+    smithy.workers[0].selectedTool = toolKey;
+    smithy.workers[0].elapsed = 0;
+  }
+  
   updateUI();
 }
 window.setSmithyTool = setSmithyTool;
+
+function changeSmithySlotTool(idx, slotIdx, toolKey) {
+  if (state.smithies && state.smithies[idx]) {
+    const smithy = state.smithies[idx];
+    if (smithy.isUnderConstruction) return;
+    
+    smithy.workers = smithy.workers || [];
+    if (!smithy.workers[slotIdx]) {
+      smithy.workers[slotIdx] = {
+        colonistId: null,
+        selectedTool: toolKey,
+        elapsed: 0,
+        isRunning: false
+      };
+    } else {
+      smithy.workers[slotIdx].selectedTool = toolKey;
+      smithy.workers[slotIdx].elapsed = 0; // reset progress on tool change
+    }
+    
+    if (slotIdx === 0) {
+      smithy.selectedTool = toolKey;
+      smithy.elapsed = 0;
+    }
+    
+    recalculateRates();
+    updateUI();
+    saveGame();
+  }
+}
+window.changeSmithySlotTool = changeSmithySlotTool;
 
 function discardTool(toolId) {
   if (!Array.isArray(state.tools)) return;
@@ -4263,6 +5088,28 @@ function renderMissions() {
   const banner = document.getElementById('missions-refresh-banner');
   const gridContainer = document.getElementById('missions-grid-container');
   if (!gridContainer) return;
+
+  const availableColsKey = (state.colonists || []).filter(c => !c.onMission).map(c => `${c.id}:${c.name}:${c.job}`).join(',');
+  const summaryKey = (state.availableMissions || []).map(m => `${m.id}:${m.status}`).join(',') + `_cols:${availableColsKey}`;
+  if (lastRenderedMissionsSummaryKey === summaryKey) {
+    (state.availableMissions || []).forEach((m, idx) => {
+      if (m.status === 'active') {
+        const remaining = Math.max(0, m.durationDays - m.elapsedDays);
+        const progressPct = Math.min(100, (m.elapsedDays / m.durationDays) * 100);
+        
+        const timeEl = document.getElementById(`mission-time-remaining-${idx}`);
+        if (timeEl) {
+          timeEl.innerText = `⏱️ ${remaining.toFixed(1)} días rest.`;
+        }
+        const progressEl = document.getElementById(`mission-progress-bar-${idx}`);
+        if (progressEl) {
+          progressEl.style.width = `${progressPct}%`;
+        }
+      }
+    });
+    return;
+  }
+  lastRenderedMissionsSummaryKey = summaryKey;
 
   const refreshInterval = CONFIG?.Raid?.missions_refresh_interval?.value ?? 30;
   const nextRefresh = (state.missionsRefreshDay || 1) + refreshInterval;
@@ -4399,13 +5246,13 @@ function renderMissions() {
         <div style="margin-top:0.5rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:0.8rem; border-radius:8px; display:flex; flex-direction:column; gap:0.5rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
             <span style="color:#c084fc; font-weight:bold;">⚔️ En Progreso...</span>
-            <span style="color:var(--color-text-muted); font-weight:600;">⏱️ ${remaining.toFixed(1)} días rest.</span>
+            <span id="mission-time-remaining-${idx}" style="color:var(--color-text-muted); font-weight:600;">⏱️ ${remaining.toFixed(1)} días rest.</span>
           </div>
           <div style="font-size:0.75rem; color:var(--color-text-muted);">
             👥 <strong>Participantes:</strong> ${participantNames}
           </div>
           <div style="width:100%; height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; margin-top:0.25rem;">
-            <div style="width:${progressPct}%; height:100%; background:linear-gradient(90deg, #c084fc, #818cf8); border-radius:3px;"></div>
+            <div id="mission-progress-bar-${idx}" style="width:${progressPct}%; height:100%; background:linear-gradient(90deg, #c084fc, #818cf8); border-radius:3px;"></div>
           </div>
         </div>
       `;
@@ -4623,13 +5470,15 @@ function renderTradeTab() {
       if (v.sellsResource && v.sellsResource !== 'none') {
         const rawNames = {
           wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+          chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
         };
         optionsHtml += `<option value="${v.id}|buy|${v.sellsResource}">🛒 Comprar ${rawNames[v.sellsResource] || v.sellsResource} de ${v.name} (${v.sellsPrice}🪙/u)</option>`;
       }
       if (v.buysResource && v.buysResource !== 'none') {
         const rawNames = {
           wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+          chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
         };
         optionsHtml += `<option value="${v.id}|sell|${v.buysResource}">💰 Vender ${rawNames[v.buysResource] || v.buysResource} a ${v.name} (${v.buysPrice}🪙/u)</option>`;
       }
@@ -4720,13 +5569,15 @@ function renderTradeTab() {
         if (v.sellsResource && v.sellsResource !== 'none') {
           const rawNames = {
             wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-            wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+            wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+            chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
           };
           optionsHtml += `<option value="${v.id}|buy|${v.sellsResource}">🛒 Comprar ${rawNames[v.sellsResource] || v.sellsResource} de ${v.name} (${v.sellsPrice}🪙/u)</option>`;
         }
         if (v.buysResource && v.buysResource !== 'none') {
           const rawNames = {
             wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
+            chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
           };
           optionsHtml += `<option value="${v.id}|sell|${v.buysResource}">💰 Vender ${rawNames[v.buysResource] || v.buysResource} a ${v.name} (${v.buysPrice}🪙/u)</option>`;
         }
@@ -4758,7 +5609,8 @@ function renderTradeTab() {
       }
       const rawNames = {
         wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-        wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+        wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+        chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
       };
       if (v.sellsResource && v.sellsResource !== 'none') {
         grouped[v.name].sells.push(`${rawNames[v.sellsResource] || v.sellsResource} (${v.sellsPrice}🪙)`);
@@ -4804,7 +5656,8 @@ function renderTradeTab() {
         const pct = Math.min(100, Math.max(0, (1 - trade.timeLeftDays / trade.durationDays) * 100));
         const rawNames = {
           wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+          wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+          chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
         };
         const resourceLabel = rawNames[trade.resource] || trade.resource;
         
@@ -4882,7 +5735,8 @@ function updateTradeDetails() {
   let isAffordable = true;
   const rawNames = {
     wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+    chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
   };
   const resourceLabel = rawNames[resource] || resource;
 
@@ -4988,7 +5842,8 @@ function updatePlayerTradeDetails() {
   let isAffordable = true;
   const rawNames = {
     wood: 'Madera 🪵', stone: 'Piedra 🪨', food: 'Comida 🍓',
-    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱'
+    wheat_seeds: 'Semillas Trigo 🌾🌱', potato_seeds: 'Semillas Patata 🥔🌱', carrot_seeds: 'Semillas Zanahoria 🥕🌱',
+    chicken: 'Gallina 🐔', pig: 'Cerdo 🐷', cow: 'Vaca 🐄', pienso: 'Pienso 📦'
   };
   const resourceLabel = rawNames[resource] || resource;
 
@@ -5070,7 +5925,8 @@ function updatePlayerTravelOverlay() {
     
     const rawNames = {
       wood: 'Madera', stone: 'Piedra', food: 'Comida',
-      wheat_seeds: 'Semillas Trigo', potato_seeds: 'Semillas Patata', carrot_seeds: 'Semillas Zanahoria'
+      wheat_seeds: 'Semillas Trigo', potato_seeds: 'Semillas Patata', carrot_seeds: 'Semillas Zanahoria',
+      chicken: 'Gallina', pig: 'Cerdo', cow: 'Vaca', pienso: 'Pienso'
     };
     const actionLabel = trade.type === 'buy' ? 'Comprar' : 'Vender';
     const resourceLabel = rawNames[trade.resource] || trade.resource;
@@ -5333,6 +6189,276 @@ function renderForges() {
   container.innerHTML = html;
 }
 window.renderForges = renderForges;
+
+let lastLivestockStarveStatus = null;
+function renderLivestock() {
+  const container = document.getElementById('active-livestock-container');
+  if (!container) return;
+  
+  const gold = state.gold || 0;
+  const costChicken = ANIMAL_TYPES.chicken.cost;
+  const costPig = ANIMAL_TYPES.pig.cost;
+  const costCow = ANIMAL_TYPES.cow.cost;
+
+  let chickensCount = 0;
+  let pigsCount = 0;
+  let cowsCount = 0;
+  let starvedCount = 0;
+  
+  if (Array.isArray(state.animals)) {
+    state.animals.forEach(a => {
+      if (a.type === 'chicken') chickensCount++;
+      else if (a.type === 'pig') pigsCount++;
+      else if (a.type === 'cow') cowsCount++;
+      
+      if (a.fedToday === false) {
+        starvedCount++;
+      }
+    });
+  }
+
+  // Draw template if empty
+  if (container.children.length === 0) {
+    let html = `
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0.5rem 0.75rem;">
+        <div style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; display: flex; justify-content: space-between; align-items: center;">
+          <span>Espacio en Corrales:</span>
+          <span id="livestock-capacity" style="font-weight: bold; color: #fff;">0 / 0</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: space-between; flex-wrap: wrap;">
+          <button id="btn-buy-chicken" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1; min-width: 110px;" 
+                  onclick="buyAnimal('chicken')">
+            🐔 Gallina (${costChicken}🪙)
+          </button>
+          <button id="btn-buy-pig" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1; min-width: 110px;" 
+                  onclick="buyAnimal('pig')">
+            🐷 Cerdo (${costPig}🪙)
+          </button>
+          <button id="btn-buy-cow" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.4rem 0.6rem; flex: 1; min-width: 110px;" 
+                  onclick="buyAnimal('cow')">
+            🐄 Vaca (${costCow}🪙)
+          </button>
+        </div>
+        
+        <div style="display: flex; justify-content: space-around; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); text-align: center;">
+          <div>
+            <span style="font-size: 1.2rem;">🐔</span>
+            <div style="font-size: 0.65rem; color: var(--color-text-muted);">Gallinas</div>
+            <div id="livestock-count-chickens" style="font-size: 0.95rem; font-weight: 700; color: #fbbf24;">0</div>
+          </div>
+          <div>
+            <span style="font-size: 1.2rem;">🐷</span>
+            <div style="font-size: 0.65rem; color: var(--color-text-muted);">Cerdos</div>
+            <div id="livestock-count-pigs" style="font-size: 0.95rem; font-weight: 700; color: #fb923c;">0</div>
+          </div>
+          <div>
+            <span style="font-size: 1.2rem;">🐄</span>
+            <div style="font-size: 0.65rem; color: var(--color-text-muted);">Vacas</div>
+            <div id="livestock-count-cows" style="font-size: 0.95rem; font-weight: 700; color: #a78bfa;">0</div>
+          </div>
+        </div>
+        
+        <div id="livestock-starve-alert"></div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 70px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; padding: 0.35rem; text-align: center;">
+            <span style="font-size: 0.9rem;">🥚</span>
+            <div style="font-size: 0.6rem; color: var(--color-text-muted);">Huevos</div>
+            <div id="livestock-qty-eggs" style="font-size: 0.8rem; font-weight: 700;">0.0</div>
+          </div>
+          <div style="flex: 1; min-width: 70px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; padding: 0.35rem; text-align: center;">
+            <span style="font-size: 0.9rem;">🪶</span>
+            <div style="font-size: 0.6rem; color: var(--color-text-muted);">Plumas</div>
+            <div id="livestock-qty-feathers" style="font-size: 0.8rem; font-weight: 700;">0.0</div>
+          </div>
+          <div style="flex: 1; min-width: 70px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; padding: 0.35rem; text-align: center;">
+            <span style="font-size: 0.9rem;">🐾</span>
+            <div style="font-size: 0.6rem; color: var(--color-text-muted);">Pieles</div>
+            <div id="livestock-qty-skins" style="font-size: 0.8rem; font-weight: 700;">0.0</div>
+          </div>
+          <div style="flex: 1; min-width: 70px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; padding: 0.35rem; text-align: center;">
+            <span style="font-size: 0.9rem;">💩</span>
+            <div style="font-size: 0.6rem; color: var(--color-text-muted);">Fertiliz.</div>
+            <div id="livestock-qty-fertilizer" style="font-size: 0.8rem; font-weight: 700;">0.0</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+    lastLivestockStarveStatus = null;
+  }
+  
+  // Update elements directly
+  const btnChicken = document.getElementById('btn-buy-chicken');
+  const btnPig = document.getElementById('btn-buy-pig');
+  const btnCow = document.getElementById('btn-buy-cow');
+  const maxCap = getAnimalsCapacity();
+  const spaceLeft = maxCap - (state.animals ? state.animals.length : 0);
+  if (btnChicken) btnChicken.disabled = gold < costChicken || spaceLeft <= 0;
+  if (btnPig) btnPig.disabled = gold < costPig || spaceLeft <= 0;
+  if (btnCow) btnCow.disabled = gold < costCow || spaceLeft <= 0;
+
+  const elCapacity = document.getElementById('livestock-capacity');
+  if (elCapacity) {
+    elCapacity.innerText = `${state.animals ? state.animals.length : 0} / ${maxCap}`;
+  }
+  
+  const elChickens = document.getElementById('livestock-count-chickens');
+  const elPigs = document.getElementById('livestock-count-pigs');
+  const elCows = document.getElementById('livestock-count-cows');
+  if (elChickens) elChickens.innerText = chickensCount;
+  if (elPigs) elPigs.innerText = pigsCount;
+  if (elCows) elCows.innerText = cowsCount;
+  
+  const currentStarveKey = `${starvedCount > 0}_${starvedCount}`;
+  if (currentStarveKey !== lastLivestockStarveStatus) {
+    lastLivestockStarveStatus = currentStarveKey;
+    const elAlert = document.getElementById('livestock-starve-alert');
+    if (elAlert) {
+      if (starvedCount > 0) {
+        elAlert.innerHTML = `
+          <div style="font-size: 0.7rem; color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.35rem 0.5rem; border-radius: 6px; display: flex; align-items: center; gap: 0.25rem;">
+            ⚠️ <strong>${starvedCount}</strong> animales están hambrientos hoy por falta de comida. No producirán.
+          </div>
+        `;
+      } else {
+        elAlert.innerHTML = `
+          <div style="font-size: 0.7rem; color: #4ade80; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.2); padding: 0.35rem 0.5rem; border-radius: 6px; display: flex; align-items: center; gap: 0.25rem;">
+            ✅ Todos tus animales están alimentados y produciendo.
+          </div>
+        `;
+      }
+    }
+  }
+  
+  const qtyEggs = document.getElementById('livestock-qty-eggs');
+  const qtyFeathers = document.getElementById('livestock-qty-feathers');
+  const qtySkins = document.getElementById('livestock-qty-skins');
+  const qtyFertilizer = document.getElementById('livestock-qty-fertilizer');
+  if (qtyEggs) qtyEggs.innerText = (state.eggs || 0).toFixed(1);
+  if (qtyFeathers) qtyFeathers.innerText = (state.feathers || 0).toFixed(1);
+  if (qtySkins) qtySkins.innerText = (state.skins || 0).toFixed(1);
+  if (qtyFertilizer) qtyFertilizer.innerText = (state.fertilizer || 0).toFixed(1);
+}
+window.renderLivestock = renderLivestock;
+
+let lastCorralsConstructionStatus = '';
+
+function renderCorrals() {
+  const container = document.getElementById('active-corrals-list');
+  if (!container) return;
+  const count = state.corrals ? state.corrals.length : 0;
+  const hasPlaceholder = container.querySelector('.placeholder-text') !== null;
+  
+  const currentStatus = (state.corrals ? state.corrals.map(c => (c.isUnderConstruction ? '1' : '0') + '_' + (c.isUpgrading ? '1' : '0') + '_' + (c.tier || 1) + '_' + (c.isPaused ? '1' : '0') + '_' + (c.workerAssigned || 0)).join(',') : '');
+  
+  if (container.children.length !== count || hasPlaceholder || count === 0 || currentStatus !== lastCorralsConstructionStatus) {
+    lastCorralsConstructionStatus = currentStatus;
+    if (count === 0) {
+      if (!container.querySelector('.placeholder-text')) {
+        container.innerHTML = `<div class="placeholder-text" style="color: var(--color-text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">Ningún Corral construido</div>`;
+      }
+      return;
+    }
+    let html = '';
+    state.corrals.forEach((corral, idx) => {
+      const tier = corral.tier || 1;
+      const capacity = tier === 3 ? 10 : (tier === 2 ? 6 : 3);
+      if (corral.isUnderConstruction || corral.isUpgrading) {
+        const badgeText = corral.isUpgrading ? 'Mejorando' : 'Construyendo';
+        const titleText = corral.isUpgrading ? 
+          `Corral #${idx + 1} (Mejorando...)` : 
+          `Corral #${idx + 1} (En construcción)`;
+        const statusTextVal = corral.isUpgrading ? 'Mejorando...' : 'En construcción';
+        const isPaused = corral.isPaused || false;
+        const pauseBtnText = isPaused ? '▶️' : '⏸️';
+        html += `
+          <div class="building-box" id="corral-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="corral-tier-badge-${idx}">${badgeText}</div>
+            <div class="building-box-header">
+              <span class="building-box-title" id="corral-title-${idx}">🏗️ ${titleText}</span>
+              <span class="building-box-prod" id="corral-status-${idx}">${statusTextVal}</span>
+            </div>
+            <div class="progress-bar-container" style="height: 6px; margin: 0.5rem 0;">
+              <div class="progress-bar-fill" id="corral-progress-${idx}" style="background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">👷 ${corral.workerAssigned || 0} / 2 Constructores auto</span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('corrals', ${idx})">
+                    🗑️
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem; background: ${isPaused ? '#10b981' : '#f59e0b'}; color: #fff; border-color: ${isPaused ? '#10b981' : '#f59e0b'};" onclick="togglePauseConstruction('corrals', ${idx})">
+                    ${pauseBtnText}
+                  </button>
+                  <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;" id="corral-construct-btn-${idx}" onclick="togglePlayerConstruct('corrals', ${idx})">
+                    🔨 Iniciar Construcción
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const upgradeCostText = tier === 1 ? 'Coste T2: 80🪙, 100🪵, 40🪨' : (tier === 2 ? 'Coste T3: 150🪙, 180🪵, 80🪨' : '');
+        html += `
+          <div class="building-box" id="corral-box-${idx}" style="position: relative;">
+            <div class="building-tier-badge" id="corral-tier-badge-${idx}">Tier ${tier}</div>
+            <div class="building-box-header">
+              <span class="building-box-title" id="corral-title-${idx}">🐄 Corral #${idx + 1}</span>
+              <span class="building-box-prod" id="corral-status-${idx}">Capacidad: ${capacity} animales</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.7rem; color: var(--color-text-muted); font-style: italic;">
+                ${tier < 3 ? upgradeCostText : 'Nivel máximo'}
+              </span>
+              <div style="display: flex; gap: 0.25rem;">
+                <button class="btn btn-danger" style="font-size: 0.7rem; padding: 0.25rem 0.4rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171;" onclick="destroyBuildingPrompt('corrals', ${idx})">
+                  🗑️ Demoler
+                </button>
+                ${tier < 3 ? `
+                <button class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.4rem;" onclick="upgradeCorral(${idx})">
+                  ⬆️ Mejorar
+                </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    });
+    container.innerHTML = html;
+  }
+  
+  // Progress updates
+  state.corrals.forEach((corral, idx) => {
+    if (corral.isUnderConstruction || corral.isUpgrading) {
+      const fillEl = document.getElementById(`corral-progress-${idx}`);
+      const statusEl = document.getElementById(`corral-status-${idx}`);
+      const btnEl = document.getElementById(`corral-construct-btn-${idx}`);
+      const actionText = corral.isUpgrading ? 'Mejorando' : 'Construyendo';
+      
+      if (fillEl && statusEl) {
+        const elapsed = corral.constructionElapsed || 0;
+        const duration = corral.constructionDuration || 1;
+        const pct = Math.min(100, (elapsed / duration) * 100);
+        fillEl.style.width = pct + '%';
+        statusEl.innerText = `${actionText}: ${pct.toFixed(0)}%`;
+      }
+      
+      if (btnEl) {
+        const isPlConstructing = state.playerConstructingBuilding === 'corrals' && state.playerConstructingIdx === idx;
+        btnEl.innerText = isPlConstructing ? '🔨 Construyendo...' : '🔨 Iniciar Construcción';
+        btnEl.className = isPlConstructing ? 'btn btn-primary' : 'btn btn-secondary';
+      }
+    }
+  });
+}
+
+window.renderCorrals = renderCorrals;
+window.renderLivestock = renderLivestock;
 
 
 

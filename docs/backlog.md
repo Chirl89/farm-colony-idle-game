@@ -56,6 +56,11 @@
 | ✅ PASO K | Árbol de tecnologías y bloqueos (`[TEC-ARBOL]`) | 2026-07-02 |
 | ✅ PASO L | Herramientas + Taller del Herrero (`[MET-TALL]`) | 2026-07-06 |
 | ✅ PASO M | Mineral de hierro + Forja (`[MET-FORJA]`) y paradas de producción por almacén lleno | 2026-07-07 |
+| ✅ PASO N | Prioridades de colonos (`[WORK-PRIO]`), asignación genérica, skip en almacén lleno y fallback de ociosos | 2026-07-07 |
+| ✅ PASO O | Prioridades de edificios (`[WORK-EDIF]`) con fallback automático de recetas y reordenación | 2026-07-07 |
+| ✅ PASO P | Slots múltiples por tier (`[WORK-SLOT]`) con procesamiento paralelo, multiplicador T3 de velocidad de +30% y detalles expandibles | 2026-07-08 |
+| ✅ PASO Q | Ganadería y sub-productos iniciales (`[FOOD-GRAN]`) (huevos, plumas, pieles, fertilizante y aceleración de cultivos) | 2026-07-08 |
+| ✅ PASO Q.1 | Ganadería completa (`[FOOD-FEED]`) (edificio Corral de ganado, Pienso procesado en el granero, alimentación y mercado de animales) | 2026-07-08 |
 
 ---
 

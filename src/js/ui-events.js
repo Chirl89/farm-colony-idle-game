@@ -725,12 +725,16 @@ function initEventHandlers() {
   if (btnBuildMarket) btnBuildMarket.addEventListener('click', buildMarket);
   const btnBuildGranary = document.getElementById('btn-build-granary');
   if (btnBuildGranary) btnBuildGranary.addEventListener('click', buildGranary);
+  const btnBuildCorral = document.getElementById('btn-build-corral');
+  if (btnBuildCorral) btnBuildCorral.addEventListener('click', buildCorral);
   const btnBuildWell = document.getElementById('btn-build-well');
   if (btnBuildWell) btnBuildWell.addEventListener('click', buildWell);
   const btnBuildSmithy = document.getElementById('btn-build-smithy');
   if (btnBuildSmithy) btnBuildSmithy.addEventListener('click', buildSmithy);
   const btnBuildForge = document.getElementById('btn-build-forge');
   if (btnBuildForge) btnBuildForge.addEventListener('click', buildForge);
+  const btnBuildMill = document.getElementById('btn-build-mill');
+  if (btnBuildMill) btnBuildMill.addEventListener('click', buildMill);
 
   const btnBuildWarehouseWood = document.getElementById('btn-build-wood-warehouse'); // O bien con id genérico
   const btnBuildWarehouseWoodReal = document.getElementById('btn-build-warehouse-wood');
@@ -811,29 +815,60 @@ function fixColonistAllocation() {
 function assignColonistToBuildingSlot(type, index, slotIdx, newColonistId) {
   const taskType = type === 'townHall' ? 'townHall' : type;
   const cid = newColonistId === "" ? null : parseInt(newColonistId);
-  
   const jobString = type === 'townHall' ? 'townHall' : `${type.toLowerCase()}_${index}`;
-  const assigned = state.colonists.filter(c => c.job === jobString);
-  const currentOccupant = assigned[slotIdx] || null;
+  
+  let currentOccupant = null;
+  const isSlotBased = ['bonfires', 'granaries', 'smithies', 'mills'].includes(type);
+  const b = state[type] && state[type][index];
+  
+  if (isSlotBased && b) {
+    b.workers = b.workers || [];
+    if (b.workers[slotIdx]) {
+      currentOccupant = state.colonists.find(c => c.id === b.workers[slotIdx].colonistId) || null;
+    }
+  } else {
+    const assigned = state.colonists.filter(c => c.job === jobString);
+    currentOccupant = assigned[slotIdx] || null;
+  }
   
   if (cid === null) {
     if (currentOccupant) {
       currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === taskType));
       currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
-      showToast("Aldeano retirado del puesto", "info");
+      currentOccupant.job = null;
     }
+    if (isSlotBased && b && b.workers) {
+      b.workers[slotIdx] = null;
+    }
+    showToast("Aldeano retirado del puesto", "info");
   } else {
     const targetCol = state.colonists.find(c => c.id === cid);
     if (!targetCol) return;
     
+    // Desasignar al ocupante actual si existe
+    if (currentOccupant && currentOccupant.id !== cid) {
+      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === taskType));
+      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
+      currentOccupant.job = null;
+    }
+    
+    // Asignar al nuevo aldeano
     targetCol.priorities = targetCol.priorities || [];
     targetCol.priorities = targetCol.priorities.filter(p => !(p.taskType === taskType));
     targetCol.priorities.unshift({ taskType, buildingIdx: null, weight: 1 });
     targetCol.priorities.forEach((p, idx) => p.weight = idx + 1);
+    targetCol.job = jobString;
     
-    if (currentOccupant && currentOccupant.id !== cid) {
-      currentOccupant.priorities = (currentOccupant.priorities || []).filter(p => !(p.taskType === taskType));
-      currentOccupant.priorities.forEach((p, idx) => p.weight = idx + 1);
+    if (isSlotBased && b) {
+      b.workers = b.workers || [];
+      b.workers[slotIdx] = {
+        colonistId: cid,
+        selectedRecipe: type === 'bonfires' ? (b.selectedRecipe || 'wheat') : undefined,
+        selectedCrop: (type === 'granaries' || type === 'mills') ? (b.selectedCrop || 'wheat') : undefined,
+        selectedTool: type === 'smithies' ? (b.selectedTool || 'axe_t1') : undefined,
+        elapsed: 0,
+        isRunning: false
+      };
     }
     
     showToast(`Aldeano ${targetCol.name} asignado al puesto`, "success");
@@ -1138,6 +1173,45 @@ function moveColonistPriority(colonistId, index, direction) {
 window.addColonistPriority = addColonistPriority;
 window.removeColonistPriority = removeColonistPriority;
 window.moveColonistPriority = moveColonistPriority;
+
+function moveBonfireRecipePriority(bonfireIdx, index, direction) {
+  if (!state.bonfires || !state.bonfires[bonfireIdx]) return;
+  const bonfire = state.bonfires[bonfireIdx];
+  const priorities = bonfire.recipePriorities || ['carrot', 'wheat', 'potato', 'berries'];
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= priorities.length) return;
+  
+  const temp = priorities[index];
+  priorities[index] = priorities[targetIndex];
+  priorities[targetIndex] = temp;
+  
+  bonfire.recipePriorities = priorities;
+  
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+function moveGranaryCropPriority(granaryIdx, index, direction) {
+  if (!state.granaries || !state.granaries[granaryIdx]) return;
+  const granary = state.granaries[granaryIdx];
+  const priorities = granary.seedsPriorities || ['wheat', 'potato', 'carrot'];
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= priorities.length) return;
+  
+  const temp = priorities[index];
+  priorities[index] = priorities[targetIndex];
+  priorities[targetIndex] = temp;
+  
+  granary.seedsPriorities = priorities;
+  
+  recalculateRates();
+  updateUI();
+  saveGame();
+}
+
+window.moveBonfireRecipePriority = moveBonfireRecipePriority;
+window.moveGranaryCropPriority = moveGranaryCropPriority;
 
 // INICIALIZACIÓN PRINCIPAL DEL JUEGO
 window.onload = async function() {

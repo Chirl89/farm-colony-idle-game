@@ -627,6 +627,7 @@ function parseCSV(csvText, fileName = '') {
     else if (currentCatLower === 'raid') category = 'Raid';
     else if (currentCatLower === 'specialisttitle') category = 'SpecialistTitle';
     else if (currentCatLower === 'village') category = 'Village';
+    else if (currentCatLower === 'buildingslots') category = 'BuildingSlots';
     
     const type = columns[idxType] || '';
     const name = columns[idxName] || '';

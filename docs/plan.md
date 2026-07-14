@@ -70,12 +70,13 @@
 | 13 | **PASO M** - `[MET-FORJA]` | Amarillo | Mineral de hierro + Forja | 8 archivos | Completado (2026-07-07) |
 | 13.B | BACKUP | - | Backup vBloque4 | - | Pendiente |
 | **BLOQUE 5 -- Sistema de trabajo (RUPTURA)** ||||||
-| 14 | **PASO N** - `[WORK-PRIO]` | Rojo | Prioridades de colonos [RUPTURA] | 4 archivos | Pendiente |
-| 15 | **PASO O** - `[WORK-EDIF]` | Amarillo | Prioridades de edificios | 3 archivos | Pendiente |
-| 16 | **PASO P** - `[WORK-SLOT]` | Rojo | Slots multiples por tier | mechanics.csv + 4 archivos | Pendiente |
+| 14 | **PASO N** - `[WORK-PRIO]` | Rojo | Prioridades de colonos [RUPTURA] | 4 archivos | Completado (2026-07-07) |
+| 15 | **PASO O** - `[WORK-EDIF]` | Amarillo | Prioridades de edificios | 3 archivos | Completado (2026-07-07) |
+| 16 | **PASO P** - `[WORK-SLOT]` | Rojo | Slots multiples por tier | mechanics.csv + 4 archivos | Completado (2026-07-08) |
 | 16.B | BACKUP | - | Backup vBloque5 | - | Pendiente |
 | **BLOQUE 6 -- Cadena alimentaria** ||||||
-| 17 | **PASO Q** - `[FOOD-GRAN]` | Amarillo | Ganaderia y sub-productos | 6 archivos | Pendiente |
+| 17 | **PASO Q** - `[FOOD-GRAN]` | Amarillo | Ganaderia y sub-productos | 6 archivos | Completado (2026-07-08) |
+| 17.1 | **PASO Q.1** - `[FOOD-FEED]` | Amarillo | Ganadería completa (Corral, Pienso y Mercado) | 8 archivos | Completado (2026-07-08) |
 | 18 | **PASO R** - `[FOOD-MOLI]` | Amarillo | Molino + cadena harina->pan | 8 archivos | Pendiente |
 | 19 | **PASO S** - `[FOOD-GRANO]` | Amarillo | Trigo->grano+paja [MIGRACION CRITICA] | 6 archivos + grep | Pendiente |
 | 19.B | BACKUP | - | Backup vBloque6 | - | Pendiente |

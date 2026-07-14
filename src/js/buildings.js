@@ -64,7 +64,7 @@ function autoAssignBuilders() {
   }
 
   // Otros edificios
-  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries', 'smithies', 'forges'];
+  const typesToCheck = ['houses', 'lumberMills', 'quarries', 'farms', 'markets', 'bonfires', 'granaries', 'smithies', 'forges', 'mills', 'corrals', 'wells', 'warehouses'];
   for (const type of typesToCheck) {
     if (Array.isArray(state[type])) {
       state[type].forEach((building, index) => {
@@ -660,6 +660,7 @@ function buildBonfire() {
     state.bonfires.push({
       id: state.bonfires.length,
       workerAssigned: 0,
+      workers: [null],
       elapsed: 0,
       isRunning: false,
       mode: 'none',
@@ -668,7 +669,9 @@ function buildBonfire() {
       constructionElapsed: 0,
       constructionDuration: getBuildingDuration('bonfire', 8.4),
       activatedAt: state.nextActivationId++,
-      isPaused: false
+      isPaused: false,
+      recipePriorities: ['carrot', 'wheat', 'potato', 'berries'],
+      cookingRecipeNow: null
     });
     autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Fogata. ¡Asigna constructores para comenzar!", "info");
@@ -693,39 +696,43 @@ function upgradeBonfire(idx) {
       showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Caldero a Tier 2.", "warning");
       return;
     }
-    // Mejorar a Caldero
-    const cfg = CONFIG.Building.pot_upgrade;
-    if (state.gold >= cfg.cost_gold && state.stone >= cfg.cost_stone) {
-      state.gold -= cfg.cost_gold;
-      state.stone -= cfg.cost_stone;
-      bonfire.tier = 2;
-      showToast(`¡Fogata #${idx + 1} mejorada a Caldero! Producción y velocidad aumentadas.`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes para mejorar a Caldero (Requiere 50 Oro y 30 Piedra)", "warning");
-    }
-  } else if (bonfire.tier === 2) {
-    if (!isBuildingUnlocked('kitchen_upgrade') && !isBuildingUnlocked('bonfire_t3')) {
-      showToast("Requiere investigar Alta Cocina", "warning");
-      return;
-    }
-    if (state.maxBuildingTier < 3) {
-      showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cocina de Taberna a Tier 3.", "warning");
-      return;
-    }
-    // Mejorar a Cocina de Taberna
-    const cfg = CONFIG.Building.kitchen_upgrade;
-    if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood) {
-      state.gold -= cfg.cost_gold;
-      state.wood -= cfg.cost_wood;
-      bonfire.tier = 3;
-      showToast(`¡Caldero #${idx + 1} mejorado a Cocina de Taberna! Producción y velocidad optimizadas al máximo.`, "success");
-      recalculateRates();
-      updateUI();
-    } else {
-      showToast("Recursos insuficientes para mejorar a Cocina de Taberna (Requiere 100 Oro y 50 Madera)", "warning");
-    }
+      // Mejorar a Caldero
+      const cfg = CONFIG.Building.pot_upgrade;
+      if (state.gold >= cfg.cost_gold && state.stone >= cfg.cost_stone) {
+        state.gold -= cfg.cost_gold;
+        state.stone -= cfg.cost_stone;
+        bonfire.tier = 2;
+        bonfire.workers = bonfire.workers || [];
+        while (bonfire.workers.length < 2) bonfire.workers.push(null);
+        showToast(`¡Fogata #${idx + 1} mejorada a Caldero! Producción y velocidad aumentadas.`, "success");
+        recalculateRates();
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para mejorar a Caldero (Requiere 50 Oro y 30 Piedra)", "warning");
+      }
+    } else if (bonfire.tier === 2) {
+      if (!isBuildingUnlocked('kitchen_upgrade') && !isBuildingUnlocked('bonfire_t3')) {
+        showToast("Requiere investigar Alta Cocina", "warning");
+        return;
+      }
+      if (state.maxBuildingTier < 3) {
+        showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar la Cocina de Taberna a Tier 3.", "warning");
+        return;
+      }
+      // Mejorar a Cocina de Taberna
+      const cfg = CONFIG.Building.kitchen_upgrade;
+      if (state.gold >= cfg.cost_gold && state.wood >= cfg.cost_wood) {
+        state.gold -= cfg.cost_gold;
+        state.wood -= cfg.cost_wood;
+        bonfire.tier = 3;
+        bonfire.workers = bonfire.workers || [];
+        while (bonfire.workers.length < 2) bonfire.workers.push(null);
+        showToast(`¡Caldero #${idx + 1} mejorado a Cocina de Taberna! Producción y velocidad optimizadas al máximo.`, "success");
+        recalculateRates();
+        updateUI();
+      } else {
+        showToast("Recursos insuficientes para mejorar a Cocina de Taberna (Requiere 100 Oro y 50 Madera)", "warning");
+      }
   } else {
     showToast("Este edificio ya ha alcanzado el nivel máximo (Cocina de Taberna).", "info");
   }
@@ -778,10 +785,46 @@ function changeBonfireRecipe(idx, recipe) {
     const bonfire = state.bonfires[idx];
     if (bonfire.isUnderConstruction) return;
     bonfire.selectedRecipe = recipe;
+    
+    // Sincronizar slot 0
+    bonfire.workers = bonfire.workers || [];
+    if (bonfire.workers[0]) {
+      bonfire.workers[0].selectedRecipe = recipe;
+    }
+    
     recalculateRates();
     updateUI();
   }
 }
+window.changeBonfireRecipe = changeBonfireRecipe;
+
+function changeBonfireSlotRecipe(idx, slotIdx, recipe) {
+  if (state.bonfires && state.bonfires[idx]) {
+    const bonfire = state.bonfires[idx];
+    if (bonfire.isUnderConstruction) return;
+    
+    bonfire.workers = bonfire.workers || [];
+    if (!bonfire.workers[slotIdx]) {
+      bonfire.workers[slotIdx] = {
+        colonistId: null,
+        selectedRecipe: recipe,
+        elapsed: 0,
+        isRunning: false
+      };
+    } else {
+      bonfire.workers[slotIdx].selectedRecipe = recipe;
+    }
+    
+    if (slotIdx === 0) {
+      bonfire.selectedRecipe = recipe;
+    }
+    
+    recalculateRates();
+    updateUI();
+    saveGame();
+  }
+}
+window.changeBonfireSlotRecipe = changeBonfireSlotRecipe;
 
 function buildTownHall() {
   const cfg = CONFIG.Building.townhall;
@@ -945,6 +988,7 @@ function buildGranary() {
       id: state.granaries.length,
       tier: 1,
       workerAssigned: 0,
+      workers: [null],
       isUnderConstruction: true,
       constructionElapsed: 0,
       constructionDuration: getBuildingDuration('granary', 50.4),
@@ -953,7 +997,9 @@ function buildGranary() {
       elapsed: 0,
       isRunning: false,
       activatedAt: state.nextActivationId++,
-      isPaused: false
+      isPaused: false,
+      seedsPriorities: ['wheat', 'potato', 'carrot'],
+      cookingRecipeNow: null
     });
     autoAssignBuilders();
     showToast("🏗️ Comenzando construcción de Granero. ¡Asigna constructores para comenzar!", "info");
@@ -1028,10 +1074,46 @@ function changeGranaryRecipe(idx, cropKey) {
     const granary = state.granaries[idx];
     if (granary.isUnderConstruction) return;
     granary.selectedCrop = cropKey;
+    
+    // Sincronizar slot 0
+    granary.workers = granary.workers || [];
+    if (granary.workers[0]) {
+      granary.workers[0].selectedCrop = cropKey;
+    }
+    
     recalculateRates();
     updateUI();
   }
 }
+window.changeGranaryRecipe = changeGranaryRecipe;
+
+function changeGranarySlotCrop(idx, slotIdx, cropKey) {
+  if (state.granaries && state.granaries[idx]) {
+    const granary = state.granaries[idx];
+    if (granary.isUnderConstruction) return;
+    
+    granary.workers = granary.workers || [];
+    if (!granary.workers[slotIdx]) {
+      granary.workers[slotIdx] = {
+        colonistId: null,
+        selectedCrop: cropKey,
+        elapsed: 0,
+        isRunning: false
+      };
+    } else {
+      granary.workers[slotIdx].selectedCrop = cropKey;
+    }
+    
+    if (slotIdx === 0) {
+      granary.selectedCrop = cropKey;
+    }
+    
+    recalculateRates();
+    updateUI();
+    saveGame();
+  }
+}
+window.changeGranarySlotCrop = changeGranarySlotCrop;
 
 function processGranaryManually(idx) {
   if (!state.granaries || !state.granaries[idx]) return;
@@ -1146,6 +1228,11 @@ function destroyBuildingPrompt(arrayName, idx) {
       const cfg = CONFIG.Building.granary_t3;
       if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
     }
+  } else if (arrayName === 'mills') {
+    if (tier >= 2 || building.upgradingToTier >= 2) {
+      const cfg = CONFIG.Building.mill_t2;
+      if (cfg) { totalGold += cfg.cost_gold || 0; totalWood += cfg.cost_wood || 0; totalStone += cfg.cost_stone || 0; }
+    }
   } else if (arrayName === 'houses') {
     if (tier >= 2 || building.upgradingToTier >= 2) {
       const cfg = CONFIG.Building.upgraded_house;
@@ -1187,7 +1274,8 @@ function destroyBuildingPrompt(arrayName, idx) {
     smithies: 'Taller del Herrero',
     forges: 'Forja',
     wells: 'Pozo',
-    warehouses: 'Almacén'
+    warehouses: 'Almacén',
+    mills: 'Molino'
   };
   const bName = `${displayNames[arrayName] || 'Edificio'} #${idx + 1}`;
   
@@ -1366,9 +1454,108 @@ function upgradeWell(idx) {
   }
 }
 
+function buildMill() {
+  if (!isBuildingUnlocked('mill')) {
+    showToast("Requiere investigación", "warning");
+    return;
+  }
+  if (!state.townHall.built || state.townHall.isUnderConstruction) {
+    showToast("Debes completar la construcción de la Casa del Jugador primero.", "warning");
+    return;
+  }
+  const cfg = CONFIG?.Building?.mill;
+  if (!cfg) return;
+  
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    if (!state.mills) state.mills = [];
+    state.mills.push({
+      id: state.mills.length,
+      tier: 1,
+      workerAssigned: 0,
+      workers: [null],
+      isUnderConstruction: true,
+      constructionElapsed: 0,
+      constructionDuration: getBuildingDuration('mill', 100.8),
+      isUpgrading: false,
+      selectedCrop: 'wheat',
+      elapsed: 0,
+      isRunning: false,
+      activatedAt: state.nextActivationId++,
+      isPaused: false,
+      cookingRecipeNow: null
+    });
+    autoAssignBuilders();
+    showToast("🏗️ Comenzando construcción de Molino. ¡Asigna constructores para comenzar!", "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast("Recursos insuficientes para construir el Molino", "warning");
+  }
+}
+
+function upgradeMill(idx) {
+  if (!state.mills || !state.mills[idx]) return;
+  const mill = state.mills[idx];
+  if (mill.isUnderConstruction || mill.isUpgrading) {
+    showToast("Este molino ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = mill.tier || 1;
+  if (tier >= 2) {
+    showToast("Este molino ya está en el nivel máximo.", "info");
+    return;
+  }
+  
+  let cfg;
+  if (tier === 1) {
+    if (!isBuildingUnlocked('mill_t2')) {
+      showToast("Requiere investigación", "warning");
+      return;
+    }
+    if (state.maxBuildingTier < 3) {
+      showToast("Se requiere Ayuntamiento (Nivel 3) para mejorar el Molino a Tier 2.", "warning");
+      return;
+    }
+    cfg = CONFIG?.Building?.mill_t2;
+  }
+  
+  if (!cfg) return;
+  
+  if (typeof canAffordBuilding === 'function' ? canAffordBuilding(cfg) : (state.gold >= (cfg.cost_gold || 0) && state.wood >= cfg.cost_wood && state.stone >= cfg.cost_stone)) {
+    if (typeof deductBuildingCosts === 'function') deductBuildingCosts(cfg);
+    else {
+      state.gold -= (cfg.cost_gold || 0);
+      state.wood -= cfg.cost_wood;
+      state.stone -= cfg.cost_stone;
+    }
+    
+    mill.isUpgrading = true;
+    mill.upgradingToTier = tier + 1;
+    mill.constructionElapsed = 0;
+    mill.constructionDuration = getBuildingDuration(`mill_t2`, 201.6);
+    mill.activatedAt = state.nextActivationId++;
+    mill.isPaused = false;
+    autoAssignBuilders();
+    
+    showToast(`🏗️ Comenzando mejora de Molino #${idx + 1} a Tier ${tier + 1}. ¡Asigna constructores para comenzar!`, "info");
+    recalculateRates();
+    updateUI();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Molino (Oro: ${cfg.cost_gold || 0}, Madera: ${cfg.cost_wood}, Piedra: ${cfg.cost_stone})`, "warning");
+  }
+}
+
 window.recalculateWaterMax = recalculateWaterMax;
 window.buildWell = buildWell;
 window.upgradeWell = upgradeWell;
+window.buildMill = buildMill;
+window.upgradeMill = upgradeMill;
 
 function selectWeightedOrderTemplate(templates) {
   const totalWeight = templates.reduce((sum, t) => sum + (t.weight || 0), 0);
@@ -1745,9 +1932,12 @@ function startPlayerTradeRoute(villageId, type, resource, amount) {
     }
   } else if (type === 'sell') {
     resourceCost = amount;
-    const currentStock = resource.endsWith('_seeds')
-      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
-      : (state[resource] || 0);
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(resource);
+    const currentStock = isAnimal
+      ? (state.animals ? state.animals.filter(a => a.type === resource).length : 0)
+      : (resource.endsWith('_seeds')
+        ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+        : (state[resource] || 0));
 
     if (currentStock < resourceCost) {
       showToast(`Recursos insuficientes (necesitas ${resourceCost} de recurso)`, "warning");
@@ -1762,7 +1952,17 @@ function startPlayerTradeRoute(villageId, type, resource, amount) {
   if (type === 'buy') {
     state.gold -= goldCost;
   } else if (type === 'sell') {
-    if (resource.endsWith('_seeds')) {
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(resource);
+    if (isAnimal) {
+      let removed = 0;
+      state.animals = state.animals.filter(a => {
+        if (a.type === resource && removed < resourceCost) {
+          removed++;
+          return false;
+        }
+        return true;
+      });
+    } else if (resource.endsWith('_seeds')) {
       state.seeds[resource.replace('_seeds', '')] -= resourceCost;
     } else {
       state[resource] -= resourceCost;
@@ -1796,8 +1996,33 @@ function completePlayerTradeRoute() {
 
   const trade = state.playerMission;
   if (trade.type === 'buy') {
-    addResourceStock(trade.resource, trade.amount);
-    showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Traes x${trade.amount} de ${trade.resource}.`, "success");
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(trade.resource);
+    if (isAnimal) {
+      if (!state.animals) state.animals = [];
+      const maxCap = getAnimalsCapacity();
+      const spaceLeft = maxCap - state.animals.length;
+      const actualBuy = Math.min(trade.amount, spaceLeft);
+      
+      for (let i = 0; i < actualBuy; i++) {
+        state.animals.push({
+          id: state.nextActivationId || (state.animals.length + 1),
+          type: trade.resource,
+          fedToday: false
+        });
+        if (state.nextActivationId) state.nextActivationId++;
+      }
+      
+      showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Traes x${actualBuy} de ${trade.resource} a tus corrales.`, "success");
+      
+      if (actualBuy < trade.amount) {
+        const refund = (trade.amount - actualBuy) * (trade.totalPrice / trade.amount);
+        state.gold += refund;
+        showToast(`⚠️ No había espacio suficiente en los corrales. Se reembolsaron ${refund.toFixed(0)}🪙 por los animales sobrantes.`, "warning");
+      }
+    } else {
+      addResourceStock(trade.resource, trade.amount);
+      showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Traes x${trade.amount} de ${trade.resource}.`, "success");
+    }
   } else if (trade.type === 'sell') {
     state.gold += trade.totalPrice;
     showToast(`✅ ¡Has regresado de tu viaje a ${trade.villageName}! Vendiste por ${trade.totalPrice}🪙.`, "success");
@@ -1904,9 +2129,12 @@ function startTradeRoute(villageId, type, resource, amount, slotIdx) {
     }
   } else if (type === 'sell') {
     resourceCost = amount;
-    const currentStock = resource.endsWith('_seeds')
-      ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
-      : (state[resource] || 0);
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(resource);
+    const currentStock = isAnimal
+      ? (state.animals ? state.animals.filter(a => a.type === resource).length : 0)
+      : (resource.endsWith('_seeds')
+        ? (state.seeds ? state.seeds[resource.replace('_seeds', '')] || 0 : 0)
+        : (state[resource] || 0));
 
     if (currentStock < resourceCost) {
       showToast(`Recursos insuficientes (necesitas ${resourceCost} de recurso)`, "warning");
@@ -1922,7 +2150,17 @@ function startTradeRoute(villageId, type, resource, amount, slotIdx) {
   if (type === 'buy') {
     state.gold -= goldCost;
   } else if (type === 'sell') {
-    if (resource.endsWith('_seeds')) {
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(resource);
+    if (isAnimal) {
+      let removed = 0;
+      state.animals = state.animals.filter(a => {
+        if (a.type === resource && removed < resourceCost) {
+          removed++;
+          return false;
+        }
+        return true;
+      });
+    } else if (resource.endsWith('_seeds')) {
       state.seeds[resource.replace('_seeds', '')] -= resourceCost;
     } else {
       state[resource] -= resourceCost;
@@ -1964,8 +2202,33 @@ function startTradeRoute(villageId, type, resource, amount, slotIdx) {
 
 function completeTradeRoute(trade) {
   if (trade.type === 'buy') {
-    addResourceStock(trade.resource, trade.amount);
-    showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Comprado x${trade.amount} de ${trade.resource}.`, "success");
+    const isAnimal = ['chicken', 'pig', 'cow'].includes(trade.resource);
+    if (isAnimal) {
+      if (!state.animals) state.animals = [];
+      const maxCap = getAnimalsCapacity();
+      const spaceLeft = maxCap - state.animals.length;
+      const actualBuy = Math.min(trade.amount, spaceLeft);
+      
+      for (let i = 0; i < actualBuy; i++) {
+        state.animals.push({
+          id: state.nextActivationId || (state.animals.length + 1),
+          type: trade.resource,
+          fedToday: false
+        });
+        if (state.nextActivationId) state.nextActivationId++;
+      }
+      
+      showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Traes x${actualBuy} de ${trade.resource}.`, "success");
+      
+      if (actualBuy < trade.amount) {
+        const refund = (trade.amount - actualBuy) * (trade.totalPrice / trade.amount);
+        state.gold += refund;
+        showToast(`⚠️ No había espacio suficiente en los corrales. Se reembolsaron ${refund.toFixed(0)}🪙 por los animales sobrantes.`, "warning");
+      }
+    } else {
+      addResourceStock(trade.resource, trade.amount);
+      showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Comprado x${trade.amount} de ${trade.resource}.`, "success");
+    }
   } else if (trade.type === 'sell') {
     state.gold += trade.totalPrice;
     showToast(`✅ ¡La caravana de ${trade.villageName} ha regresado! Vendido por ${trade.totalPrice}🪙.`, "success");
@@ -2316,6 +2579,7 @@ function buildSmithy() {
     id: state.smithies.length,
     tier: 1,
     workerAssigned: 0,
+    workers: [null],
     isUnderConstruction: true,
     constructionElapsed: 0,
     constructionDuration: duration,
@@ -2513,4 +2777,143 @@ function upgradeForge(idx) {
 
 window.buildForge = buildForge;
 window.upgradeForge = upgradeForge;
+
+function buyAnimal(type) {
+  const buyKey = `buy_${type}`;
+  if (!CONFIG || !CONFIG.Sales || !CONFIG.Sales[buyKey]) {
+    showToast("Configuración de animal no encontrada", "warning");
+    return;
+  }
+
+  if (!state.animals) state.animals = [];
+  const maxCap = getAnimalsCapacity();
+  if (state.animals.length >= maxCap) {
+    showToast(`No tienes espacio en tus corrales para albergar más animales. (Capacidad actual: ${maxCap})`, "warning");
+    return;
+  }
+
+  const recipe = CONFIG.Sales[buyKey];
+  const price = recipe.cost_gold || 0;
+  if (state.gold >= price) {
+    state.gold -= price;
+    state.animals.push({
+      id: state.nextActivationId || (state.animals.length + 1),
+      type: type,
+      fedToday: false
+    });
+    if (state.nextActivationId) {
+      state.nextActivationId++;
+    }
+    showToast(`¡Comprado: ${recipe.name} por ${price}🪙!`, "success");
+    recalculateRates();
+    updateUI();
+    saveGame();
+  } else {
+    showToast("Oro insuficiente para comprar el animal", "warning");
+  }
+}
+
+function fertilizeFarm(farmIdx) {
+  if (!state.farms || !state.farms[farmIdx]) return;
+  const farm = state.farms[farmIdx];
+  if (state.fertilizer >= 1 && (farm.stage === 'grow' || farm.stage === 'grow2') && !farm.isUnderConstruction) {
+    state.fertilizer -= 1;
+    const cropKey = farm.activeCrop || farm.crop || 'wheat';
+    const stageKey = `stage_${farm.stage}_${cropKey}`;
+    const stageDuration = (CONFIG.Timing && CONFIG.Timing[stageKey]) ? CONFIG.Timing[stageKey].duration : 5;
+    farm.stageElapsed = (farm.stageElapsed || 0) + (stageDuration * 0.5);
+    showToast(`🌱 ¡Campo #${farmIdx + 1} fertilizado!`, "success");
+    recalculateRates();
+    updateUI();
+    saveGame();
+  }
+}
+
+window.buyAnimal = buyAnimal;
+window.fertilizeFarm = fertilizeFarm;
+
+function buildCorral() {
+  if (!state.townHall.built || state.townHall.isUnderConstruction) {
+    showToast("Debes completar la construcción del Ayuntamiento primero.", "warning");
+    return;
+  }
+  const cfg = CONFIG.Building.corral;
+  if (!cfg) return;
+  if (state.gold >= (cfg.cost_gold || 0) && state.wood >= (cfg.cost_wood || 0)) {
+    state.gold -= (cfg.cost_gold || 0);
+    state.wood -= (cfg.cost_wood || 0);
+    if (!state.corrals) state.corrals = [];
+    state.corrals.push({
+      id: state.corrals.length,
+      tier: 1,
+      isUnderConstruction: true,
+      constructionElapsed: 0,
+      constructionDuration: getBuildingDuration('corral', 16.8),
+      isUpgrading: false,
+      activatedAt: state.nextActivationId++,
+      isPaused: false
+    });
+    autoAssignBuilders();
+    showToast("🏗️ Comenzando construcción de Corral. ¡Asigna constructores para comenzar!", "info");
+    recalculateRates();
+    updateUI();
+    saveGame();
+  } else {
+    showToast("Recursos insuficientes para construir el Corral de Ganado (40🪙, 60🪵)", "warning");
+  }
+}
+
+function upgradeCorral(idx) {
+  if (!state.corrals || !state.corrals[idx]) return;
+  const corral = state.corrals[idx];
+  if (corral.isUnderConstruction || corral.isUpgrading) {
+    showToast("Este corral ya está en proceso de construcción o mejora.", "warning");
+    return;
+  }
+  const tier = corral.tier || 1;
+  if (tier >= 3) {
+    showToast("Este corral ya está en el nivel máximo.", "info");
+    return;
+  }
+  
+  let cfg;
+  if (tier === 1) {
+    if (state.maxBuildingTier < 2) {
+      showToast("Se requiere Ayuntamiento de Nivel 2 para mejorar el Corral a Tier 2.", "warning");
+      return;
+    }
+    cfg = CONFIG.Building.corral_t2;
+  } else if (tier === 2) {
+    if (state.maxBuildingTier < 3) {
+      showToast("Se requiere Ayuntamiento de Nivel 3 para mejorar el Corral a Tier 3.", "warning");
+      return;
+    }
+    cfg = CONFIG.Building.corral_t3;
+  }
+  
+  if (!cfg) return;
+  
+  if (state.gold >= (cfg.cost_gold || 0) && state.wood >= (cfg.cost_wood || 0) && state.stone >= (cfg.cost_stone || 0)) {
+    state.gold -= (cfg.cost_gold || 0);
+    state.wood -= (cfg.cost_wood || 0);
+    state.stone -= (cfg.cost_stone || 0);
+    
+    corral.isUpgrading = true;
+    corral.upgradingToTier = tier + 1;
+    corral.constructionElapsed = 0;
+    corral.constructionDuration = getBuildingDuration(`corral_t${tier + 1}`, tier === 1 ? 33.6 : 67.2);
+    corral.activatedAt = state.nextActivationId++;
+    
+    autoAssignBuilders();
+    showToast(`🏗️ Comenzando mejora de Corral a Tier ${tier + 1}.`, "info");
+    recalculateRates();
+    updateUI();
+    saveGame();
+  } else {
+    showToast(`Recursos insuficientes para mejorar el Corral.`, "warning");
+  }
+}
+
+window.buildCorral = buildCorral;
+window.upgradeCorral = upgradeCorral;
 

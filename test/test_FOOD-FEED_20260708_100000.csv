@@ -1,0 +1,7 @@
+ID;Name;Description;Status;Parameters;Result
+T-FOOD-FEED-01;Construct Corral T1;Verificar construccion de Corral T1 y aumento de capacidad a 3 animales;PASS;gold: 40, wood: 60;state.corrals.length == 1 && getAnimalsCapacity() == 3
+T-FOOD-FEED-02;Upgrade Corral T2;Verificar mejora de Corral a T2 y aumento de capacidad a 6 animales;PASS;gold: 80, wood: 100, stone: 40;getAnimalsCapacity() == 6
+T-FOOD-FEED-03;Upgrade Corral T3;Verificar mejora de Corral a T3 y aumento de capacidad a 10 animales;PASS;gold: 150, wood: 180, stone: 80;getAnimalsCapacity() == 10
+T-FOOD-FEED-04;Pienso Recipe Granary;Verificar que la receta de Pienso se ejecuta en el Granero consumiendo trigo y produciendo pienso;PASS;recipe: granary_pienso_t1, input: 3 wheat, output: 5 pienso;state.pienso == 5
+T-FOOD-FEED-05;Animal Feeding Pienso;Verificar que los animales se alimentan exclusivamente de pienso y entran en hambruna si falta;PASS;pienso: 1.0, animals: 1 chicken (0.5 cost), 1 pig (1.5 cost);chicken.fedToday == true && pig.fedToday == false
+T-FOOD-FEED-06;Animal Market Trade;Verificar compra/venta de animales en el mercado con limites de corrales y reembolsos;PASS;buy: 5 chickens, capacity: 3;state.animals.length == 3 && gold_refunded == 60

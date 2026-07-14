@@ -35,6 +35,9 @@ Construction;farm_t3;Mejora Granja T3;6720
 Construction;granary;Construcción Granero;5040
 Construction;granary_t2;Mejora Granero T2;10080
 Construction;granary_t3;Mejora Granero T3;20160
+Construction;corral;Construcción Corral;1680
+Construction;corral_t2;Mejora Corral T2;3360
+Construction;corral_t3;Mejora Corral T3;6720
 Construction;bonfire;Construcción Fogata;840
 Construction;bonfire_t2;Mejora Fogata → Caldero;1680
 Construction;bonfire_t3;Mejora Caldero → Cocina;3360
@@ -93,6 +96,9 @@ Production;granary_potato_t3;Ciclo Semillas Patata T3;12600
 Production;granary_carrot_t1;Ciclo Semillas Zanahoria T1;18900
 Production;granary_carrot_t2;Ciclo Semillas Zanahoria T2;18900
 Production;granary_carrot_t3;Ciclo Semillas Zanahoria T3;18900
+Production;granary_pienso_t1;Ciclo Pienso T1;10
+Production;granary_pienso_t2;Ciclo Pienso T2;10
+Production;granary_pienso_t3;Ciclo Pienso T3;10
 ;;;
 # Mercados (ciclo auto compra/venta);;;
 Production;market_t1;Ciclo Mercado T1;3

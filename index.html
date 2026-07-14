@@ -398,14 +398,36 @@
 
         <!-- Subtab Content: Alimentos Básicos -->
         <div id="subtab-alimentos" class="subtab-content">
-          <section class="module-card">
-            <div class="module-title">
-              <span>🌾 Granjas Activas</span>
-            </div>
-            <div id="active-farms-list" class="building-boxes-container">
-              <!-- Cajas dinámicas -->
-            </div>
-          </section>
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <section class="module-card">
+              <div class="module-title">
+                <span>🌾 Granjas Activas</span>
+              </div>
+              <div id="active-farms-list" class="building-boxes-container">
+                <!-- Cajas dinámicas -->
+              </div>
+            </section>
+
+            <!-- Corrales -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>🐄 Corrales Activos</span>
+              </div>
+              <div id="active-corrals-list" class="building-boxes-container">
+                <!-- Cajas dinámicas (renderCorrals) -->
+              </div>
+            </section>
+
+            <!-- Ganadería -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>🐄 Ganadería y Animales</span>
+              </div>
+              <div id="active-livestock-container">
+                <!-- Se poblará dinámicamente -->
+              </div>
+            </section>
+          </div>
         </div>
 
         <!-- Subtab Content: Procesado -->
@@ -428,6 +450,16 @@
               </div>
               <div id="active-granaries-list" class="building-boxes-container">
                 <!-- Cajas dinámicas -->
+              </div>
+            </section>
+
+            <!-- Molinos -->
+            <section class="module-card">
+              <div class="module-title">
+                <span>🌾 Molinos Activos</span>
+              </div>
+              <div id="active-mills-list" class="building-boxes-container">
+                <!-- Cajas dinámicas (renderMills) -->
               </div>
             </section>
 
@@ -623,7 +655,7 @@
               </div>
             </div>
 
-            <!-- Granero -->
+             <!-- Granero -->
             <div class="building-item">
               <div class="building-info">
                 <span class="building-name">Granero (Granary)</span>
@@ -636,6 +668,42 @@
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
                 <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-granaries">Construidos: 0</span>
                 <button class="btn btn-secondary" id="btn-build-granary">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+            <!-- Corral de Ganado -->
+            <div class="building-item">
+              <div class="building-info">
+                <span class="building-name">🐄 Corral de Ganado</span>
+                <span class="building-desc">Permite albergar animales. T1: 3 animales, T2: 6 animales, T3: 10 animales.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-corral-wood">🪵 60 Madera</span>
+                  <span class="cost-badge" id="cost-corral-gold">🪙 40 Oro</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-corrals">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-corral">
+                  Construir
+                </button>
+              </div>
+            </div>
+
+             <!-- Molino de Grano -->
+            <div class="building-item" id="build-mill-card">
+              <div class="building-info">
+                <span class="building-name">🌾 Molino de Grano (Mill)</span>
+                <span class="building-desc">Grana y muele el trigo para obtener harina. T1: 1 puesto, T2: 2 puestos.</span>
+                <div class="costs-list">
+                  <span class="cost-badge" id="cost-mill-wood">🪵 60 Madera</span>
+                  <span class="cost-badge" id="cost-mill-stone">🪨 40 Piedra</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem;">
+                <span style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;" id="count-mills">Construidos: 0</span>
+                <button class="btn btn-secondary" id="btn-build-mill">
                   Construir
                 </button>
               </div>

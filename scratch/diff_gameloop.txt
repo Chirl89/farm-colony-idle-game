@@ -1,0 +1,571 @@
+﻿diff --git a/src/js/gameloop.js b/src/js/gameloop.js
+index 31faa4a..57d3604 100644
+--- a/src/js/gameloop.js
++++ b/src/js/gameloop.js
+@@ -828,9 +828,15 @@ function resolveColonistsPriorities() {
+     if (type === 'houses') return 0;
+     if (type === 'farms') return 1;
+-    if (type === 'granaries') return 1;
+     if (type === 'forges') return 1;
+-    if (type === 'smithies') return b.tier || 1;
+     if (type === 'markets') return b.tier || 1;
+-    if (type === 'bonfires') return 1;
++    
++    if (['bonfires', 'granaries', 'smithies'].includes(type)) {
++      const typeKey = type === 'smithies' ? 'smithy' : (type === 'bonfires' ? 'bonfire' : 'granary');
++      const slotsKey = `${typeKey}_t${b.tier || 1}_slots`;
++      if (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) {
++        return parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1;
++      }
++      return b.tier || 1;
++    }
+     return b.tier || 1;
+   };
+@@ -1021,4 +1027,59 @@ function resolveColonistsPriorities() {
+     }
+   });
++
++  // Sincronizar arreglos de slots individuales para edificios de producci├│n
++  buildingTypes.forEach(bt => {
++    if (['bonfires', 'granaries', 'smithies'].includes(bt.key)) {
++      if (Array.isArray(state[bt.key])) {
++        state[bt.key].forEach((b, idx) => {
++          if (!b.isUnderConstruction && !b.isUpgrading) {
++            const prefix = bt.prefix;
++            const key = `${prefix}_${idx}`;
++            const maxSlots = getBuildingMaxWorkers(bt.key, idx);
++            
++            b.workers = b.workers || [];
++            while (b.workers.length < maxSlots) {
++              b.workers.push(null);
++            }
++            if (b.workers.length > maxSlots) {
++              b.workers = b.workers.slice(0, maxSlots);
++            }
++            
++            const currentAssigns = state.colonists
++              ? state.colonists.filter(c => c.job === key).map(c => c.id)
++              : [];
++            
++            // Eliminar ocupantes desasignados
++            for (let i = 0; i < b.workers.length; i++) {
++              if (b.workers[i] !== null && !currentAssigns.includes(b.workers[i].colonistId)) {
++                b.workers[i] = null;
++              }
++            }
++            
++            // A├▒adir nuevos ocupantes en slots vac├¡os
++            currentAssigns.forEach(cId => {
++              const alreadyOccupying = b.workers.some(w => w !== null && w.colonistId === cId);
++              if (!alreadyOccupying) {
++                const emptySlot = b.workers.findIndex(w => w === null);
++                if (emptySlot !== -1) {
++                  b.workers[emptySlot] = {
++                    colonistId: cId,
++                    selectedRecipe: bt.key === 'bonfires' ? (b.selectedRecipe || 'wheat') : undefined,
++                    selectedCrop: bt.key === 'granaries' ? (b.selectedCrop || 'wheat') : undefined,
++                    selectedTool: bt.key === 'smithies' ? (b.selectedTool || 'axe_t1') : undefined,
++                    elapsed: 0,
++                    isRunning: false
++                  };
++                }
++              }
++            });
++            
++            // Sincronizar workerAssigned
++            b.workerAssigned = b.workers.filter(w => w !== null).length;
++          }
++        });
++      }
++    }
++  });
+ }
+ window.resolveColonistsPriorities = resolveColonistsPriorities;
+@@ -1268,7 +1329,25 @@ function gameTick() {
+                     delete building.upgradingToTier;
+                     building.constructionElapsed = 0;
++
++                    if (['bonfires', 'granaries', 'smithies'].includes(bt.key)) {
++                      const typeKey = bt.key === 'smithies' ? 'smithy' : (bt.key === 'bonfires' ? 'bonfire' : 'granary');
++                      const slotsKey = `${typeKey}_t${building.tier}_slots`;
++                      const maxSlots = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) ? (parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1) : 1;
++                      building.workers = building.workers || [];
++                      while (building.workers.length < maxSlots) {
++                        building.workers.push(null);
++                      }
++                    }
+                   } else {
+                     building.isUnderConstruction = false;
+                     building.constructionElapsed = 0;
++
++                    if (['bonfires', 'granaries', 'smithies'].includes(bt.key)) {
++                      const typeKey = bt.key === 'smithies' ? 'smithy' : (bt.key === 'bonfires' ? 'bonfire' : 'granary');
++                      const slotsKey = `${typeKey}_t${building.tier}_slots`;
++                      const maxSlots = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) ? (parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1) : 1;
++                      building.workers = Array(maxSlots).fill(null);
++                      building.workerAssigned = 0;
++                    }
+                   }
+                   
+@@ -1439,5 +1518,5 @@ function gameTick() {
+         state.smithies.forEach((smithy, idx) => {
+           smithy.isWarehouseFull = false;
+-          if (smithy.isUnderConstruction || smithy.isUpgrading || !smithy.workerAssigned) return;
++          if (smithy.isUnderConstruction || smithy.isUpgrading) return;
+           const assignKey = `smithies_${idx}`;
+           if (isWarehouseFullForJob(assignKey)) {
+@@ -1445,42 +1524,56 @@ function gameTick() {
+             return;
+           }
+-          const toolKey = smithy.selectedTool || 'axe_t1';
+-          const timingKey = `smithy_${toolKey.replace('_t1','_t1').replace('_t2','_t2')}`;
+-          // Map selectedTool ÔåÆ production timing key
+-          const timingId = 'smithy_' + toolKey; // e.g. smithy_axe_t1
+-          const craftDuration = CONFIG?.Timing?.[timingId]?.duration ?? 4;
+-          const craftCfg = CONFIG?.Crafting?.[`smithy_${toolKey}`];
+-          const woodCost = craftCfg ? (craftCfg.input_amt || craftCfg.consume_amount || 4) : 4;
+-          const ironCost = toolKey.endsWith('_t2') ? (craftCfg ? (craftCfg.input_amt || 2) : 2) : 0;
+-
+-          smithy.elapsed = (smithy.elapsed || 0) + effectiveDelta / dayDuration;
+-
+-          if (smithy.elapsed >= craftDuration) {
+-            smithy.elapsed = 0;
+-            // Verificar materiales
+-            const isT2 = toolKey.endsWith('_t2');
+-            const matResource = isT2 ? 'iron_bar' : 'wood';
+-            const matCost = isT2 ? ironCost : woodCost;
+-            if ((state[matResource] || 0) < matCost) {
+-              showToast(`ÔÜá´©Å Sin ${matResource === 'wood' ? 'madera' : 'lingotes'} para fabricar en Taller #${idx + 1}`, "warning");
+-              return;
++
++          const maxSlots = smithy.workers ? smithy.workers.length : 1;
++          smithy.workers = smithy.workers || Array(maxSlots).fill(null);
++
++          smithy.workers.forEach((worker, slotIdx) => {
++            if (worker === null) return;
++
++            const toolKey = worker.selectedTool || smithy.selectedTool || 'axe_t1';
++            const timingId = 'smithy_' + toolKey;
++            const craftDuration = CONFIG?.Timing?.[timingId]?.duration ?? 4;
++            const craftCfg = CONFIG?.Crafting?.[`smithy_${toolKey}`];
++            const woodCost = craftCfg ? (craftCfg.input_amt || craftCfg.consume_amount || 4) : 4;
++            const ironCost = toolKey.endsWith('_t2') ? (craftCfg ? (craftCfg.input_amt || 2) : 2) : 0;
++
++            worker.elapsed = (worker.elapsed || 0) + effectiveDelta / dayDuration;
++
++            if (worker.elapsed >= craftDuration) {
++              worker.elapsed = 0;
++              // Verificar materiales
++              const isT2 = toolKey.endsWith('_t2');
++              const matResource = isT2 ? 'iron_bar' : 'wood';
++              const matCost = isT2 ? ironCost : woodCost;
++              if ((state[matResource] || 0) < matCost) {
++                showToast(`ÔÜá´©Å Sin ${matResource === 'wood' ? 'madera' : 'lingotes'} para fabricar en Taller #${idx + 1} (Slot ${slotIdx + 1})`, "warning");
++                return;
++              }
++              state[matResource] -= matCost;
++              // Extraer tipo y tier de la herramienta
++              const parts = toolKey.split('_'); // e.g. ['axe', 't1']
++              const toolType = parts[0]; // 'axe', 'pickaxe', 'hoe', 'weapon'
++              const toolTier = parseInt((parts[1] || 't1').replace('t', '')) || 1;
++              const newTool = {
++                id: `tool_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
++                type: toolType,
++                tier: toolTier,
++                durability: 100,
++                assignedTo: null
++              };
++              state.tools.push(newTool);
++              const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
++              showToast(`­ƒö¿ Nueva ${toolNames[toolType] || toolType} T${toolTier} fabricada en Taller #${idx + 1} (Slot ${slotIdx + 1})!`, "success");
++              recalculateRates();
++              if (typeof updateUI === 'function') updateUI();
+             }
+-            state[matResource] -= matCost;
+-            // Extraer tipo y tier de la herramienta
+-            const parts = toolKey.split('_'); // e.g. ['axe', 't1']
+-            const toolType = parts[0]; // 'axe', 'pickaxe', 'hoe', 'weapon'
+-            const toolTier = parseInt((parts[1] || 't1').replace('t', '')) || 1;
+-            const newTool = {
+-              id: `tool_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+-              type: toolType,
+-              tier: toolTier,
+-              durability: 100,
+-              assignedTo: null
+-            };
+-            state.tools.push(newTool);
+-            const toolNames = { axe: 'Hacha', pickaxe: 'Pico', hoe: 'Azada', weapon: 'Arma' };
+-            showToast(`­ƒö¿ Nueva ${toolNames[toolType] || toolType} T${toolTier} fabricada en Taller #${idx + 1}!`, "success");
+-            recalculateRates();
+-            if (typeof updateUI === 'function') updateUI();
++          });
++
++          const firstWorker = smithy.workers[0];
++          if (firstWorker) {
++            smithy.elapsed = firstWorker.elapsed;
++            smithy.selectedTool = firstWorker.selectedTool;
++          } else {
++            smithy.elapsed = 0;
+           }
+         });
+@@ -1522,6 +1615,6 @@ function gameTick() {
+     if (Array.isArray(state.bonfires)) {
+       state.bonfires.forEach((bonfire, idx) => {
++        if (bonfire.isUnderConstruction || bonfire.isUpgrading) return;
+         bonfire.isWarehouseFull = false;
+-        const hasWorker = bonfire.workerAssigned > 0;
+         const assignKey = `bonfires_${idx}`;
+         if (isWarehouseFullForJob(assignKey)) {
+@@ -1544,58 +1637,115 @@ function gameTick() {
+         if (!autoRec || !manualRec) return;
+ 
+-        if (!bonfire.isUnderConstruction && !bonfire.isRunning && hasWorker) {
+-          const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+-          const totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
+-          const foodCapacity = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
+-          if (totalFood < foodCapacity) {
+-            const recipe = bonfire.selectedRecipe || 'wheat';
+-            const minFood = autoRec.consume_amount;
+-            if ((state[recipe] || 0) >= minFood) {
+-              state[recipe] -= minFood;
+-              updateGlobalFood();
+-              bonfire.elapsed = 0;
+-              bonfire.isRunning = true;
+-              bonfire.mode = 'auto';
+-              bonfire.activeRecipe = recipe;
+-              recalculateRates();
+-            }
+-          }
++        let speedBonus = 0;
++        if (bonfire.tier === 3) {
++          speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.bonfire_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.bonfire_t3_speed.value) || 0.3) : 0.3;
+         }
+ 
+-        if (!bonfire.isUnderConstruction && bonfire.isRunning) {
+-          let speedMultiplier = 1;
+-          if (bonfire.mode === 'auto') {
+-            const workers = state.colonists ? state.colonists.filter(c => c.job === `bonfires_${idx}`) : [];
+-            let mult = 0;
+-            workers.forEach(c => {
+-              const lvl = c.attributes.cooking || 3;
+-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+-            });
+-            speedMultiplier = mult;
++        const maxSlots = bonfire.workers ? bonfire.workers.length : 1;
++        bonfire.workers = bonfire.workers || Array(maxSlots).fill(null);
++
++        bonfire.workers.forEach((worker, slotIdx) => {
++          if (worker === null) return;
++
++          if (worker.isRunning) {
++            worker.cookingRecipeNow = worker.activeRecipe || worker.selectedRecipe || bonfire.selectedRecipe || 'wheat';
+           }
+-          bonfire.elapsed += effectiveDelta * speedMultiplier;
+-          const targetDuration = bonfire.mode === 'manual' ? manualRec.duration : autoRec.duration;
+-          
+-          if (bonfire.elapsed >= targetDuration) {
+-            const rec = bonfire.mode === 'manual' ? manualRec : autoRec;
+-            const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
+-            const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
+-            const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+-            const recipe = bonfire.activeRecipe || bonfire.selectedRecipe || 'wheat';
+-            const cookedDish = 'cooked_' + recipe;
+-            const added = addResourceStock(cookedDish, produced);
+-            updateGlobalFood();
+-            
+-            resourcesGeneratedThisSecond.cooked = (resourcesGeneratedThisSecond.cooked || 0) + produced;
++
++          const hasWorker = true;
++          const recipe = worker.selectedRecipe || bonfire.selectedRecipe || 'wheat';
++          const minFood = autoRec.consume_amount;
++
++          if (!worker.isRunning && hasWorker) {
++            const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
++            const totalFood = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
++            const foodCapacity = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
++            if (totalFood < foodCapacity) {
++              if ((state[recipe] || 0) >= minFood) {
++                state[recipe] -= minFood;
++                updateGlobalFood();
++                worker.elapsed = 0;
++                worker.isRunning = true;
++                worker.mode = 'auto';
++                worker.activeRecipe = recipe;
++                worker.cookingRecipeNow = recipe;
++                recalculateRates();
++              } else {
++                const priorities = bonfire.recipePriorities || ['carrot', 'wheat', 'potato', 'berries'];
++                let fallbackFound = false;
++                for (const r of priorities) {
++                  if ((state[r] || 0) >= minFood) {
++                    state[r] -= minFood;
++                    updateGlobalFood();
++                    worker.elapsed = 0;
++                    worker.isRunning = true;
++                    worker.mode = 'auto';
++                    worker.activeRecipe = r;
++                    worker.cookingRecipeNow = r;
++                    fallbackFound = true;
++                    recalculateRates();
++                    break;
++                  }
++                }
++                if (!fallbackFound) {
++                  worker.cookingRecipeNow = null;
++                }
++              }
++            } else {
++              worker.cookingRecipeNow = null;
++            }
++          }
++
++          if (worker.isRunning) {
++            let speedMultiplier = 1;
++            if (worker.mode === 'auto') {
++              const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
++              if (colonist) {
++                const lvl = colonist.attributes.cooking || 3;
++                speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
++              }
++            }
++            speedMultiplier *= (1 + speedBonus);
++
++            worker.elapsed = (worker.elapsed || 0) + effectiveDelta * speedMultiplier;
++            const targetDuration = worker.mode === 'manual' ? manualRec.duration : autoRec.duration;
+             
+-            let bName = bonfire.tier === 1 ? 'Fogata' : (bonfire.tier === 2 ? 'Caldero' : 'Cocina de Taberna');
+-            const cookedNames = { cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada' };
+-            showToast(`­ƒöÑ ${bName} #${idx + 1} complet├│ un lote de ${produced} ${cookedNames[cookedDish] || cookedDish}`, "success");
+-            bonfire.isRunning = false;
+-            bonfire.activeRecipe = null;
+-            bonfire.mode = 'none';
+-            recalculateRates();
+-            if (typeof updateUI === 'function') updateUI();
++            if (worker.elapsed >= targetDuration) {
++              const rec = worker.mode === 'manual' ? manualRec : autoRec;
++              const yieldMin = rec.output_min !== undefined ? rec.output_min : rec.yield;
++              const yieldMax = rec.output_max !== undefined ? rec.output_max : rec.yield;
++              const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
++              const activeRecKey = worker.activeRecipe || recipe;
++              const cookedDish = 'cooked_' + activeRecKey;
++              addResourceStock(cookedDish, produced);
++              updateGlobalFood();
++              
++              resourcesGeneratedThisSecond.cooked = (resourcesGeneratedThisSecond.cooked || 0) + produced;
++              
++              let bName = bonfire.tier === 1 ? 'Fogata' : (bonfire.tier === 2 ? 'Caldero' : 'Cocina de Taberna');
++              const cookedNames = { cooked_wheat: 'Pan', cooked_potato: 'Patata Asada', cooked_carrot: 'Zanahoria Asada', cooked_berries: 'Mermelada' };
++              showToast(`­ƒöÑ ${bName} #${idx + 1} (Slot ${slotIdx + 1}) complet├│ un lote de ${produced} ${cookedNames[cookedDish] || cookedDish}`, "success");
++              worker.isRunning = false;
++              worker.activeRecipe = null;
++              worker.mode = 'none';
++              recalculateRates();
++              if (typeof updateUI === 'function') updateUI();
++            }
+           }
++        });
++
++        // Retrocompatibilidad: Sincronizar campos principales de bonfire con slot 0
++        const firstWorker = bonfire.workers[0];
++        if (firstWorker) {
++          bonfire.cookingRecipeNow = firstWorker.cookingRecipeNow;
++          bonfire.isRunning = firstWorker.isRunning;
++          bonfire.elapsed = firstWorker.elapsed;
++          bonfire.activeRecipe = firstWorker.activeRecipe;
++          bonfire.mode = firstWorker.mode;
++        } else {
++          bonfire.cookingRecipeNow = null;
++          bonfire.isRunning = false;
++          bonfire.elapsed = 0;
++          bonfire.activeRecipe = null;
++          bonfire.mode = 'none';
+         }
+       });
+@@ -1607,70 +1757,128 @@ function gameTick() {
+         if (granary.isUnderConstruction || granary.isUpgrading) return;
+ 
+-        const hasWorker = granary.workerAssigned > 0;
+-        const cropKey = granary.selectedCrop || 'wheat';
+         const tier = granary.tier || 1;
+-        const recipeKey = `granary_${cropKey}_t${tier}`;
+-        const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
+ 
+-        if (!recipe) return;
++        let speedBonus = 0;
++        if (granary.tier === 3) {
++          speedBonus = (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots.granary_t3_speed) ? (parseFloat(CONFIG.BuildingSlots.granary_t3_speed.value) || 0.3) : 0.3;
++        }
+ 
+-        // Auto-iniciar si tiene trabajadores y no est├í corriendo
+-        if (!granary.isRunning && hasWorker) {
+-          const seedKeys = ['wheat', 'potato', 'carrot'];
+-          const totalSeeds = state.seeds ? seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0) : 0;
+-          const seedsCapacity = (state.storageCapacity && state.storageCapacity.seeds) ?? Infinity;
+-          if (totalSeeds < seedsCapacity) {
+-            const minFood = recipe.consume_amount || 5;
+-            const consumeRes = recipe.consume_type || cropKey;
+-            if ((state[consumeRes] || 0) >= minFood) {
+-              state[consumeRes] -= minFood;
+-              updateGlobalFood();
+-              granary.elapsed = 0;
+-              granary.isRunning = true;
+-              granary.mode = 'auto';
+-              granary.activeCrop = cropKey;
+-              recalculateRates();
+-            }
++        const maxSlots = granary.workers ? granary.workers.length : 1;
++        granary.workers = granary.workers || Array(maxSlots).fill(null);
++
++        granary.workers.forEach((worker, slotIdx) => {
++          if (worker === null) return;
++
++          if (worker.isRunning) {
++            worker.cookingRecipeNow = worker.activeCrop || worker.selectedCrop || granary.selectedCrop || 'wheat';
+           }
+-        }
+ 
+-        // Ticking del progreso de procesamiento
+-        if (granary.isRunning) {
+-          let speedMultiplier = 1;
+-          if (granary.mode === 'auto') {
+-            const workers = state.colonists ? state.colonists.filter(c => c.job === `granaries_${idx}`) : [];
+-            let mult = 0;
+-            workers.forEach(c => {
+-              const lvl = c.attributes.farming || 3;
+-              mult += getAttributeMult(lvl) * getColonistEfficiency(c);
+-            });
+-            speedMultiplier = mult;
++          const cropKey = worker.selectedCrop || granary.selectedCrop || 'wheat';
++          const recipeKey = `granary_${cropKey}_t${tier}`;
++          const recipe = CONFIG.Processing && CONFIG.Processing[recipeKey];
++          if (!recipe) return;
++
++          const hasWorker = true;
++          const minFood = recipe.consume_amount || 5;
++          const consumeRes = recipe.consume_type || cropKey;
++
++          if (!worker.isRunning && hasWorker) {
++            const seedKeys = ['wheat', 'potato', 'carrot'];
++            const totalSeeds = state.seeds ? seedKeys.reduce((sum, k) => sum + (state.seeds[k] || 0), 0) : 0;
++            const seedsCapacity = (state.storageCapacity && state.storageCapacity.seeds) ?? Infinity;
++            if (totalSeeds < seedsCapacity) {
++              if ((state[consumeRes] || 0) >= minFood) {
++                state[consumeRes] -= minFood;
++                updateGlobalFood();
++                worker.elapsed = 0;
++                worker.isRunning = true;
++                worker.mode = 'auto';
++                worker.activeCrop = cropKey;
++                worker.cookingRecipeNow = cropKey;
++                recalculateRates();
++              } else {
++                const priorities = granary.seedsPriorities || ['wheat', 'potato', 'carrot'];
++                let fallbackFound = false;
++                for (const crop of priorities) {
++                  const rKey = `granary_${crop}_t${tier}`;
++                  const r = CONFIG.Processing && CONFIG.Processing[rKey];
++                  if (r) {
++                    const fallbackMin = r.consume_amount || 5;
++                    const fallbackRes = r.consume_type || crop;
++                    if ((state[fallbackRes] || 0) >= fallbackMin) {
++                      state[fallbackRes] -= fallbackMin;
++                      updateGlobalFood();
++                      worker.elapsed = 0;
++                      worker.isRunning = true;
++                      worker.mode = 'auto';
++                      worker.activeCrop = crop;
++                      worker.cookingRecipeNow = crop;
++                      fallbackFound = true;
++                      recalculateRates();
++                      break;
++                    }
++                  }
++                }
++                if (!fallbackFound) {
++                  worker.cookingRecipeNow = null;
++                }
++              }
++            } else {
++              worker.cookingRecipeNow = null;
++            }
+           }
+-          granary.elapsed += effectiveDelta * speedMultiplier;
+-          
+-          const runningCrop = granary.activeCrop || granary.selectedCrop || 'wheat';
+-          const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
+-          const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
+-          const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
+-
+-          if (granary.elapsed >= targetDuration) {
+-            granary.isRunning = false;
+-            granary.elapsed = 0;
+-            
+-            const yieldMin = runningRecipe && runningRecipe.output_min !== undefined ? runningRecipe.output_min : (runningRecipe ? runningRecipe.yield : 1);
+-            const yieldMax = runningRecipe && runningRecipe.output_max !== undefined ? runningRecipe.output_max : (runningRecipe ? runningRecipe.yield : 1);
+-            const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
+-            const seedType = runningCrop; 
+-            addResourceStock(seedType + '_seeds', produced);
+-            if (typeof updateUI === 'function') updateUI();
+-            
+-            const cropNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
+-            showToast(`­ƒî¥ Granero #${idx + 1} produjo +${produced} Semillas de ${cropNames[seedType] || seedType}`, "success");
+-            
+-            granary.activeCrop = null;
+-            granary.mode = 'none';
+-            recalculateRates();
+-            if (typeof updateUI === 'function') updateUI();
++
++          if (worker.isRunning) {
++            let speedMultiplier = 1;
++            if (worker.mode === 'auto') {
++              const colonist = state.colonists ? state.colonists.find(c => c.id === worker.colonistId) : null;
++              if (colonist) {
++                const lvl = colonist.attributes.farming || 3;
++                speedMultiplier = getAttributeMult(lvl) * getColonistEfficiency(colonist);
++              }
++            }
++            speedMultiplier *= (1 + speedBonus);
++
++            worker.elapsed = (worker.elapsed || 0) + effectiveDelta * speedMultiplier;
++            const runningCrop = worker.activeCrop || cropKey;
++            const runningRecipeKey = `granary_${runningCrop}_t${tier}`;
++            const runningRecipe = CONFIG.Processing && CONFIG.Processing[runningRecipeKey];
++            const targetDuration = runningRecipe ? runningRecipe.duration : 3.0;
++
++            if (worker.elapsed >= targetDuration) {
++              worker.isRunning = false;
++              worker.elapsed = 0;
++
++              const yieldMin = runningRecipe && runningRecipe.output_min !== undefined ? runningRecipe.output_min : (runningRecipe ? runningRecipe.yield : 1);
++              const yieldMax = runningRecipe && runningRecipe.output_max !== undefined ? runningRecipe.output_max : (runningRecipe ? runningRecipe.yield : 1);
++              const produced = Math.round(yieldMin + Math.random() * (yieldMax - yieldMin));
++              const seedType = runningCrop;
++              addResourceStock(seedType + '_seeds', produced);
++              if (typeof updateUI === 'function') updateUI();
++
++              const cropNames = { wheat: 'Trigo', potato: 'Patata', carrot: 'Zanahoria' };
++              showToast(`­ƒî¥ Granero #${idx + 1} (Slot ${slotIdx + 1}) produjo +${produced} Semillas de ${cropNames[seedType] || seedType}`, "success");
++
++              worker.activeCrop = null;
++              worker.mode = 'none';
++              recalculateRates();
++              if (typeof updateUI === 'function') updateUI();
++            }
+           }
++        });
++
++        const firstWorker = granary.workers[0];
++        if (firstWorker) {
++          granary.cookingRecipeNow = firstWorker.cookingRecipeNow;
++          granary.isRunning = firstWorker.isRunning;
++          granary.elapsed = firstWorker.elapsed;
++          granary.activeCrop = firstWorker.activeCrop;
++          granary.mode = firstWorker.mode;
++        } else {
++          granary.cookingRecipeNow = null;
++          granary.isRunning = false;
++          granary.elapsed = 0;
++          granary.activeCrop = null;
++          granary.mode = 'none';
+         }
+       });

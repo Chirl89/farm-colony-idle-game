@@ -89,3 +89,9 @@ Los estados posibles para cada prueba son: `PASS` | `FAIL` | `SKIP` | `PENDING`.
 | [test_MET-TALL_20260703_085202.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_MET-TALL_20260703_085202.csv) | Herramientas + Herrero (PASO L) | 2026-07-03 | 9 PASS, 0 FAIL |
 | [test_MET-FORJA_20260706_122200.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_MET-FORJA_20260706_122200.csv) | Mineral de hierro + Forja (PASO M) | 2026-07-06 | 6 PASS, 0 FAIL |
 | [test_WORK-PRIO_20260707_090100.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_WORK-PRIO_20260707_090100.csv) | Prioridades de colonos (PASO N) | 2026-07-07 | 9 PASS, 0 FAIL |
+| [test_WORK-EDIF_20260707_094000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_WORK-EDIF_20260707_094000.csv) | Fallback de recetas (PASO O) | 2026-07-07 | 6 PASS, 0 FAIL |
+| [test_WORK-SLOT_20260707_111000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_WORK-SLOT_20260707_111000.csv) | Slots múltiples por tier en edificios (PASO P) | 2026-07-07 | 5 PASS, 0 FAIL |
+| [test_FOOD-GRAN_20260708_090000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_FOOD-GRAN_20260708_090000.csv) | Ganadería y sub-productos (PASO Q) | 2026-07-08 | 6 PASS, 0 FAIL |
+| [test_FOOD-FEED_20260708_100000.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_FOOD-FEED_20260708_100000.csv) | Estructura de Ganadería Completa (Edificio, Mercado y Pienso) (PASO Q.1) | 2026-07-08 | 6 PASS, 0 FAIL |
+| [test_FOOD-MOLI_20260708_135900.csv](file:///c:/Users/EM2025007512/.gemini/antigravity/scratch/farm-colony-idle-game/test/test_FOOD-MOLI_20260708_135900.csv) | Molino + harina -> pan (PASO R) | 2026-07-08 | 7 PASS, 0 FAIL |
+

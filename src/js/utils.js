@@ -208,7 +208,7 @@ function deductResourceStock(key, amount) {
 
 function addResourceStock(key, amount) {
   if (typeof window.lastFullToastTime === 'undefined') {
-    window.lastFullToastTime = { wood: 0, stone: 0, food: 0, seeds: 0, iron: 0, iron_bar: 0 };
+    window.lastFullToastTime = { wood: 0, stone: 0, food: 0, seeds: 0, iron: 0, iron_bar: 0, eggs: 0, skins: 0, feathers: 0, fertilizer: 0, pienso: 0, flour: 0 };
   }
 
   let storageType = null;
@@ -233,9 +233,29 @@ function addResourceStock(key, amount) {
     storageType = 'iron_bar';
     currentVal = state.iron_bar || 0;
     storageName = 'Lingote de Hierro';
-  } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'].includes(key)) {
+  } else if (key === 'skins') {
+    storageType = 'skins';
+    currentVal = state.skins || 0;
+    storageName = 'Pieles';
+  } else if (key === 'feathers') {
+    storageType = 'feathers';
+    currentVal = state.feathers || 0;
+    storageName = 'Plumas';
+  } else if (key === 'fertilizer') {
+    storageType = 'fertilizer';
+    currentVal = state.fertilizer || 0;
+    storageName = 'Fertilizante';
+  } else if (key === 'pienso') {
+    storageType = 'pienso';
+    currentVal = state.pienso || 0;
+    storageName = 'Pienso';
+  } else if (key === 'flour') {
+    storageType = 'flour';
+    currentVal = state.flour || 0;
+    storageName = 'Harina';
+  } else if (['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread'].includes(key)) {
     storageType = 'food';
-    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+    const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread'];
     currentVal = foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
     storageName = 'Alimentos';
   } else if (key.endsWith('_seeds')) {
@@ -324,6 +344,11 @@ function getXPJobKey(job) {
     const idx = parseInt(job.split('_')[1]);
     const tier = (typeof state !== 'undefined' && state.markets && state.markets[idx]) ? (state.markets[idx].tier || 1) : 1;
     return `market_t${tier}`;
+  }
+  if (job.startsWith('mills_')) {
+    const idx = parseInt(job.split('_')[1]);
+    const tier = (typeof state !== 'undefined' && state.mills && state.mills[idx]) ? (state.mills[idx].tier || 1) : 1;
+    return `mill_t${tier}`;
   }
   if (job === 'construction') return 'construction';
   return null;
@@ -445,6 +470,10 @@ function isWarehouseFullForJob(jobKey) {
   } else if (type === 'bonfires') {
     const cap = (state.storageCapacity && state.storageCapacity.food) ?? Infinity;
     const currentVal = typeof window.getFoodOccupation === 'function' ? window.getFoodOccupation() : 0;
+    return currentVal >= cap;
+  } else if (type === 'mills') {
+    const cap = (state.storageCapacity && state.storageCapacity.flour) ?? Infinity;
+    const currentVal = state.flour || 0;
     return currentVal >= cap;
   }
   return false;

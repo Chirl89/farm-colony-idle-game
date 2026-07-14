@@ -1,0 +1,7 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado
+U01;Unit;Fogata sin trigo cambia a patata;trigo=0 patata>5;Tick;cookingRecipeNow=potato;cookingRecipeNow=potato;PASS
+U02;Unit;Fogata vuelve a trigo al haber trigo;cocinando patata;Anadir trigo;cookingRecipeNow=wheat;cookingRecipeNow=wheat;PASS
+U03;Unit;Para si no hay ninguna receta;Todas sin stock;Tick;cookingRecipeNow=null badge Sin ingredientes;cookingRecipeNow=null badge Sin ingredientes;PASS
+U04;Unit;Granero sin trigo pasa a patata;trigo=0 patata>5;Tick;cookingRecipeNow=potato;cookingRecipeNow=potato;PASS
+R01;Regresion;selectedRecipe no cambia solo cookingRecipeNow;selectedRecipe=wheat;Sin trigo;selectedRecipe sigue siendo wheat;selectedRecipe sigue siendo wheat;PASS
+R02;Regresion;WORK-PRIO funciona junto a prioridades edificios;WORK-PRIO activo;Activar fallback;Prioridades colonos OK;Prioridades colonos OK;PASS

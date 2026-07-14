@@ -1,6 +1,6 @@
 // ESTADO POR DEFECTO
 const DEFAULT_STATE = {
-  gold: 0,
+  gold: 50,
   wood: 0,
   stone: 0,
   food: 0,
@@ -16,6 +16,9 @@ const DEFAULT_STATE = {
   iron_bar: 0,
   iron: 0,
   forges: [],
+  flour: 0,
+  bread: 0,
+  mills: [],
   maxPopulation: 0,
   colonists: [],
   candidates: [],
@@ -29,7 +32,7 @@ const DEFAULT_STATE = {
   currentColonistsSubTab: 'hire',
   candidateRotationElapsed: 0,
   hasHiredThisWeek: false,
-  foodPriority: ['cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'wheat', 'potato', 'carrot', 'berries'],
+  foodPriority: ['bread', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'wheat', 'potato', 'carrot', 'berries'],
   starvingColonists: 0,
   fedCookedToday: 0,
   fedRawToday: 0,
@@ -42,7 +45,9 @@ const DEFAULT_STATE = {
     cooked_wheat: true,
     cooked_potato: true,
     cooked_carrot: true,
-    cooked_berries: true
+    cooked_berries: true,
+    eggs: true,
+    bread: true
   },
   lumberMills: [],
   quarries: [],
@@ -150,8 +155,24 @@ const DEFAULT_STATE = {
   researchQueue: null,
   // PASO L - [MET-TALL]
   smithies: [],
-  tools: []
+  tools: [],
+  // PASO Q - [FOOD-GRAN]
+  animals: [],
+  eggs: 0,
+  feathers: 0,
+  skins: 0,
+  fertilizer: 0,
+  pienso: 0,
+  corrals: []
 };
+
+// Animal Types definition
+const ANIMAL_TYPES = {
+  chicken: { name: 'Gallina', emoji: '🐔', foodCost: 0.5, output: 'eggs', outputRate: 0.5, cost: 30 },
+  pig:     { name: 'Cerdo', emoji: '🐷', foodCost: 1.5, output: 'skins', outputRate: 0.1, cost: 80 },
+  cow:     { name: 'Vaca', emoji: '🐄', foodCost: 2.0, output: 'skins', outputRate: 0.05, cost: 150 }
+};
+window.ANIMAL_TYPES = ANIMAL_TYPES;
 
 // Qué tipo de herramienta necesita cada edificio (null = no necesita)
 const TOOL_REQUIREMENTS = {
@@ -365,6 +386,8 @@ function loadGame() {
         });
       }
       
+      // Prioridades de recetas y semillas se inicializan y migran en el bloque unificado de slots abajo.
+      
       // Migración de colonos numéricos a arreglo de objetos
       if (!state.colonists || !Array.isArray(state.colonists) || state.colonists.length === 0) {
         const totalColonists = parseInt(parsed.currentColonists) || 0;
@@ -411,6 +434,126 @@ function loadGame() {
       if (typeof state.candidateRotationElapsed === 'undefined') state.candidateRotationElapsed = 0;
       if (typeof state.hasHiredThisWeek === 'undefined') state.hasHiredThisWeek = false;
       if (typeof state.nextActivationId === 'undefined') state.nextActivationId = 1;
+
+      // PASO P: Migración de slots (workers) para fogatas, graneros y smithies
+      const getBuildingSlotsCount = (type, tier) => {
+        const typeKey = type === 'smithies' ? 'smithy' : (type === 'bonfires' ? 'bonfire' : (type === 'mills' ? 'mill' : 'granary'));
+        const slotsKey = `${typeKey}_t${tier}_slots`;
+        if (CONFIG && CONFIG.BuildingSlots && CONFIG.BuildingSlots[slotsKey]) {
+          return parseInt(CONFIG.BuildingSlots[slotsKey].value) || 1;
+        }
+        return 1;
+      };
+
+      if (Array.isArray(state.bonfires)) {
+        state.bonfires.forEach((b, idx) => {
+          if (typeof b.recipePriorities === 'undefined') {
+            b.recipePriorities = ['carrot', 'wheat', 'potato', 'berries'];
+          }
+          if (typeof b.cookingRecipeNow === 'undefined') {
+            b.cookingRecipeNow = null;
+          }
+          const maxSlots = getBuildingSlotsCount('bonfires', b.tier || 1);
+          if (!Array.isArray(b.workers)) {
+            b.workers = Array(maxSlots).fill(null);
+            let assignedCount = 0;
+            if (state.colonists) {
+              state.colonists.forEach(c => {
+                if (c.job === 'bonfires_' + idx && assignedCount < maxSlots) {
+                  b.workers[assignedCount] = {
+                    colonistId: c.id,
+                    selectedRecipe: b.selectedRecipe || 'wheat',
+                    elapsed: assignedCount === 0 ? (b.elapsed || 0) : 0,
+                    isRunning: assignedCount === 0 ? (b.isRunning || false) : false,
+                    activeRecipe: assignedCount === 0 ? (b.activeRecipe || null) : null
+                  };
+                  assignedCount++;
+                }
+              });
+            }
+            b.workerAssigned = assignedCount;
+          }
+        });
+      }
+
+      if (Array.isArray(state.granaries)) {
+        state.granaries.forEach((g, idx) => {
+          if (typeof g.seedsPriorities === 'undefined') {
+            g.seedsPriorities = ['wheat', 'potato', 'carrot'];
+          }
+          if (typeof g.cookingRecipeNow === 'undefined') {
+            g.cookingRecipeNow = null;
+          }
+          const maxSlots = getBuildingSlotsCount('granaries', g.tier || 1);
+          if (!Array.isArray(g.workers)) {
+            g.workers = Array(maxSlots).fill(null);
+            let assignedCount = 0;
+            if (state.colonists) {
+              state.colonists.forEach(c => {
+                if (c.job === 'granaries_' + idx && assignedCount < maxSlots) {
+                  g.workers[assignedCount] = {
+                    colonistId: c.id,
+                    selectedCrop: g.selectedCrop || 'wheat',
+                    elapsed: assignedCount === 0 ? (g.elapsed || 0) : 0,
+                    isRunning: assignedCount === 0 ? (g.isRunning || false) : false,
+                    activeCrop: assignedCount === 0 ? (g.activeCrop || null) : null
+                  };
+                  assignedCount++;
+                }
+              });
+            }
+            g.workerAssigned = assignedCount;
+          }
+        });
+      }
+
+      if (Array.isArray(state.smithies)) {
+        state.smithies.forEach((s, idx) => {
+          const maxSlots = getBuildingSlotsCount('smithies', s.tier || 1);
+          if (!Array.isArray(s.workers)) {
+            s.workers = Array(maxSlots).fill(null);
+            let assignedCount = 0;
+            if (state.colonists) {
+              state.colonists.forEach(c => {
+                if (c.job === 'smithies_' + idx && assignedCount < maxSlots) {
+                  s.workers[assignedCount] = {
+                    colonistId: c.id,
+                    selectedTool: s.selectedTool || 'axe_t1',
+                    elapsed: assignedCount === 0 ? (s.elapsed || 0) : 0,
+                    isRunning: assignedCount === 0 ? (s.isRunning || false) : false
+                  };
+                  assignedCount++;
+                }
+              });
+            }
+            s.workerAssigned = assignedCount;
+          }
+        });
+      }
+
+      if (Array.isArray(state.mills)) {
+        state.mills.forEach((m, idx) => {
+          const maxSlots = getBuildingSlotsCount('mills', m.tier || 1);
+          if (!Array.isArray(m.workers)) {
+            m.workers = Array(maxSlots).fill(null);
+            let assignedCount = 0;
+            if (state.colonists) {
+              state.colonists.forEach(c => {
+                if (c.job === 'mills_' + idx && assignedCount < maxSlots) {
+                  m.workers[assignedCount] = {
+                    colonistId: c.id,
+                    selectedCrop: m.selectedCrop || 'wheat',
+                    elapsed: assignedCount === 0 ? (m.elapsed || 0) : 0,
+                    isRunning: assignedCount === 0 ? (m.isRunning || false) : false
+                  };
+                  assignedCount++;
+                }
+              });
+            }
+            m.workerAssigned = assignedCount;
+          }
+        });
+      }
       
       // Asegurar que todos los atributos y XPs existen en todos los colonos
       const allAttrs = ['woodcutting', 'mining', 'farming', 'cooking', 'trading', 'exploration', 'combat', 'construction'];
@@ -883,7 +1026,32 @@ function loadGame() {
           }
         });
       }
-      
+      // PASO Q - [FOOD-GRAN] Migraciones
+      if (typeof state.animals === 'undefined') state.animals = [];
+      if (typeof state.eggs === 'undefined') state.eggs = 0;
+      if (typeof state.feathers === 'undefined') state.feathers = 0;
+      if (typeof state.skins === 'undefined') state.skins = 0;
+      if (typeof state.fertilizer === 'undefined') state.fertilizer = 0;
+      if (typeof state.pienso === 'undefined') state.pienso = 0;
+      if (typeof state.corrals === 'undefined') state.corrals = [];
+      if (state.foodPriority && !state.foodPriority.includes('eggs')) {
+        state.foodPriority.splice(4, 0, 'eggs');
+      }
+      if (state.allowConsume && typeof state.allowConsume.eggs === 'undefined') {
+        state.allowConsume.eggs = true;
+      }
+
+      // PASO R - [FOOD-MOLI] Migraciones
+      if (typeof state.flour === 'undefined') state.flour = 0;
+      if (typeof state.bread === 'undefined') state.bread = 0;
+      if (!Array.isArray(state.mills)) state.mills = [];
+      if (state.foodPriority && !state.foodPriority.includes('bread')) {
+        state.foodPriority.unshift('bread');
+      }
+      if (state.allowConsume && typeof state.allowConsume.bread === 'undefined') {
+        state.allowConsume.bread = true;
+      }
+
       updateGlobalFood();
 
       if (typeof recalculateStorageCapacity === 'function') recalculateStorageCapacity();
@@ -959,14 +1127,14 @@ function resetGame(isTestMode = false) {
 }
 
 function updateGlobalFood() {
-  const list = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  const list = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread'];
   
   if (!CONFIG || !CONFIG.FoodEquivalence) {
     let total = 0;
     list.forEach(key => {
       const isAllowed = state.allowConsume && state.allowConsume[key] !== false;
       if (isAllowed) {
-        const mult = key.startsWith('cooked_') ? 5 : 1;
+        const mult = key.startsWith('cooked_') ? 5 : (key === 'bread' ? 8 : (key === 'eggs' ? 3 : 1));
         total += (state[key] || 0) * mult;
       }
     });
@@ -1045,11 +1213,26 @@ function getResourcesOccupation() {
          (state.iron || 0) + 
          ironBarCount +
          (toolsCount * toolSize) + 
-         getSeedsOccupation();
+         getSeedsOccupation() +
+         (state.skins || 0) +
+         (state.feathers || 0) +
+         (state.fertilizer || 0) +
+         (state.pienso || 0) +
+         (state.flour || 0);
 }
 
+function getAnimalsCapacity() {
+  if (!state.corrals) return 0;
+  return state.corrals.reduce((sum, c) => {
+    if (c.isUnderConstruction) return sum;
+    const tier = c.tier || 1;
+    return sum + (tier === 3 ? 10 : (tier === 2 ? 6 : 3));
+  }, 0);
+}
+window.getAnimalsCapacity = getAnimalsCapacity;
+
 function getFoodOccupation() {
-  const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries'];
+  const foodKeys = ['wheat', 'potato', 'carrot', 'berries', 'cooked_wheat', 'cooked_potato', 'cooked_carrot', 'cooked_berries', 'eggs', 'bread'];
   return foodKeys.reduce((sum, k) => sum + (state[k] || 0), 0);
 }
 
@@ -1099,6 +1282,11 @@ function recalculateStorageCapacity() {
     iron: state.maxResourcesCapacity - resOcc + (state.iron || 0),
     iron_bar: state.maxResourcesCapacity - resOcc + (state.iron_bar || 0),
     seeds: state.maxResourcesCapacity - resOcc + getSeedsOccupation(),
+    skins: state.maxResourcesCapacity - resOcc + (state.skins || 0),
+    feathers: state.maxResourcesCapacity - resOcc + (state.feathers || 0),
+    fertilizer: state.maxResourcesCapacity - resOcc + (state.fertilizer || 0),
+    pienso: state.maxResourcesCapacity - resOcc + (state.pienso || 0),
+    flour: state.maxResourcesCapacity - resOcc + (state.flour || 0),
     food: state.maxFoodCapacity,
     resource: state.maxResourcesCapacity
   };

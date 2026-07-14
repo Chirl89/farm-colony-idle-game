@@ -1,0 +1,8 @@
+ID;Tipo;Descripcion;Precondicion;Accion;Resultado_Esperado;Resultado_Real;Estado;Notas
+U01;Unit;Trigo recolectado por foragers o granero;Trigo > 0;Tick;Trigo acumulado;Trigo recolectado y disponible en el inventario;PASS;Precondición de materia prima
+U02;Unit;Construcción de Molino T1 y asignación de colono;Recursos suficientes;Construir Molino;Molino T1 construido y trabajador asignado;Molino construido correctamente y agricultor asignado;PASS;Agricultor asignado al puesto #1
+U03;Unit;Conversión de Trigo (5) a Harina;Trigo >= 5 en Molino T1;Ciclo de Molino;Trigo -5, Harina +1;Molienda de trigo completada y harina añadida a inventario;PASS;Tasa de conversión cargada de CONFIG
+U04;Unit;Mejora de Molino a T2;Recursos suficientes, Molino T1;Mejorar;Molino Tier 2;Molino mejorado a Tier 2 deduciendo costes;PASS;Consume madera, piedra y oro
+U05;Unit;Asignación de 2 colonos en Molino T2;Molino T2 construido;Asignar 2 trabajadores;Puestos ocupados;Ambos puestos de trabajo asignados y progresando individualmente;PASS;Slots múltiples por tier funcionando
+U06;Unit;Conversión de Harina (2) a Pan en Fogata T2+;Harina >= 2, Caldero activo;Ciclo Cocina;Harina -2, Pan +1;Harina consumida y Pan Artesano añadido con 8 de comida;PASS;Receta cargada dinámicamente de CONFIG
+I01;Integracion;Flujo de procesado completo trigo -> harina -> pan;Todo construido;Procesado;Producción encadenada;Trigo fluye a harina y luego se hornea como pan;PASS;Verificación de cadena productiva de trigo-harina-pan

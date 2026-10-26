@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetheria: Granja & Colonia - Diorama 3D Isométrico Real</title>
+    <style>
+        :root {
+            --bg-body: #0b1120;
+            --bg-panel: #1e293b;
+            --border-panel: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-green: #22c55e;
+            --accent-blue: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1240px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-panel);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+
+        .viewport-wrapper {
+            background: #0f172a;
+            border: 1px solid var(--border-panel);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
+            height: 640px;
+        }
+
+        #webgl-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-panel);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card h3 {
+            font-size: 15px;
+            color: var(--accent-blue);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-panel);
+            padding-bottom: 8px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        button {
+            background: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        button:hover {
+            background: #475569;
+            border-color: #64748b;
+        }
+
+        button.active {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: var(--accent-green);
+            color: #86efac;
+        }
+
+        .element-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .info-list {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-left: 18px;
+        }
+
+        .info-list li {
+            margin-bottom: 4px;
+        }
+
+        .hint-bar {
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+        }
+    </style>
+    <!-- Three.js r128 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Aetheria: Granja & Colonia <span class="badge">Diorama 3D Real (Three.js)</span></h1>
+            <div style="font-size: 13px; color: var(--text-muted);">Versión: <strong>v0.1.15</strong></div>
+        </header>
+
+        <div class="main-layout">
+            <div class="viewport-wrapper">
+                <div id="webgl-container"></div>
+                <div class="hint-bar">🖱️ Clic izquierdo para rotar | Clic derecho para desplazar | Rueda para zoom</div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card">
+                    <h3>🎮 Controles de Demostración</h3>
+                    <div class="controls">
+                        <button id="btnResetView" onclick="resetIsometricView()">📐 Cámara Isométrica Estándar</button>
+                        <button id="btnLight" onclick="cycleLighting()">☀️ Iluminación: Mediodía Soleado</button>
+                        <button id="btnColonist" class="active" onclick="toggleColonistAnim()">🚶 Colono Píldora: Activo</button>
+                        <button id="btnFloat" class="active" onclick="toggleFloatingDiorama()">✨ Flotación Suave: Activa</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎨 Correcciones Clave Aplicadas</h3>
+                    <div class="element-legend">
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #22c55e;"></div>
+                            <span><strong>Z-Buffer Real:</strong> El colono queda físicamente ocultado al pasar tras las casas.</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #b45309;"></div>
+                            <span><strong>Sendero Despejado:</strong> Los edificios respetan su parcela y no invaden el camino.</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #38bdf8; border-radius: 8px;"></div>
+                            <span><strong>Colono Cápsula 3D:</strong> Figura suave redondeada con sombra de contacto en tiempo real.</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="color-box" style="background: #ef4444;"></div>
+                            <span><strong>Materiales Mate:</strong> Iluminación suave idéntica al render conceptual.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💡 Estado de la Colonia</h3>
+                    <ul class="info-list">
+                        <li><strong>Casa Principal:</strong> Bloque con tejado rojo a dos aguas y chimenea rústica.</li>
+                        <li><strong>Granero:</strong> Estructura de madera con tejado azul marino.</li>
+                        <li><strong>Huerto:</strong> Bancal con hileras ordenadas de zanahorias y trigo cúbicos.</li>
+                        <li><strong>Fauna:</strong> Vaca y gallina cúbicas pastando en la hierba.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURACIÓN DEL MOTOR 3D (THREE.JS) ---
+        const container = document.getElementById('webgl-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        // Escena
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+
+        // Cámara Ortográfica Isométrica Real
+        const aspect = width / height;
+        const d = 11;
+        const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+
+        function setIsometricCameraPosition() {
+            camera.position.set(20, 20, 20);
+            camera.lookAt(0, 0, 0);
+            camera.zoom = 1.0;
+            camera.updateProjectionMatrix();
+        }
+        setIsometricCameraPosition();
+
+        // Renderizador WebGL con Sombras Suaves
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Controles de Cámara (OrbitControls)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.target.set(0, 0, 0);
+
+        function resetIsometricView() {
+            controls.reset();
+            setIsometricCameraPosition();
+        }
+
+        // --- 2. ILUMINACIÓN Y CICLO DÍA / ATARDECER / NOCHE ---
+        const ambientLight = new THREE.AmbientLight(0xf8fafc, 0.65);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfff7ed, 0.85);
+        dirLight.position.set(16, 25, 14);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 80;
+        const shadowD = 14;
+        dirLight.shadow.camera.left = -shadowD;
+        dirLight.shadow.camera.right = shadowD;
+        dirLight.shadow.camera.top = shadowD;
+        dirLight.shadow.camera.bottom = -shadowD;
+        dirLight.shadow.bias = -0.0005;
+        scene.add(dirLight);
+
+        // Luz secundaria para rebote de sombras (cálida diurna, sin tinte azul)
+        const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x276749, 0.3);
+        scene.add(hemiLight);
+
+        // Grupo principal del Diorama Flotante
+        const dioramaGroup = new THREE.Group();
+        scene.add(dioramaGroup);
+
+        // Luces puntuales de las ventanas para la noche
+        const houseLight = new THREE.PointLight(0xfbbf24, 0, 8);
+        houseLight.position.set(3.5, 2.2, -1.2);
+        dioramaGroup.add(houseLight);
+
+        let lightMode = 0; // 0: Día, 1: Atardecer, 2: Noche
+        const lightNames = ['☀️ Mediodía Soleado', '🌅 Atardecer Ámbar', '🌙 Noche Estrellada'];
+
+        function cycleLighting() {
+            lightMode = (lightMode + 1) % 3;
+            document.getElementById('btnLight').textContent = `⏰ Iluminación: ${lightNames[lightMode]}`;
+
+            if (lightMode === 0) { // Día
+                scene.background.setHex(0x0f172a);
+                ambientLight.color.setHex(0xf8fafc);
+                ambientLight.intensity = 0.65;
+                dirLight.color.setHex(0xfff7ed);
+                dirLight.intensity = 0.85;
+                houseLight.intensity = 0;
+            } else if (lightMode === 1) { // Atardecer
+                scene.background.setHex(0x1a1528);
+                ambientLight.color.setHex(0xfed7aa);
+                ambientLight.intensity = 0.55;
+                dirLight.color.setHex(0xf97316);
+                dirLight.intensity = 0.75;
+                houseLight.intensity = 0.5;
+            } else { // Noche
+                scene.background.setHex(0x020617);
+                ambientLight.color.setHex(0x38bdf8);
+                ambientLight.intensity = 0.25;
+                dirLight.color.setHex(0x818cf8);
+                dirLight.intensity = 0.3;
+                houseLight.intensity = 2.5;
+            }
+        }
+
+        // --- 3. MATERIALES MATE SUAVES (ESTILO TOWNSCAPER / VOXEL) ---
+        const matGrass = new THREE.MeshLambertMaterial({ color: 0x529e31 });
+        const matEarthBase = new THREE.MeshLambertMaterial({ color: 0x276749 });
+        const matCliff = new THREE.MeshLambertMaterial({ color: 0x334155 });
+        const matPath = new THREE.MeshLambertMaterial({ color: 0xd97706 });
+        const matFarmland = new THREE.MeshLambertMaterial({ color: 0x78350f });
+
+        const matHouseWall = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
+        const matHouseRoof = new THREE.MeshLambertMaterial({ color: 0xef4444 });
+        const matChimney = new THREE.MeshLambertMaterial({ color: 0x64748b });
+        const matDoor = new THREE.MeshLambertMaterial({ color: 0x92400e });
+
+        const matBarnWall = new THREE.MeshLambertMaterial({ color: 0xb45309 });
+        const matBarnRoof = new THREE.MeshLambertMaterial({ color: 0x2563eb });
+
+        const matCarrot = new THREE.MeshLambertMaterial({ color: 0xf97316 });
+        const matCarrotLeaf = new THREE.MeshLambertMaterial({ color: 0x15803d });
+        const matWheat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
+
+        // --- 4. CONSTRUCCIÓN DE LA ISLA Y TERRENO ---
+        const MAP_SIZE = 12;
+        const TILE = 1.0;
+
+        // Base Flotante (Suelo de Pradera Verde + Borde de Roca)
+        const islandTopGeo = new THREE.BoxGeometry(MAP_SIZE, 0.4, MAP_SIZE);
+        const islandTop = new THREE.Mesh(islandTopGeo, matGrass);
+        islandTop.position.set(0, -0.2, 0);
+        islandTop.receiveShadow = true;
+        dioramaGroup.add(islandTop);
+
+        const islandBaseGeo = new THREE.BoxGeometry(MAP_SIZE - 0.2, 2.0, MAP_SIZE - 0.2);
+        const islandBase = new THREE.Mesh(islandBaseGeo, matCliff);
+        islandBase.position.set(0, -1.4, 0);
+        dioramaGroup.add(islandBase);
+
+        // Bancal de Cultivo (Tierra marrón fértil)
+        const farmGeo = new THREE.BoxGeometry(4.0, 0.05, 3.0);
+        const farmMesh = new THREE.Mesh(farmGeo, matFarmland);
+        farmMesh.position.set(-3.2, 0.03, -3.0);
+        farmMesh.receiveShadow = true;
+        dioramaGroup.add(farmMesh);
+
+        // Hileras de Cultivos en Micro-Cubos
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 4; c++) {
+                const posX = -4.5 + c * 0.9;
+                const posZ = -3.9 + r * 0.9;
+
+                if (r === 0 || r === 1) { // Zanahorias
+                    const carrotGeo = new THREE.BoxGeometry(0.35, 0.4, 0.35);
+                    const carrotMesh = new THREE.Mesh(carrotGeo, matCarrot);
+                    carrotMesh.position.set(posX, 0.25, posZ);
+                    carrotMesh.castShadow = true;
+                    carrotMesh.receiveShadow = true;
+                    dioramaGroup.add(carrotMesh);
+
+                    // Tallo verde
+                    const leafGeo = new THREE.BoxGeometry(0.15, 0.2, 0.15);
+                    const leafMesh = new THREE.Mesh(leafGeo, matCarrotLeaf);
+                    leafMesh.position.set(posX, 0.5, posZ);
+                    dioramaGroup.add(leafMesh);
+                } else { // Trigo Dorado
+                    const wheatGeo = new THREE.BoxGeometry(0.3, 0.5, 0.3);
+                    const wheatMesh = new THREE.Mesh(wheatGeo, matWheat);
+                    wheatMesh.position.set(posX, 0.3, posZ);
+                    wheatMesh.castShadow = true;
+                    wheatMesh.receiveShadow = true;
+                    dioramaGroup.add(wheatMesh);
+                }
+            }
+        }
+
+        // Sendero de Tierra Batida Totalmente Despejado (Conecta puertas, huerto y pasto)
+        const pathSegments = [
+            // Eje central horizontal
+            { x: 0, z: 0, w: 9.0, d: 1.2 },
+            // Ramal que sube hacia la puerta de la Casa Principal
+            { x: 3.2, z: -1.2, w: 1.2, d: 1.4 },
+            // Ramal que baja hacia la puerta del Granero
+            { x: 3.0, z: 1.4, w: 1.2, d: 1.6 },
+            // Ramal hacia el bancal de cultivo
+            { x: -3.2, z: -1.0, w: 1.2, d: 1.2 },
+            // Ramal hacia el pasto de animales
+            { x: -3.2, z: 2.0, w: 1.2, d: 2.8 }
+        ];
+
+        pathSegments.forEach(seg => {
+            const pathGeo = new THREE.BoxGeometry(seg.w, 0.02, seg.d);
+            const pathMesh = new THREE.Mesh(pathGeo, matPath);
+            pathMesh.position.set(seg.x, 0.015, seg.z);
+            pathMesh.receiveShadow = true;
+            dioramaGroup.add(pathMesh);
+        });
+
+        // --- 5. EDIFICIOS GEOMÉTRICOS LIMPIOS (UBICACIÓN DESPEJADA) ---
+
+        // Función para Techo a Dos Aguas 3D
+        function createGabledRoof(width, depth, height, material) {
+            const shape = new THREE.Shape();
+            shape.moveTo(-width / 2, 0);
+            shape.lineTo(0, height);
+            shape.lineTo(width / 2, 0);
+            shape.closePath();
+
+            const extrudeSettings = {
+                depth: depth,
+                bevelEnabled: false
+            };
+            const roofGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            roofGeo.center();
+            const roofMesh = new THREE.Mesh(roofGeo, material);
+            roofMesh.castShadow = true;
+            return roofMesh;
+        }
+
+        // A. CASA PRINCIPAL (Ubicada limpia en parcela x: 3.2, z: -3.4)
+        const houseGroup = new THREE.Group();
+        houseGroup.position.set(3.2, 0, -3.4);
+
+        const houseBody = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.0, 2.6), matHouseWall);
+        houseBody.position.y = 1.0;
+        houseBody.castShadow = true;
+        houseBody.receiveShadow = true;
+        houseGroup.add(houseBody);
+
+        const houseRoof = createGabledRoof(3.6, 3.0, 1.4, matHouseRoof);
+        houseRoof.rotation.y = Math.PI / 2;
+        houseRoof.position.set(0, 2.65, 0);
+        houseGroup.add(houseRoof);
+
+        // Chimenea
+        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.4, 0.5), matChimney);
+        chimney.position.set(0.9, 2.8, -0.6);
+        chimney.castShadow = true;
+        houseGroup.add(chimney);
+
+        // Puerta orientada al sendero (sur)
+        const houseDoor = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.06), matDoor);
+        houseDoor.position.set(0, 0.6, 1.33);
+        houseGroup.add(houseDoor);
+
+        // Ventanas
+        const matWindow = new THREE.MeshLambertMaterial({ color: 0x93c5fd });
+        const win1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.06), matWindow);
+        win1.position.set(-1.0, 1.2, 1.33);
+        houseGroup.add(win1);
+        const win2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.06), matWindow);
+        win2.position.set(1.0, 1.2, 1.33);
+        houseGroup.add(win2);
+
+        dioramaGroup.add(houseGroup);
+
+        // B. GRANERO RÚSTICO (Ubicado limpio en parcela x: 3.0, z: 3.4)
+        const barnGroup = new THREE.Group();
+        barnGroup.position.set(3.0, 0, 3.4);
+
+        const barnBody = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.2, 2.6), matBarnWall);
+        barnBody.position.y = 1.1;
+        barnBody.castShadow = true;
+        barnBody.receiveShadow = true;
+        barnGroup.add(barnBody);
+
+        const barnRoof = createGabledRoof(4.0, 3.0, 1.3, matBarnRoof);
+        barnRoof.rotation.y = Math.PI / 2;
+        barnRoof.position.set(0, 2.8, 0);
+        barnGroup.add(barnRoof);
+
+        // Portón doble del granero
+        const barnDoor = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.5, 0.06), matDoor);
+        barnDoor.position.set(0, 0.75, -1.33);
+        barnGroup.add(barnDoor);
+
+        dioramaGroup.add(barnGroup);
+
+        // --- 6. FAUNA CÚBICA (VACA Y GALLINA EN EL PASTO) ---
+        // Vaca Cúbica
+        const cowGroup = new THREE.Group();
+        cowGroup.position.set(-2.0, 0, 2.8);
+
+        const cowBody = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 0.8), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+        cowBody.position.y = 0.7;
+        cowBody.castShadow = true;
+        cowGroup.add(cowBody);
+
+        // Mancha negra
+        const cowSpot = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.82), new THREE.MeshLambertMaterial({ color: 0x0f172a }));
+        cowSpot.position.set(-0.2, 0.75, 0);
+        cowGroup.add(cowSpot);
+
+        // Cabeza
+        const cowHead = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshLambertMaterial({ color: 0xf8fafc }));
+        cowHead.position.set(0.7, 1.0, 0);
+        cowHead.castShadow = true;
+        cowGroup.add(cowHead);
+
+        // Hocico rosa
+        const cowSnout = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.4), new THREE.MeshLambertMaterial({ color: 0xf472b6 }));
+        cowSnout.position.set(1.05, 0.9, 0);
+        cowGroup.add(cowSnout);
+
+        // Patas
+        for (let px of [-0.4, 0.4]) {
+            for (let pz of [-0.25, 0.25]) {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.4, 0.2), new THREE.MeshLambertMaterial({ color: 0x0f172a }));
+                leg.position.set(px, 0.2, pz);
+                leg.castShadow = true;
+                cowGroup.add(leg);
+            }
+        }
+        dioramaGroup.add(cowGroup);
+
+        // Gallinas Cúbicas
+        function createChicken(x, z) {
+            const chkGroup = new THREE.Group();
+            chkGroup.position.set(x, 0, z);
+
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+            body.position.y = 0.3;
+            body.castShadow = true;
+            chkGroup.add(body);
+
+            const comb = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.2, 0.2), new THREE.MeshLambertMaterial({ color: 0xef4444 }));
+            comb.position.set(0, 0.55, 0);
+            chkGroup.add(comb);
+
+            const beak = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.15), new THREE.MeshLambertMaterial({ color: 0xeab308 }));
+            beak.position.set(0.25, 0.35, 0);
+            chkGroup.add(beak);
+
+            dioramaGroup.add(chkGroup);
+        }
+        createChicken(-3.8, 1.8);
+        createChicken(-4.2, 3.2);
+
+        // --- 7. COLONO CÁPSULA 3D REAL (CON Z-BUFFER NATIVO) ---
+        const colonistGroup = new THREE.Group();
+
+        // Cuerpo Cápsula / Píldora suave redondeada
+        // Cilindro central + hemisferios superior e inferior
+        const colRadius = 0.28;
+        const colCylinderH = 0.45;
+
+        // Cilindro Torso (Túnica azul cian)
+        const torsoGeo = new THREE.CylinderGeometry(colRadius, colRadius, colCylinderH, 20);
+        const matColTorso = new THREE.MeshLambertMaterial({ color: 0x0284c7 });
+        const torso = new THREE.Mesh(torsoGeo, matColTorso);
+        torso.position.y = 0.48;
+        torso.castShadow = true;
+        colonistGroup.add(torso);
+
+        // Cabeza semiesférica (Blanca / Sombrero)
+        const headGeo = new THREE.SphereGeometry(colRadius, 20, 16);
+        const matColHead = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
+        const head = new THREE.Mesh(headGeo, matColHead);
+        head.position.y = 0.48 + colCylinderH / 2;
+        head.castShadow = true;
+        colonistGroup.add(head);
+
+        // Base semiesférica inferior
+        const baseGeo = new THREE.SphereGeometry(colRadius, 20, 16);
+        const baseMesh = new THREE.Mesh(baseGeo, matColTorso);
+        baseMesh.position.y = 0.48 - colCylinderH / 2;
+        baseMesh.castShadow = true;
+        colonistGroup.add(baseMesh);
+
+        // Cinturón dorado
+        const beltGeo = new THREE.CylinderGeometry(colRadius + 0.02, colRadius + 0.02, 0.1, 20);
+        const belt = new THREE.Mesh(beltGeo, new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+        belt.position.y = 0.38;
+        colonistGroup.add(belt);
+
+        // Ojos / Visor minimalista estilo peg-person
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+        const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.04), eyeMat);
+        eye1.position.set(0.09, 0.72, 0.27);
+        colonistGroup.add(eye1);
+        const eye2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.04), eyeMat);
+        eye2.position.set(-0.09, 0.72, 0.27);
+        colonistGroup.add(eye2);
+
+        dioramaGroup.add(colonistGroup);
+
+        // --- 8. RUTA DEL COLONO TOTALMENTE DESPEJADA ---
+        // Recorre el sendero conectando los bancales, la casa y el granero
+        // Nota: Al pasar por detrás de la casa (Z < -3.4), el Z-buffer de Three.js
+        // oculta físicamente al colono de forma 100% natural.
+        const pathWaypoints = [
+            new THREE.Vector3(-3.2, 0, -1.0), // Huerto
+            new THREE.Vector3(-3.2, 0, 0),     // Intersección izquierda
+            new THREE.Vector3(0, 0, 0),        // Centro del sendero principal
+            new THREE.Vector3(3.2, 0, 0),      // Intersección derecha
+            new THREE.Vector3(3.2, 0, -1.2),   // Entrada Casa Principal
+            new THREE.Vector3(3.2, 0, 0),      // Vuelve al sendero
+            new THREE.Vector3(3.0, 0, 1.4),    // Entrada Granero
+            new THREE.Vector3(0, 0, 0),        // Vuelve al centro
+            new THREE.Vector3(-3.2, 0, 2.0),   // Zona de Pasto
+            new THREE.Vector3(-3.2, 0, 0)      // Vuelve al huerto
+        ];
+
+        let isColonistMoving = true;
+        let isFloating = true;
+        let pathProgress = 0;
+
+        function toggleColonistAnim() {
+            isColonistMoving = !isColonistMoving;
+            const btn = document.getElementById('btnColonist');
+            btn.classList.toggle('active', isColonistMoving);
+            btn.textContent = `🚶 Colono Píldora: ${isColonistMoving ? 'Activo' : 'Pausado'}`;
+        }
+
+        function toggleFloatingDiorama() {
+            isFloating = !isFloating;
+            const btn = document.getElementById('btnFloat');
+            btn.classList.toggle('active', isFloating);
+            btn.textContent = `✨ Flotación Suave: ${isFloating ? 'Activa' : 'Fija'}`;
+            if (!isFloating) dioramaGroup.position.y = 0;
+        }
+
+        // --- 9. BUCLE DE ANIMACIÓN Y RENDERIZADO ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Flotación sutil del diorama
+            if (isFloating) {
+                dioramaGroup.position.y = Math.sin(elapsedTime * 1.5) * 0.15;
+            }
+
+            // Movimiento del Colono
+            if (isColonistMoving) {
+                pathProgress += 0.003;
+                if (pathProgress >= 1) pathProgress = 0;
+
+                const totalSegments = pathWaypoints.length - 1;
+                const globalT = pathProgress * totalSegments;
+                const segIdx = Math.min(Math.floor(globalT), totalSegments - 1);
+                const localT = globalT - segIdx;
+
+                const pA = pathWaypoints[segIdx];
+                const pB = pathWaypoints[segIdx + 1];
+
+                colonistGroup.position.lerpVectors(pA, pB, localT);
+
+                // Orientar el colono hacia la dirección de avance
+                const moveDir = new THREE.Vector3().subVectors(pB, pA).normalize();
+                if (moveDir.lengthSq() > 0.001) {
+                    const angle = Math.atan2(moveDir.x, moveDir.z);
+                    colonistGroup.rotation.y = angle;
+                }
+
+                // Balanceo al caminar
+                colonistGroup.rotation.z = Math.sin(elapsedTime * 10) * 0.08;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Redimensionamiento Responsivo
+        window.addEventListener('resize', () => {
+            const newW = container.clientWidth;
+            const newH = container.clientHeight;
+            const newAspect = newW / newH;
+
+            camera.left = -d * newAspect;
+            camera.right = d * newAspect;
+            camera.top = d;
+            camera.bottom = -d;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(newW, newH);
+        });
+    </script>
+</body>
+</html>

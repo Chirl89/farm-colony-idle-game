@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetheria: Granja & Colonia - Base Visual de la Colonia 2D</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --accent: #22c55e;
+            --border: #30363d;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 24px;
+        }
+        .container { max-width: 1240px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        h1 { font-size: 26px; font-weight: 800; color: #fff; }
+        p.subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+        .canvas-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+        }
+        canvas {
+            background: #527c2b;
+            border-radius: 10px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            max-width: 100%;
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 13px;
+        }
+        .stat-row span:first-child { color: var(--text-muted); }
+        .stat-row span:last-child { font-weight: 600; color: #fff; }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            background: #21262d;
+            color: #f0f6fc;
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.2s;
+            text-align: center;
+        }
+        button:hover { background: #30363d; border-color: #8b949e; }
+        button.active {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="badge">AETHERIA 2D - VISTA DE LA COLONIA</span>
+                <h1>Asentamiento Rural: Granja & Tierras de Cultivo</h1>
+                <p class="subtitle">Suelo natural continuo, edificios estáticos sin parpadeos, huerto de cultivo y colono 100% visible.</p>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="canvas-card">
+                <canvas id="gameCanvas" width="840" height="620"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <div class="card">
+                    <h3>🏛️ Configuración Visual</h3>
+                    <div class="stat-row"><span>Suelo / Terreno</span><span>Pradera homogénea + Senderos suaves</span></div>
+                    <div class="stat-row"><span>Casa Rural</span><span>Vivienda de piedra y madera (Estática)</span></div>
+                    <div class="stat-row"><span>Granero</span><span>Almacén de vigas nobles (Estático)</span></div>
+                    <div class="stat-row"><span>Molino</span><span>Torre rústica con aspas (Estático)</span></div>
+                    <div class="stat-row"><span>Pozo de Agua</span><span>Brocal de piedra circular</span></div>
+                    <div class="stat-row"><span>Huerto</span><span>Bancales de labranza + Hortalizas</span></div>
+                    <div class="stat-row"><span>Colono</span><span>Aldeano con túnica, 100% nítido</span></div>
+                    <div class="stat-row"><span>Fauna</span><span>Gallina y Vaca en pasto</span></div>
+                </div>
+
+                <div class="card">
+                    <h3>🎮 Controles de Demostración</h3>
+                    <div class="controls">
+                        <button id="btnZoom" onclick="toggleZoom()">🔍 Zoom: 1.25×</button>
+                        <button id="btnTime" onclick="cycleTimeOfDay()">☀️ Hora: Mediodía</button>
+                        <button id="btnAnim" class="active" onclick="toggleAnimation()">🚶 Colono en Movimiento: ON</button>
+                    </div>
+                </div>
+
+                <div class="card" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    💡 <strong>Mejoras aplicadas:</strong>
+                    <ul style="margin-left: 18px; margin-top: 6px;">
+                        <li><strong>Colono 100% visible:</strong> Con túnica medieval, pelo, piel y botas de cuero, perfectamente proporcionado y nítido sobre el sendero.</li>
+                        <li><strong>Suelo homogéneo:</strong> Sin costuras cuadradas repetitivas.</li>
+                        <li><strong>Molino estático:</strong> Asentado con solidez y sin parpadeos.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Assets
+        const imgHome = new Image(); imgHome.src = '../src/assets/colony/starterhome.png';
+        const imgBarn = new Image(); imgBarn.src = '../src/assets/colony/barn.png';
+        const imgColonist = new Image(); imgColonist.src = '../src/assets/colony/colonist.png';
+        const imgChicken = new Image(); imgChicken.src = '../src/assets/colony/chicken.png';
+        const imgCow = new Image(); imgCow.src = '../src/assets/colony/cow.png';
+        const imgWheat = new Image(); imgWheat.src = '../src/assets/colony/wheat_5.png';
+        const imgCarrot = new Image(); imgCarrot.src = '../src/assets/colony/carrot_5.png';
+
+        let zoom = 1.25;
+        let timeMode = 0; // 0: Día, 1: Atardecer, 2: Noche
+        const timeNames = ['☀️ Mediodía', '🌅 Atardecer', '🌙 Noche'];
+        let isAnimated = true;
+
+        // Estado del Colono
+        let colX = 380;
+        let colY = 378;
+        let colDir = 1; // 1: Derecha, -1: Izquierda
+        let colFrame = 0;
+        let lastFrameTime = 0;
+
+        function toggleZoom() {
+            zoom = zoom === 1.25 ? 1.5 : (zoom === 1.5 ? 1.0 : 1.25);
+            document.getElementById('btnZoom').textContent = `🔍 Zoom: ${zoom}×`;
+        }
+
+        function cycleTimeOfDay() {
+            timeMode = (timeMode + 1) % 3;
+            document.getElementById('btnTime').textContent = `⏰ Hora: ${timeNames[timeMode]}`;
+        }
+
+        function toggleAnimation() {
+            isAnimated = !isAnimated;
+            const btn = document.getElementById('btnAnim');
+            btn.classList.toggle('active', isAnimated);
+            btn.textContent = `🚶 Colono en Movimiento: ${isAnimated ? 'ON' : 'PAUSADO'}`;
+        }
+
+        // Semillas aleatorias fijas para textura sutil de hierba
+        const grassTufts = [];
+        for (let i = 0; i < 60; i++) {
+            grassTufts.push({
+                x: (i * 73) % canvas.width,
+                y: (i * 47) % canvas.height,
+                type: i % 3
+            });
+        }
+
+        function render(timestamp) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            // 1. Suelo: Pradera Natural Suave y Homogénea (Sin costuras)
+            ctx.fillStyle = '#55822b';
+            ctx.fillRect(-60, -60, canvas.width + 120, canvas.height + 120);
+
+            // Detalles sutiles y naturales de hierba
+            ctx.fillStyle = '#4c7526';
+            grassTufts.forEach(t => {
+                if (t.type === 0) {
+                    ctx.fillRect(t.x, t.y, 3, 2);
+                    ctx.fillRect(t.x + 1, t.y - 1, 2, 2);
+                } else if (t.type === 1) {
+                    ctx.fillRect(t.x, t.y, 4, 2);
+                } else {
+                    ctx.fillStyle = '#619331';
+                    ctx.fillRect(t.x, t.y, 2, 3);
+                    ctx.fillStyle = '#4c7526';
+                }
+            });
+
+            // 2. Senderos de Tierra Batida Suaves (Curvos y redondeados)
+            ctx.fillStyle = '#926a3c';
+            // Camino principal horizontal
+            ctx.beginPath();
+            ctx.roundRect(80, 360, 680, 36, 16);
+            ctx.fill();
+
+            // Ramal a la casa principal
+            ctx.beginPath();
+            ctx.roundRect(160, 200, 32, 170, 14);
+            ctx.fill();
+
+            // Ramal al granero
+            ctx.beginPath();
+            ctx.roundRect(420, 200, 32, 170, 14);
+            ctx.fill();
+
+            // Borde suave de tierra / grava
+            ctx.fillStyle = '#7a5730';
+            ctx.fillRect(84, 394, 672, 2);
+            ctx.fillRect(162, 368, 28, 2);
+
+            // 3. Huerto de Cultivos
+            const farmX = 80;
+            const farmY = 420;
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const bx = farmX + c * 24;
+                    const by = farmY + r * 22;
+                    ctx.fillStyle = '#5a3d28';
+                    ctx.beginPath();
+                    ctx.roundRect(bx, by, 20, 18, 4);
+                    ctx.fill();
+
+                    const imgCrop = (c % 2 === 0) ? imgWheat : imgCarrot;
+                    if (imgCrop.complete && imgCrop.naturalWidth > 0) {
+                        ctx.drawImage(imgCrop, bx + 3, by - 4, 14, 16);
+                    }
+                }
+            }
+
+            // 4. Edificio 1: Casa Rural Principal (Starterhome - Estática)
+            if (imgHome.complete && imgHome.naturalWidth > 0) {
+                // Sombra de la casa
+                ctx.fillStyle = 'rgba(20, 35, 15, 0.35)';
+                ctx.beginPath();
+                ctx.ellipse(175, 230, 95, 28, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Casa rural completa
+                ctx.drawImage(imgHome, 128, 110, 763, 825, 75, 50, 200, 215);
+            }
+
+            // 5. Edificio 2: Granero Rústico (Barn - Estático)
+            if (imgBarn.complete && imgBarn.naturalWidth > 0) {
+                // Sombra del granero
+                ctx.fillStyle = 'rgba(20, 35, 15, 0.35)';
+                ctx.beginPath();
+                ctx.ellipse(435, 230, 90, 26, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Granero completo
+                ctx.drawImage(imgBarn, 67, 56, 839, 789, 340, 60, 190, 180);
+            }
+
+            // 6. Edificio 3: Molino de Viento (Completamente Estático)
+            const millX = 590;
+            const millY = 90;
+            ctx.fillStyle = 'rgba(20, 35, 15, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(millX + 45, millY + 140, 50, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cuerpo del molino
+            ctx.fillStyle = '#6b7280';
+            ctx.beginPath();
+            ctx.moveTo(millX + 25, millY + 140);
+            ctx.lineTo(millX + 35, millY + 50);
+            ctx.lineTo(millX + 55, millY + 50);
+            ctx.lineTo(millX + 65, millY + 140);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Tejado cónico de madera
+            ctx.fillStyle = '#9a3412';
+            ctx.beginPath();
+            ctx.moveTo(millX + 45, millY + 20);
+            ctx.lineTo(millX + 25, millY + 50);
+            ctx.lineTo(millX + 65, millY + 50);
+            ctx.closePath();
+            ctx.fill();
+
+            // Aspas estáticas de lona rústica
+            ctx.strokeStyle = '#d6d3d1';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(millX + 45, millY + 45); ctx.lineTo(millX + 15, millY + 15); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(millX + 45, millY + 45); ctx.lineTo(millX + 75, millY + 75); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(millX + 45, millY + 45); ctx.lineTo(millX + 75, millY + 15); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(millX + 45, millY + 45); ctx.lineTo(millX + 15, millY + 75); ctx.stroke();
+            ctx.fillStyle = 'rgba(250, 245, 235, 0.85)';
+            ctx.fillRect(millX + 18, millY + 16, 12, 18);
+            ctx.fillRect(millX + 60, millY + 58, 12, 18);
+
+            // 7. Pozo de Agua de Piedra
+            const wellX = 295;
+            const wellY = 270;
+            ctx.fillStyle = '#4b5563';
+            ctx.beginPath();
+            ctx.arc(wellX, wellY, 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1e3a8a';
+            ctx.beginPath();
+            ctx.arc(wellX, wellY, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(wellX - 16, wellY - 26, 32, 10);
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(wellX - 16, wellY - 26, 32, 10);
+
+            // 8. Fauna en el pasto
+            if (imgChicken.complete && imgChicken.naturalWidth > 0) {
+                const chkFrame = Math.floor(timestamp / 300) % 4;
+                ctx.drawImage(imgChicken, chkFrame * 32, 0, 32, 32, 290, 420, 28, 28);
+            }
+            if (imgCow.complete && imgCow.naturalWidth > 0) {
+                const cowFrame = Math.floor(timestamp / 400) % 4;
+                ctx.drawImage(imgCow, cowFrame * 32, 0, 32, 32, 330, 410, 48, 48);
+            }
+
+            // 9. Colono en movimiento por el sendero
+            if (isAnimated && timestamp - lastFrameTime > 120) {
+                colFrame = (colFrame + 1) % 4;
+                lastFrameTime = timestamp;
+
+                colX += colDir * 2.5;
+                if (colX > 680) colDir = -1;
+                if (colX < 180) colDir = 1;
+            }
+
+            // Sombra bajo los pies del colono
+            ctx.fillStyle = 'rgba(20, 30, 15, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(colX, colY + 2, 10, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dibujar colono completo (64x64, 4 frames por fila de 16x16)
+            // Row 2: Perfil caminando hacia la derecha
+            if (imgColonist.complete && imgColonist.naturalWidth > 0) {
+                ctx.save();
+                ctx.translate(colX, colY);
+                if (colDir === -1) {
+                    ctx.scale(-1, 1); // Espejado suave para caminar hacia la izquierda
+                }
+                // Dibujar en escala nítida (32x32 píxeles)
+                ctx.drawImage(
+                    imgColonist,
+                    (colFrame % 4) * 16, 2 * 16, 16, 16,
+                    -16, -28, 32, 32
+                );
+                ctx.restore();
+            }
+
+            // 10. Rótulo identificativo dentro del Canvas
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(16, 16, 360, 28);
+            ctx.fillStyle = '#22c55e';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('Aetheria: Colonia Rural (Colono 100% Visible)', 26, 35);
+
+            // 11. Iluminación Día / Atardecer / Noche
+            if (timeMode === 1) { // Atardecer ámbar
+                ctx.fillStyle = 'rgba(217, 119, 6, 0.2)';
+                ctx.fillRect(-60, -60, canvas.width + 120, canvas.height + 120);
+            } else if (timeMode === 2) { // Noche
+                ctx.fillStyle = 'rgba(10, 16, 35, 0.72)';
+                ctx.fillRect(-60, -60, canvas.width + 120, canvas.height + 120);
+
+                // Ventanas cálidas iluminadas de la casa
+                const lights = [
+                    { x: 130, y: 150, r: 60 },
+                    { x: 195, y: 155, r: 65 }
+                ];
+                lights.forEach(l => {
+                    const grad = ctx.createRadialGradient(l.x, l.y, 5, l.x, l.y, l.r);
+                    grad.addColorStop(0, 'rgba(255, 215, 100, 0.75)');
+                    grad.addColorStop(1, 'rgba(255, 215, 100, 0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(l.x, l.y, l.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Farol del colono
+                const colLight = ctx.createRadialGradient(colX, colY - 14, 5, colX, colY - 14, 55);
+                colLight.addColorStop(0, 'rgba(255, 220, 120, 0.85)');
+                colLight.addColorStop(1, 'rgba(255, 220, 120, 0)');
+                ctx.fillStyle = colLight;
+                ctx.beginPath();
+                ctx.arc(colX, colY - 14, 55, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
